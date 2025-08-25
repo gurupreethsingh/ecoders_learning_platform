@@ -1,0 +1,70 @@
+# =========================
+# Global ignores
+# =========================
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# Node / Backend ignores
+# =========================
+backend/node_modules/
+backend/package-lock.json
+backend/uploads/
+backend/dist/
+backend/build/
+backend/.cache/
+
+# Logs
+backend/logs
+backend/debug.log
+backend/error.log
+
+# =========================
+# React / Frontend ignores
+# =========================
+frontend/node_modules/
+frontend/package-lock.json
+frontend/build/
+frontend/.cache/
+
+# Testing
+coverage
+*.lcov
+
+# =========================
+# IDE / Editor ignores
+# =========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ignore backend node_modules
+node_modules/
+
+# Ignore frontend build output
+frontend/build/
+
+# Ignore uploads (images, files, etc.)
+uploads/
+
+# Ignore logs folder
+logs/
+
+# Ignore IDE settings
+.vscode/
+.idea/
