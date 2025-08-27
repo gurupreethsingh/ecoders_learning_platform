@@ -19,7 +19,7 @@ import React, { useEffect, useMemo, useState } from "react";
  *   plus videoUrl/pdfUrl/duration/isFreePreview
  */
 
-const API = import.meta?.env?.VITE_API_URL || "http://localhost:3011/api";
+const API = import.meta?.env?.VITE_API_URL || "http://localhost:3011";
 
 // simple slug helper (client-side; server will also slugify if missing)
 const slugify = (s = "") =>

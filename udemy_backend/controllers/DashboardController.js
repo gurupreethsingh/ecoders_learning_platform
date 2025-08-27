@@ -73,6 +73,7 @@ const Cart = require("../models/CartModel");
 // ADD THESE
 const Degree = require("../models/DegreeModel");
 const Semister = require("../models/SemisterModel");
+const Exam = require("../models/ExamModel");
 
 const collections = {
   users: User,
@@ -80,6 +81,7 @@ const collections = {
   categories: Category,
   subcategories: SubCategory,
   blogs: Blog,
+  exams: Exam,
   courses: Course,
   orders: Order,
   contacts: Contact,

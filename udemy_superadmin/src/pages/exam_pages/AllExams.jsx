@@ -13,12 +13,15 @@ import {
   FaGraduationCap,
   FaUniversity,
   FaTrashAlt,
+  FaClock,
+  FaPercent,
+  FaCheck,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
 import globalBackendRoute from "../../config/Config";
 
-export default function AllCourses() {
+export default function AllExams() {
   const [view, setView] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -36,11 +39,11 @@ export default function AllCourses() {
   const [fetchError, setFetchError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // lookups
   const [degreeMap, setDegreeMap] = useState({});
-  const [categoryMap, setCategoryMap] = useState({});
-  const [subCategoryMap, setSubCategoryMap] = useState({});
   const [semisterMap, setSemisterMap] = useState({});
-  const [instructorMap, setInstructorMap] = useState({});
+  const [courseMap, setCourseMap] = useState({});
+  const [userMap, setUserMap] = useState({}); // fallback labels for createdBy (optional)
 
   const iconStyle = {
     list: view === "list" ? "text-blue-500" : "text-gray-500",
@@ -48,11 +51,9 @@ export default function AllCourses() {
     card: view === "card" ? "text-purple-500" : "text-gray-500",
   };
 
-  const makeSlug = (name, serverSlug) => {
-    if (serverSlug && typeof serverSlug === "string" && serverSlug.length > 0)
-      return serverSlug;
-    if (!name) return "course";
-    return String(name)
+  const makeSlug = (name, code) => {
+    const base = name || code || "exam";
+    return String(base)
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
@@ -73,47 +74,70 @@ export default function AllCourses() {
   const shortId = (val) =>
     typeof val === "string" ? `${val.slice(0, 6)}…${val.slice(-4)}` : "";
 
-  const formatPrice = (n) => {
-    if (n === 0) return "Free";
-    if (!Number.isFinite(Number(n))) return "—";
+  const formatDate = (d) => {
+    if (!d) return "—";
     try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(Number(n));
+      return new Date(d).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     } catch {
-      return `$${n}`;
+      return "—";
     }
+  };
+
+  const formatDateTime = (d) => {
+    if (!d) return null;
+    try {
+      return new Date(d).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const EXAM_TYPE_LABELS = {
+    weekly: "Weekly",
+    monthly: "Monthly",
+    half_yearly: "Half Yearly",
+    mid_term: "Mid Term",
+    preparatory: "Preparatory",
+    final: "Final Exam",
   };
 
   useEffect(() => setPage(1), [searchTerm, pageSize]);
 
-  // lookups for degree/category/subcategory/semister/instructor
+  // lookups for degree/semister/course/(optional)users
   useEffect(() => {
     let alive = true;
 
     const fetchLookups = async () => {
       try {
-        const [degRes, catRes, subCatRes, semRes, instructorsRes] =
-          await Promise.allSettled([
-            axios.get(`${globalBackendRoute}/api/list-degrees`, {
-              params: { page: 1, limit: 500 },
-            }),
-            axios.get(`${globalBackendRoute}/api/all-categories`),
-            axios
-              .get(`${globalBackendRoute}/api/all-subcategories`)
-              .catch(() => ({ data: { data: [] } })),
-            axios
-              .get(`${globalBackendRoute}/api/semisters`, {
-                params: { page: 1, limit: 2000 },
-              })
-              .catch(() => ({ data: { data: [] } })),
-            // ✅ FIXED: use your real route
-            axios
-              .get(`${globalBackendRoute}/api/get-instructors`)
-              .catch(() => ({ data: { data: [] } })),
-          ]);
+        const [degRes, semRes, courseRes, usersRes] = await Promise.allSettled([
+          axios.get(`${globalBackendRoute}/api/list-degrees`, {
+            params: { page: 1, limit: 1000 },
+          }),
+          axios
+            .get(`${globalBackendRoute}/api/semisters`, {
+              params: { page: 1, limit: 5000 },
+            })
+            .catch(() => ({ data: { data: [] } })),
+          axios
+            .get(`${globalBackendRoute}/api/list-courses`, {
+              params: { page: 1, limit: 5000 },
+            })
+            .catch(() => ({ data: { data: [] } })),
+          // optional; if you don't have such route, this will just fallback
+          axios
+            .get(`${globalBackendRoute}/api/get-instructors`)
+            .catch(() => ({ data: { data: [] } })),
+        ]);
 
         if (!alive) return;
 
@@ -121,31 +145,10 @@ export default function AllCourses() {
         if (degRes.status === "fulfilled") {
           const list = degRes.value?.data?.data || [];
           const map = {};
-          list.forEach((d) => {
+          (Array.isArray(list) ? list : []).forEach((d) => {
             map[d._id || d.id] = d.name || d.title || "Untitled Degree";
           });
           setDegreeMap(map);
-        }
-
-        // Categories
-        if (catRes.status === "fulfilled") {
-          const list = catRes.value?.data || catRes.value?.data?.data || [];
-          const map = {};
-          (Array.isArray(list) ? list : []).forEach((c) => {
-            map[c._id || c.id] = c.category_name || c.name || "Uncategorized";
-          });
-          setCategoryMap(map);
-        }
-
-        // Subcategories (best-effort)
-        if (subCatRes.status === "fulfilled") {
-          const list =
-            subCatRes.value?.data?.data || subCatRes.value?.data || [];
-          const map = {};
-          (Array.isArray(list) ? list : []).forEach((s) => {
-            map[s._id || s.id] = s.subcategory_name || s.name || "—";
-          });
-          setSubCategoryMap(map);
         }
 
         // Semisters
@@ -163,18 +166,26 @@ export default function AllCourses() {
           setSemisterMap(map);
         }
 
-        // Instructors (best-effort)
-        if (instructorsRes.status === "fulfilled") {
+        // Courses
+        if (courseRes.status === "fulfilled") {
           const list =
-            instructorsRes.value?.data?.data ||
-            instructorsRes.value?.data ||
-            [];
+            courseRes.value?.data?.data || courseRes.value?.data || [];
+          const map = {};
+          (Array.isArray(list) ? list : []).forEach((c) => {
+            map[c._id || c.id] =
+              c.title || c.name || c.code || "Untitled Course";
+          });
+          setCourseMap(map);
+        }
+
+        // Users (best-effort)
+        if (usersRes.status === "fulfilled") {
+          const list = usersRes.value?.data?.data || usersRes.value?.data || [];
           const map = {};
           (Array.isArray(list) ? list : []).forEach((u) => {
-            map[u._id || u.id] =
-              u.name || u.fullName || u.email || "Instructor";
+            map[u._id || u.id] = u.name || u.fullName || u.email || "User";
           });
-          setInstructorMap(map);
+          setUserMap(map);
         }
       } catch {
         // ignore; UI will fallback to IDs
@@ -187,7 +198,7 @@ export default function AllCourses() {
     };
   }, []);
 
-  // fetch courses
+  // fetch exams
   useEffect(() => {
     let alive = true;
     const ctrl = new AbortController();
@@ -202,14 +213,14 @@ export default function AllCourses() {
           sortBy: "createdAt",
           sortDir: "desc",
         };
-        if (searchTerm.trim()) params.search = searchTerm.trim();
+        if (searchTerm.trim()) params.search = searchTerm.trim(); // server may support 'search' or ignore it
 
-        const res = await axios.get(`${globalBackendRoute}/api/list-courses`, {
+        const res = await axios.get(`${globalBackendRoute}/api/list-exams`, {
           params,
           signal: ctrl.signal,
         });
 
-        const data = res.data?.data || [];
+        const data = res.data?.data || res.data || [];
         const m = res.data?.meta || {};
         if (!alive) return;
 
@@ -222,8 +233,8 @@ export default function AllCourses() {
         });
       } catch (err) {
         if (!alive) return;
-        console.error("Error fetching courses:", err);
-        setFetchError("Failed to load courses. Please try again.");
+        console.error("Error fetching exams:", err);
+        setFetchError("Failed to load exams. Please try again.");
       } finally {
         if (!alive) return;
         setLoading(false);
@@ -271,45 +282,39 @@ export default function AllCourses() {
     return withDots;
   };
 
-  const deleteCourse = async (e, id, title) => {
+  const deleteExam = async (e, id, title) => {
     e.preventDefault();
     e.stopPropagation();
     const ok = window.confirm(
-      `Delete course "${title || "Untitled"}"? This action cannot be undone.`
+      `Delete exam "${title || "Untitled"}"? This action cannot be undone.`
     );
     if (!ok) return;
     try {
       const res = await axios.delete(
-        `${globalBackendRoute}/api/delete-course/${id}`
+        `${globalBackendRoute}/api/delete-exam/${id}`
       );
       if (res.status >= 200 && res.status < 300) {
         if (rows.length === 1 && page > 1) setPage((p) => Math.max(1, p - 1));
         setRefreshKey((k) => k + 1);
-        alert("Course deleted successfully.");
+        alert("Exam deleted successfully.");
       } else {
-        throw new Error("Failed to delete course.");
+        throw new Error("Failed to delete exam.");
       }
     } catch (err) {
       console.error("Delete failed:", err);
       alert(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to delete course."
+        err?.response?.data?.message || err?.message || "Failed to delete exam."
       );
     }
   };
 
-  const toggle = async (e, id, kind) => {
+  const togglePublish = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    const url =
-      kind === "published"
-        ? `${globalBackendRoute}/api/courses/${id}/toggle-published`
-        : kind === "archived"
-        ? `${globalBackendRoute}/api/courses/${id}/toggle-archived`
-        : `${globalBackendRoute}/api/courses/${id}/toggle-featured`;
     try {
-      const res = await axios.post(url);
+      const res = await axios.post(
+        `${globalBackendRoute}/api/toggle-publish/${id}`
+      );
       if (res.status >= 200 && res.status < 300) {
         setRefreshKey((k) => k + 1);
       } else {
@@ -321,10 +326,28 @@ export default function AllCourses() {
     }
   };
 
-  const renderBadges = (c) => {
+  const bumpAttempt = async (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await axios.post(
+        `${globalBackendRoute}/api/increment-attempt/${id}`
+      );
+      if (res.status >= 200 && res.status < 300) {
+        setRefreshKey((k) => k + 1);
+      } else {
+        throw new Error("Increment failed");
+      }
+    } catch (err) {
+      console.error("Increment failed:", err);
+      alert(err?.response?.data?.message || err?.message || "Action failed.");
+    }
+  };
+
+  const renderBadges = (x) => {
     return (
       <div className="flex flex-wrap gap-2 mt-2">
-        {c?.published ? (
+        {x?.isPublished ? (
           <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">
             Published
           </span>
@@ -333,21 +356,25 @@ export default function AllCourses() {
             Draft
           </span>
         )}
-        {c?.isFeatured ? (
+        {x?.difficultyLevel ? (
           <span className="inline-block text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700">
-            Featured
+            {x.difficultyLevel}
           </span>
         ) : null}
-        {c?.isArchived ? (
-          <span className="inline-block text-xs px-2 py-1 rounded bg-gray-200 text-gray-700">
-            Archived
-          </span>
-        ) : null}
-        {c?.accessType ? (
+        {x?.examType ? (
           <span className="inline-block text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
-            {c.accessType}
+            {EXAM_TYPE_LABELS[x.examType] || x.examType}
           </span>
         ) : null}
+        {x?.isPaid ? (
+          <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">
+            Paid
+          </span>
+        ) : (
+          <span className="inline-block text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
+            Free
+          </span>
+        )}
       </div>
     );
   };
@@ -356,13 +383,13 @@ export default function AllCourses() {
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 border-b">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="block-heading">
-          <h2 className="font-bold text-xl">All Courses</h2>
+          <h2 className="font-bold text-xl">All Exams</h2>
         </div>
 
         <div className="relative w-full sm:w-1/2">
           <input
             type="text"
-            placeholder="Search courses by title, slug, level, language, tags, etc."
+            placeholder="Search exams by name, code, subject, tags, etc."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -372,7 +399,7 @@ export default function AllCourses() {
 
         <div className="flex items-center space-x-4">
           <p className="text-sm text-gray-600">
-            Showing {rows.length} of {meta.total} courses
+            Showing {rows.length} of {meta.total} exams
           </p>
           <FaThList
             className={`cursor-pointer ${iconStyle.list}`}
@@ -406,7 +433,7 @@ export default function AllCourses() {
       </div>
 
       {loading && (
-        <p className="text-center text-gray-600 mt-6">Loading courses…</p>
+        <p className="text-center text-gray-600 mt-6">Loading exams…</p>
       )}
       {fetchError && !loading && (
         <p className="text-center text-red-600 mt-6">{fetchError}</p>
@@ -426,91 +453,83 @@ export default function AllCourses() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            {rows.map((c) => {
-              const tags = toTags(c.tags);
-              const created =
-                c?.createdAt &&
-                new Date(c.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                });
-              const slug = makeSlug(c?.title, c?.slug);
-              const path = `/single-course/${slug}/${c?._id || c?.id}`;
+            {rows.map((x) => {
+              const tags = toTags(x.tags);
+              const created = formatDate(x?.createdAt);
+              const examDate = formatDate(x?.examDate);
+              const start = formatDateTime(x?.startTime);
+              const end = formatDateTime(x?.endTime);
+
+              const slug = makeSlug(x?.examName, x?.examCode);
+              const path = `/single-exam/${slug}/${x?._id || x?.id}`;
               const listLayout = view === "list";
 
+              // Degree
+              const degreeId =
+                typeof x?.degree === "object" ? x?.degree?._id : x?.degree;
               const degreeName =
-                c?.degreeName ||
-                degreeMap[c?.degree] ||
-                (typeof c?.degree === "object" && c?.degree?.name) ||
-                (typeof c?.degree === "string" ? shortId(c.degree) : "—");
+                (typeof x?.degree === "object" &&
+                  (x?.degree?.name || x?.degree?.title)) ||
+                degreeMap[degreeId] ||
+                (typeof degreeId === "string" ? shortId(degreeId) : "—");
 
-              const semisterName =
-                c?.semisterName ||
-                semisterMap[c?.semister] ||
-                (typeof c?.semister === "object" &&
-                  (c?.semister?.title ||
-                    c?.semister?.semister_name ||
-                    (c?.semister?.semNumber
-                      ? `Semister ${c?.semister?.semNumber}`
+              // Semister/Semester (support both just in case)
+              const semField = x?.semester ?? x?.semister;
+              const semId =
+                typeof semField === "object" ? semField?._id : semField;
+              const semName =
+                (typeof semField === "object" &&
+                  (semField?.title ||
+                    semField?.semister_name ||
+                    (semField?.semNumber
+                      ? `Semister ${semField?.semNumber}`
                       : ""))) ||
-                (typeof c?.semister === "string" ? shortId(c.semister) : "—");
+                semisterMap[semId] ||
+                (typeof semId === "string" ? shortId(semId) : "—");
 
-              const categoryName =
-                c?.categoryName ||
-                categoryMap[c?.category] ||
-                (typeof c?.category === "object" &&
-                  (c?.category?.category_name || c?.category?.name)) ||
-                (typeof c?.category === "string" ? shortId(c.category) : "—");
+              // Course
+              const courseId =
+                typeof x?.course === "object" ? x?.course?._id : x?.course;
+              const courseName =
+                (typeof x?.course === "object" &&
+                  (x?.course?.title || x?.course?.name || x?.course?.code)) ||
+                courseMap[courseId] ||
+                (typeof courseId === "string" ? shortId(courseId) : "—");
 
-              const subCategoryName =
-                c?.subCategoryName ||
-                subCategoryMap[c?.subCategory] ||
-                (typeof c?.subCategory === "object" &&
-                  (c?.subCategory?.subcategory_name || c?.subCategory?.name)) ||
-                (typeof c?.subCategory === "string"
-                  ? shortId(c.subCategory)
-                  : "—");
-
-              const instructorName =
-                c?.instructorName ||
-                instructorMap[c?.instructor] ||
-                (typeof c?.instructor === "object" &&
-                  (c?.instructor?.name ||
-                    c?.instructor?.fullName ||
-                    c?.instructor?.email)) ||
-                (typeof c?.instructor === "string"
-                  ? shortId(c.instructor)
-                  : "—");
+              // createdBy (best-effort)
+              const userId =
+                typeof x?.createdBy === "object"
+                  ? x?.createdBy?._id
+                  : x?.createdBy;
+              const createdByName =
+                (typeof x?.createdBy === "object" &&
+                  (x?.createdBy?.name ||
+                    x?.createdBy?.fullName ||
+                    x?.createdBy?.email)) ||
+                userMap[userId] ||
+                (typeof userId === "string" ? shortId(userId) : "—");
 
               return (
-                <div key={c._id || c.id} className="relative">
+                <div key={x._id || x.id} className="relative">
                   <div className="absolute -top-2 -right-2 z-10 flex gap-2">
                     <button
                       title="Toggle Published"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-green-50 text-green-600"
-                      onClick={(e) => toggle(e, c._id || c.id, "published")}
+                      onClick={(e) => togglePublish(e, x._id || x.id)}
                     >
                       P
                     </button>
                     <button
-                      title="Toggle Featured"
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-indigo-50 text-indigo-600"
-                      onClick={(e) => toggle(e, c._id || c.id, "featured")}
+                      title="Increment Attempt Count"
+                      className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-blue-50 text-blue-600"
+                      onClick={(e) => bumpAttempt(e, x._id || x.id)}
                     >
-                      F
+                      <FaCheck className="h-4 w-4" />
                     </button>
                     <button
-                      title="Toggle Archived"
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-gray-50 text-gray-700"
-                      onClick={(e) => toggle(e, c._id || c.id, "archived")}
-                    >
-                      A
-                    </button>
-                    <button
-                      title="Delete course"
+                      title="Delete exam"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-red-50 text-red-600"
-                      onClick={(e) => deleteCourse(e, c._id || c.id, c?.title)}
+                      onClick={(e) => deleteExam(e, x._id || x.id, x?.examName)}
                     >
                       <FaTrashAlt className="h-4 w-4" />
                     </button>
@@ -545,75 +564,99 @@ export default function AllCourses() {
                       >
                         <div className="text-left space-y-1 flex-shrink-0">
                           <h3 className="text-lg font-bold text-gray-900">
-                            {c?.title || "Untitled Course"}
+                            {x?.examName || "Untitled Exam"}
                           </h3>
 
-                          {created && (
-                            <p className="text-sm text-gray-600 flex items-center">
-                              <FaCalendar className="mr-1 text-yellow-500" />
-                              {created}
+                          <p className="text-sm text-gray-600 flex items-center">
+                            <FaCalendar className="mr-1 text-yellow-500" />
+                            Created: {created}
+                            {x?.examDate ? (
+                              <span className="ml-3">
+                                • Exam Date: <strong>{examDate}</strong>
+                              </span>
+                            ) : null}
+                          </p>
+
+                          {(x?.startTime || x?.endTime) && (
+                            <p className="text-sm text-gray-600">
+                              Window:{" "}
+                              <span className="font-medium">
+                                {start || "—"}
+                              </span>{" "}
+                              →{" "}
+                              <span className="font-medium">{end || "—"}</span>
                             </p>
                           )}
 
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <FaUser className="mr-1 text-red-500" />
-                            <span className="truncate">
-                              <span className="font-medium">Instructor:</span>{" "}
-                              {instructorName}{" "}
-                              <span className="ml-2 font-medium">Level:</span>{" "}
-                              {c?.level || "—"}{" "}
-                              <span className="ml-2 font-medium">
-                                Language:
-                              </span>{" "}
-                              {c?.language || "—"}
-                            </span>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Subject:</span>{" "}
+                            {x?.subject || "—"}{" "}
+                            <span className="ml-2 font-medium">Code:</span>{" "}
+                            {x?.examCode || "—"}
                           </p>
 
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <FaUniversity className="mr-1 text-indigo-500" />
-                            <span className="truncate">
-                              <span className="font-medium">Degree:</span>{" "}
-                              {degreeName}{" "}
-                              {semisterName ? (
-                                <>
-                                  <span className="ml-2 font-medium">
-                                    Semister:
-                                  </span>{" "}
-                                  {semisterName}
-                                </>
-                              ) : null}
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Degree:</span>{" "}
+                            {degreeName}
+                            {semName ? (
+                              <>
+                                <span className="ml-2 font-medium">
+                                  Semister:
+                                </span>{" "}
+                                {semName}
+                              </>
+                            ) : null}
+                            <span className="ml-2 font-medium">Course:</span>{" "}
+                            {courseName}
+                          </p>
+
+                          <p className="text-sm text-gray-700">
+                            <FaClock className="inline mr-1 text-indigo-500" />
+                            Duration:{" "}
+                            <span className="font-medium">
+                              {x?.examDurationMinutes
+                                ? `${x.examDurationMinutes} min`
+                                : "—"}
+                            </span>
+                            <FaPercent className="inline ml-3 mr-1 text-green-600" />
+                            Pass %:{" "}
+                            <span className="font-medium">
+                              {x?.passPercentage ?? "—"}
+                            </span>
+                            <span className="ml-3">
+                              Total Marks:{" "}
+                              <span className="font-medium">
+                                {x?.totalMarks ?? "—"}
+                              </span>
                             </span>
                           </p>
 
                           <p className="text-sm text-gray-600">
-                            <span className="font-medium">Category:</span>{" "}
-                            {categoryName}{" "}
-                            <span className="ml-2 font-medium">
-                              Subcategory:
+                            Attempts:{" "}
+                            <span className="font-medium">
+                              {x?.attemptCount ?? 0}
                             </span>{" "}
-                            {subCategoryName}
+                            / Allowed:{" "}
+                            <span className="font-medium">
+                              {x?.numberOfAttemptsAllowed ?? 1}
+                            </span>{" "}
+                            • Created By:{" "}
+                            <span className="font-medium">{createdByName}</span>
                           </p>
 
-                          <p className="text-sm text-gray-700">
-                            <span className="font-medium">Duration:</span>{" "}
-                            {c?.durationInHours ? `${c.durationInHours}h` : "—"}{" "}
-                            <span className="ml-2 font-medium">Price:</span>{" "}
-                            {formatPrice(c?.price ?? "—")}
-                          </p>
-
-                          {toTags(c.tags).length > 0 && (
+                          {toTags(x.tags).length > 0 && (
                             <p className="text-sm text-gray-600 flex items-center">
                               <FaTags className="mr-1 text-green-500" />
-                              {toTags(c.tags).join(", ")}
+                              {toTags(x.tags).join(", ")}
                             </p>
                           )}
 
-                          {renderBadges(c)}
+                          {renderBadges(x)}
                         </div>
 
-                        {view !== "list" && c?.metaDescription && (
+                        {view !== "list" && x?.instructions && (
                           <p className="text-gray-700 mt-2 line-clamp-2">
-                            {c.metaDescription}
+                            {x.instructions}
                           </p>
                         )}
 
@@ -627,7 +670,7 @@ export default function AllCourses() {
           </motion.div>
 
           {meta.total === 0 && (
-            <p className="text-center text-gray-600 mt-6">No courses found.</p>
+            <p className="text-center text-gray-600 mt-6">No exams found.</p>
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-8 gap-3">

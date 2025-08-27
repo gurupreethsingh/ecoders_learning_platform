@@ -17,7 +17,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const categoryRoutes = require("./routes/CategoryRoutes");
 const contactRoutes = require("./routes/ContactRoutes");
 const courseRoutes = require("./routes/CourseRoutes");
-const examRoutes  = require("./routes/ExamRoutes.js");
+const examRoutes = require("./routes/ExamRoutes.js");
 const notificationRoutes = require("./routes/NotificationRoutes");
 const orderRoutes = require("./routes/OrderRoutes");
 const subCategoryRoutes = require("./routes/SubCategoryRoutes");
@@ -27,7 +27,7 @@ const wishlistRoutes = require("./routes/WishlistRoutes");
 const dashboardRoutes = require("./routes/DashboardRoutes");
 const degreeRoutes = require("./routes/DegreeRoutes");
 const semisterRoutes = require("./routes/SemisterRoutes");
-
+const questionRoutes = require("./routes/QuestionRoutes");
 
 // 4. Initialize Express
 const app = express();
@@ -77,6 +77,7 @@ app.use("/api", subscriptionRoutes);
 app.use("/api", userRoutes);
 app.use("/api", wishlistRoutes);
 app.use("/api", semisterRoutes);
+app.use("/api", questionRoutes);
 
 // 7. Connect to MongoDB using .env
 const DATABASE_URI = process.env.DATABASE;

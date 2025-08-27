@@ -1,110 +1,205 @@
+// // models/ExamModel.js
+// const mongoose = require("mongoose");
+// const { Schema } = mongoose;
+
+// const ExamSchema = new Schema(
+//   {
+//     // Relations
+//     degree: {
+//       type: Schema.Types.ObjectId,
+//       ref: "Degree",
+//       required: true,
+//     },
+//     semester: {
+//       type: Schema.Types.ObjectId,
+//       ref: "Semester",
+//       required: true,
+//     },
+//     course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+
+//     // Core exam attributes
+//     examName: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     examCode: {
+//       type: String,
+//       required: true,
+//       unique: true,
+//       trim: true,
+//     },
+//     examDurationMinutes: {
+//       type: Number,
+//       required: true,
+//       min: 10, // at least 10 minutes
+//     },
+//     examType: {
+//       type: String,
+//       enum: [
+//         "weekly",
+//         "monthly",
+//         "half_yearly",
+//         "mid_term",
+//         "preparatory",
+//         "final",
+//       ],
+//       required: true,
+//     },
+//     passPercentage: {
+//       type: Number,
+//       required: true,
+//       min: 0,
+//       max: 100,
+//     },
+//     isPaid: {
+//       type: Boolean,
+//       default: false,
+//     },
+//     numberOfAttemptsAllowed: {
+//       type: Number,
+//       default: 1,
+//     },
+//     attemptCount: {
+//       type: Number,
+//       default: 0, // how many times attempted so far
+//     },
+
+//     // Publishing & authorship
+//     isPublished: {
+//       type: Boolean,
+//       default: false,
+//     },
+//     createdBy: {
+//       type: Schema.Types.ObjectId,
+//       ref: "User",
+//       required: true,
+//     },
+
+//     // Extra useful fields for a language learning / school platform
+//     subject: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     totalMarks: {
+//       type: Number,
+//       default: 100,
+//     },
+//     instructions: {
+//       type: String,
+//       default: "Read all questions carefully before answering.",
+//     },
+//     syllabusOutline: {
+//       type: String,
+//       default: "",
+//     },
+//     allowedLanguages: [
+//       {
+//         type: String,
+//         trim: true,
+//       },
+//     ], // e.g. ["English", "Spanish", "French"]
+
+//     tags: [
+//       {
+//         type: String,
+//         trim: true,
+//       },
+//     ],
+
+//     // Optional advanced fields
+//     examDate: {
+//       type: Date,
+//     },
+//     startTime: {
+//       type: Date,
+//     },
+//     endTime: {
+//       type: Date,
+//     },
+//     negativeMarking: {
+//       type: Boolean,
+//       default: false,
+//     },
+//     negativeMarkPerQuestion: {
+//       type: Number,
+//       default: 0,
+//     },
+//     maxStudents: {
+//       type: Number,
+//       default: 0, // 0 = unlimited
+//     },
+//     difficultyLevel: {
+//       type: String,
+//       enum: ["easy", "medium", "hard"],
+//       default: "medium",
+//     },
+//   },
+//   { timestamps: true }
+// );
+
+// module.exports = mongoose.model("Exam", ExamSchema);
+
+//
+
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const examSchema = new mongoose.Schema(
+const ExamSchema = new Schema(
   {
-    // The course this exam belongs to
-    course: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Course",
-      required: true,
-    },
+    degree: { type: Schema.Types.ObjectId, ref: "Degree", required: true },
 
-    // Title of the exam
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    // ⬇️ IMPORTANT: match your model name "Semister"
+    semester: { type: Schema.Types.ObjectId, ref: "Semister", required: true },
 
-    // Short description
-    description: {
-      type: String,
-      trim: true,
-    },
+    course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
 
-    // Type of exam — MCQ, coding, mixed, etc.
+    examName: { type: String, required: true, trim: true },
+    examCode: { type: String, required: true, unique: true, trim: true },
+    examDurationMinutes: { type: Number, required: true, min: 10 },
     examType: {
       type: String,
-      enum: ["MCQ", "Coding", "Mixed"],
-      default: "MCQ",
-    },
-
-    // Duration in minutes
-    duration: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-
-    // Passing percentage (e.g., 60%)
-    passingPercentage: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 100,
-    },
-
-    // Maximum marks for the exam
-    totalMarks: {
-      type: Number,
+      enum: [
+        "weekly",
+        "monthly",
+        "half_yearly",
+        "mid_term",
+        "preparatory",
+        "final",
+      ],
       required: true,
     },
+    passPercentage: { type: Number, required: true, min: 0, max: 100 },
+    isPaid: { type: Boolean, default: false },
+    numberOfAttemptsAllowed: { type: Number, default: 1 },
+    attemptCount: { type: Number, default: 0 },
+    isPublished: { type: Boolean, default: false },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
-    // Whether the exam is free or part of a paid course
-    isPaid: {
-      type: Boolean,
-      default: false,
+    subject: { type: String, required: true, trim: true },
+    totalMarks: { type: Number, default: 100 },
+    instructions: {
+      type: String,
+      default: "Read all questions carefully before answering.",
     },
+    syllabusOutline: { type: String, default: "" },
+    allowedLanguages: [{ type: String, trim: true }],
+    tags: [{ type: String, trim: true }],
 
-    // List of questions for the exam
-    questions: [
-      {
-        questionText: { type: String, required: true },
-        questionType: {
-          type: String,
-          enum: ["MCQ", "TrueFalse", "ShortAnswer", "Coding"],
-          default: "MCQ",
-        },
-        options: [
-          {
-            optionText: String,
-            isCorrect: { type: Boolean, default: false },
-          },
-        ],
-        marks: { type: Number, required: true },
-        explanation: String,
-      },
-    ],
-
-    // Number of attempts allowed
-    attemptsAllowed: {
-      type: Number,
-      default: 1,
+    examDate: { type: Date },
+    startTime: { type: Date },
+    endTime: { type: Date },
+    negativeMarking: { type: Boolean, default: false },
+    negativeMarkPerQuestion: { type: Number, default: 0 },
+    maxStudents: { type: Number, default: 0 },
+    difficultyLevel: {
+      type: String,
+      enum: ["easy", "medium", "hard"],
+      default: "medium",
     },
-
-    // Whether the exam is published/visible to students
-    isPublished: {
-      type: Boolean,
-      default: false,
-    },
-
-    // Which instructor created this exam
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    // Analytics: how many students attempted
-    attemptsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    // Tags for search optimization
-    tags: [String],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Exam", examSchema);
+module.exports = mongoose.model("Exam", ExamSchema);

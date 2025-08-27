@@ -160,8 +160,13 @@ const SuperadminDashboard = () => {
                 },
                 {
                   label: "Create Course",
-                  icon: <FaPlus className="text-green-600" />,
+                  icon: <FaPlus className="text-green-400" />,
                   path: "/create-course",
+                },
+                {
+                  label: "Create Exam",
+                  icon: <FaPlus className="text-green-600" />,
+                  path: "/create-exam",
                 },
               ]}
             />

@@ -1,51 +1,38 @@
-const express = require("express");
-const router = express.Router();
+// routes/ExamRoutes.js
+const router = require("express").Router();
+const C = require("../controllers/ExamController");
 
-const ExamController = require("../controllers/ExamController"); 
+// ---------- CRUD ----------
+router.post("/create-exam", C.createExam);
+router.get("/list-exams", C.listExams);
+router.get("/get-exam/:id", C.getExamById);
+router.patch("/update-exam/:id", C.updateExamById);
+router.delete("/delete-exam/:id", C.deleteExamById);
 
-/* -------------------- CRUD ROUTES -------------------- */
-// Create a new exam
-router.post("/create-exam", ExamController.addExam);
+// ---------- Counts ----------
+router.get("/count-all", C.countAll);
+router.get("/count-by", C.countBy);
 
-// Get all exams (supports pagination, search, filter)
-router.get("/get-all-exams", ExamController.getAllExams);
+// ---------- Search & Filter ----------
+router.get("/search-exams", C.searchExams);
+// examples
+router.get(
+  "/get-by-degree-semester-course/:degreeId/:semesterId/:courseId",
+  C.getByDegreeSemesterCourse
+);
 
-// Get a single exam by ID
-router.get("/get-exam/:id", ExamController.getExamById);
+router.get(
+  "/get-published-by-dsc/:degreeId/:semesterId/:courseId",
+  C.getPublishedByDegreeSemesterCourse
+);
 
-// Update an exam
-router.put("/update-exam/:id", ExamController.updateExam);
+// ---------- Status ----------
+router.get("/upcoming-exams", C.upcomingExams);
+router.get("/past-exams", C.pastExams);
+router.get("/exam-stats", C.stats);
 
-// Delete an exam
-router.delete("/delete-exam/:id", ExamController.deleteExam);
-
-/* -------------------- COUNT ROUTES -------------------- */
-// Count all exams
-router.get("/count-all-exams", ExamController.countAllExams);
-
-// Count exams by course
-router.get("/count-exams-by-course/:courseId", ExamController.countExamsByCourse);
-
-// Count exams by instructor
-router.get("/count-exams-by-instructor/:instructorId", ExamController. countExamsByInstructor);
-
-// Count published and unpublished exams
-router.get("/count-published-exams", ExamController.countPublishedExams);
-
-// Count paid and free exams
-router.get("/count-paid-free-exams", ExamController.countPaidFreeExams);
-
-/* -------------------- FILTER / GET BY ATTRIBUTE -------------------- */
-// Get exams by course
-router.get("/get-exams-by-course/:courseId", ExamController.getExamsByCourse);
-
-// Get exams by instructor
-router.get("/get-exams-by-instructor/:instructorId", ExamController.getExamsByInstructor);
-
-// Get all published exams
-router.get("/get-published-exams", ExamController.getPublishedExams);
-
-// Get all free exams
-router.get("/get-free-exams", ExamController.getFreeExams);
+// ---------- Actions ----------
+router.post("/toggle-publish/:id", C.togglePublish);
+router.post("/increment-attempt/:id", C.incrementAttemptCount);
 
 module.exports = router;

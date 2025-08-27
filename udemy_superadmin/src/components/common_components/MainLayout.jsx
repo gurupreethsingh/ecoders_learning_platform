@@ -58,6 +58,12 @@ import UpdateSemister from "../../pages/semister_pages/UpdateSemister";
 import SingleCourse from "../../pages/course_pages/SingleCourse";
 import UpdateCourse from "../../pages/course_pages/UpdateCourse";
 
+// exam routes / pages.
+import CreateExam from "../../pages/exam_pages/CreateExam";
+import AllExams from "../../pages/exam_pages/AllExams";
+import SingleExam from "../../pages/exam_pages/SingleExam";
+import UpdateExam from "../../pages/exam_pages/UpdateExam";
+
 const MainLayout = () => {
   return (
     <div className="min-h-screen text-gray-900">
@@ -517,6 +523,52 @@ const MainLayout = () => {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="Update Course">
                   <UpdateCourse />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          {/* exam routes.  */}
+          {/* course pages.  */}
+          <Route
+            path="/create-exam"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Create Exam">
+                  <CreateExam />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-exams"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Exams">
+                  <AllExams />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-exam/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Single Exam Details">
+                  <SingleExam />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/update-exam/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Update Exam">
+                  <UpdateExam />
                 </PageTitle>
               </PrivateRoute>
             }
