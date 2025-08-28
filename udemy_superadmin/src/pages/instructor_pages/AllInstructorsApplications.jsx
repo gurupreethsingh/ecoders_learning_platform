@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -24,7 +24,7 @@ import {
   FaMoneyBillWave,
   FaStar,
   FaUsers,
-  FaTimesCircle, // NEW: for top-right hard delete
+  FaTimesCircle,
 } from "react-icons/fa";
 
 // ====== API ROUTES (match your backend) ======
@@ -38,6 +38,7 @@ const ROUTES = {
   SOFT_DELETE: (id) => `${globalBackendRoute}/api/instructors/remove/${id}`, // DELETE
   HARD_DELETE: (id) =>
     `${globalBackendRoute}/api/instructors/hard-delete/${id}`, // DELETE
+  GET_BY_ID: (id) => `${globalBackendRoute}/api/instructors/get-by-id/${id}`, // GET
 };
 
 function makeSlug(input) {
@@ -53,9 +54,7 @@ const shortId = (val) =>
   typeof val === "string" ? `${val.slice(0, 6)}…${val.slice(-4)}` : "";
 
 const chip = (text, color) => (
-  <span
-    className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${color}`}
-  >
+  <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${color}`}>
     {text}
   </span>
 );
@@ -73,9 +72,7 @@ const ActiveBadge = ({ active }) =>
     ? chip("active", "bg-indigo-100 text-indigo-700")
     : chip("inactive", "bg-gray-100 text-gray-600");
 
-const ListSeparator = () => (
-  <span className="mx-2 text-gray-300 select-none">•</span>
-);
+const ListSeparator = () => <span className="mx-2 text-gray-300 select-none">•</span>;
 
 const SocialLinks = ({ i }) => {
   const IconLink = ({ href, children, title }) =>
@@ -146,13 +143,25 @@ export default function AllInstructorsApplications() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const token = localStorage.getItem("token");
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+  // 🔒 MEMOIZE auth header so it doesn't change identity every render
+  const authHeader = useMemo(
+    () => (token ? { Authorization: `Bearer ${token}` } : undefined),
+    [token]
+  );
+
+  // ---- Email cache + helpers ----
+  const [emailMap, setEmailMap] = useState({}); // { [id]: email }
+  const fetchedRef = useRef(new Set()); // to avoid duplicate fetches
+
+  const getId = (i) => i._id || i.id;
+  const pickEmail = (obj = {}) =>
+    obj.email || obj.user?.email || obj.contactEmail || "";
+
+  const displayEmail = (i) => i.email || emailMap[getId(i)] || "";
 
   // reset page when filters change
-  useEffect(
-    () => setPage(1),
-    [search, status, active, showDeleted, limit, sort]
-  );
+  useEffect(() => setPage(1), [search, status, active, showDeleted, limit, sort]);
 
   // counts
   useEffect(() => {
@@ -178,8 +187,7 @@ export default function AllInstructorsApplications() {
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, authHeader]);
 
   // list
   useEffect(() => {
@@ -192,8 +200,7 @@ export default function AllInstructorsApplications() {
         const params = { page, limit, sort };
         if (search.trim()) params.q = search.trim();
         if (status !== "all") params.status = status;
-        if (active !== "all")
-          params.active = active === "true" ? "true" : "false";
+        if (active !== "all") params.active = active === "true" ? "true" : "false";
         if (showDeleted) params.deleted = "true";
 
         const r = await axios.get(ROUTES.LIST, {
@@ -219,9 +226,7 @@ export default function AllInstructorsApplications() {
         if (!alive) return;
         console.error("Fetch instructors failed:", err);
         setMsg(
-          err?.response?.data?.message ||
-            err?.message ||
-            "Failed to load instructors."
+          err?.response?.data?.message || err?.message || "Failed to load instructors."
         );
       } finally {
         if (!alive) return;
@@ -232,7 +237,62 @@ export default function AllInstructorsApplications() {
       alive = false;
       controller.abort();
     };
-  }, [page, limit, search, status, active, showDeleted, sort, refreshKey]);
+  }, [page, limit, search, status, active, showDeleted, sort, refreshKey, authHeader]);
+
+  // fetch missing emails for the current rows (cache them)
+  // ✅ dependencies trimmed to avoid loops: only rerun when rows or token changes
+  useEffect(() => {
+    let alive = true;
+    if (!rows.length) return;
+
+    const idsToFetch = [];
+    for (const r of rows) {
+      const id = getId(r);
+      if (!id) continue;
+      if (r.email) continue;
+      if (emailMap[id]) continue;
+      if (fetchedRef.current.has(id)) continue;
+      idsToFetch.push(id);
+    }
+
+    if (!idsToFetch.length) return;
+
+    (async () => {
+      try {
+        const results = await Promise.all(
+          idsToFetch.map((id) =>
+            axios
+              .get(ROUTES.GET_BY_ID(id), { headers: authHeader })
+              .then((res) => ({ id, data: res?.data?.data }))
+              .catch(() => ({ id, data: null }))
+          )
+        );
+
+        if (!alive) return;
+
+        const next = {};
+        for (const { id, data } of results) {
+          fetchedRef.current.add(id);
+          if (data) {
+            const em = pickEmail(data);
+            if (em) next[id] = em;
+          }
+        }
+
+        if (Object.keys(next).length) {
+          setEmailMap((prev) => ({ ...prev, ...next }));
+        }
+      } catch {
+        // silent
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [rows, token, authHeader, emailMap]); // <-- You can also drop emailMap from deps if you prefer
+  // If you still see extra re-renders, change the line above to:
+  // }, [rows, token, authHeader]);
 
   const pageWindow = useMemo(() => {
     const start =
@@ -245,15 +305,7 @@ export default function AllInstructorsApplications() {
     const total = pagination.totalPages;
     const current = pagination.page;
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const set = new Set([
-      1,
-      2,
-      total - 1,
-      total,
-      current,
-      current - 1,
-      current + 1,
-    ]);
+    const set = new Set([1, 2, total - 1, total, current, current - 1, current + 1]);
     [...set].forEach((n) => (n < 1 || n > total) && set.delete(n));
     const arr = [...set].sort((a, b) => a - b);
     const out = [];
@@ -354,9 +406,7 @@ export default function AllInstructorsApplications() {
       <ListSeparator />
       <span className="inline-flex items-center gap-1">
         <FaStar className="text-yellow-500" />
-        {i.rating?.toFixed
-          ? i.rating.toFixed(1)
-          : Number(i.rating || 0).toFixed(1)}{" "}
+        {i.rating?.toFixed ? i.rating.toFixed(1) : Number(i.rating || 0).toFixed(1)}{" "}
         ({i.ratingCount || 0})
       </span>
       <ListSeparator />
@@ -392,21 +442,12 @@ export default function AllInstructorsApplications() {
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             {chip(`Total: ${counts.total}`, "bg-gray-100 text-gray-700")}
-            {chip(
-              `Pending: ${counts.pending}`,
-              "bg-yellow-100 text-yellow-700"
-            )}
-            {chip(
-              `Approved: ${counts.approved}`,
-              "bg-green-100 text-green-700"
-            )}
+            {chip(`Pending: ${counts.pending}`, "bg-yellow-100 text-yellow-700")}
+            {chip(`Approved: ${counts.approved}`, "bg-green-100 text-green-700")}
             {chip(`Rejected: ${counts.rejected}`, "bg-red-100 text-red-700")}
             {chip(`Deleted: ${counts.deleted}`, "bg-gray-200 text-gray-700")}
             {chip(`Active: ${counts.active}`, "bg-indigo-100 text-indigo-700")}
-            {chip(
-              `Inactive: ${counts.inactive}`,
-              "bg-purple-100 text-purple-700"
-            )}
+            {chip(`Inactive: ${counts.inactive}`, "bg-purple-100 text-purple-700")}
           </div>
         </div>
 
@@ -516,12 +557,8 @@ export default function AllInstructorsApplications() {
       </div>
 
       {/* Messages */}
-      {loading && (
-        <p className="text-center text-gray-600 mt-6">Loading instructors…</p>
-      )}
-      {msg && !loading && (
-        <p className="text-center text-red-600 mt-6">{msg}</p>
-      )}
+      {loading && <p className="text-center text-gray-600 mt-6">Loading instructors…</p>}
+      {msg && !loading && <p className="text-center text-red-600 mt-6">{msg}</p>}
 
       {/* Grid */}
       {!loading && !msg && (
@@ -543,10 +580,10 @@ export default function AllInstructorsApplications() {
               const listLayout = view === "list";
 
               const degCount = Array.isArray(i.degrees) ? i.degrees.length : 0;
-              const semCount = Array.isArray(i.semesters)
-                ? i.semesters.length
-                : 0;
+              const semCount = Array.isArray(i.semesters) ? i.semesters.length : 0;
               const crsCount = Array.isArray(i.courses) ? i.courses.length : 0;
+
+              const em = displayEmail(i);
 
               return (
                 <div key={i._id || i.id} className="relative">
@@ -601,14 +638,29 @@ export default function AllInstructorsApplications() {
                           <ActiveBadge active={!!i.isActive} />
                         </div>
 
+                        {/* Email (fetched if missing) */}
+                        {em ? (
+                          <div className="text-xs text-gray-700 mt-1">
+                            <a
+                              href={`mailto:${em}`}
+                              className="underline decoration-dotted underline-offset-2"
+                              onClick={(e) => e.stopPropagation()}
+                              title={em}
+                            >
+                              {em}
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1">Email: —</div>
+                        )}
+
                         {renderTopStats(i)}
                         {renderLangs(i)}
                         {renderSkills(i)}
 
                         <div className="text-xs text-gray-600 mt-2">
                           <span className="font-medium">Assignments:</span>{" "}
-                          {degCount} degree(s), {semCount} semester(s),{" "}
-                          {crsCount} course(s)
+                          {degCount} degree(s), {semCount} semester(s), {crsCount} course(s)
                         </div>
 
                         <SocialLinks i={i} />
@@ -695,9 +747,7 @@ export default function AllInstructorsApplications() {
           </motion.div>
 
           {pagination.total === 0 && (
-            <p className="text-center text-gray-600 mt-6">
-              No instructors found.
-            </p>
+            <p className="text-center text-gray-600 mt-6">No instructors found.</p>
           )}
 
           {/* Pagination */}
@@ -715,9 +765,7 @@ export default function AllInstructorsApplications() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={pagination.page <= 1}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
-                  pagination.page <= 1
-                    ? "bg-gray-300"
-                    : "bg-indigo-600 hover:bg-indigo-500"
+                  pagination.page <= 1 ? "bg-gray-300" : "bg-indigo-600 hover:bg-indigo-500"
                 }`}
                 title="Previous page"
               >
@@ -748,9 +796,7 @@ export default function AllInstructorsApplications() {
               </div>
 
               <button
-                onClick={() =>
-                  setPage((p) => Math.min(pagination.totalPages, p + 1))
-                }
+                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={pagination.page >= pagination.totalPages}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
                   pagination.page >= pagination.totalPages
