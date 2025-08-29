@@ -92,7 +92,7 @@ const Header = () => {
             {/* Right Group */}
             <div className="flex items-center gap-4">
               <a
-                href="#"
+                href="/apply-to-become-instructor"
                 className="text-sm font-semibold text-gray-600 hover:text-purple-600"
               >
                 Become an Instructor

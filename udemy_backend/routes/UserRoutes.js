@@ -17,7 +17,7 @@ const {
   verifyOTP,
   resetPassword,
   getUserCountsByRole,
-     getUsersByRole,
+  getUsersByRole,
   getInstructors,
   getAuthors,
 } = require("../controllers/UserController");
@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
     try {
       const user = await User.findById(req.params.id);
       const role = user?.role || "others";
-      
+
       const uploadFolder = path.join("uploads", role);
 
       if (!fs.existsSync(uploadFolder)) {
@@ -65,6 +65,7 @@ router.post("/reset-password", resetPassword);
 router.get("/getUserCountsByRole", getUserCountsByRole);
 router.get("/get-users-by-role", getUsersByRole);
 router.get("/get-instructors", getInstructors);
+router.get("/instructors", getInstructors);
 router.get("/get-authors", getAuthors);
 
 module.exports = router;

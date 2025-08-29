@@ -28,6 +28,7 @@ const dashboardRoutes = require("./routes/DashboardRoutes");
 const degreeRoutes = require("./routes/DegreeRoutes");
 const semisterRoutes = require("./routes/SemisterRoutes");
 const questionRoutes = require("./routes/QuestionRoutes");
+const instructorRoutes = require("./routes/InstructorRoutes");
 
 // 4. Initialize Express
 const app = express();
@@ -78,6 +79,7 @@ app.use("/api", userRoutes);
 app.use("/api", wishlistRoutes);
 app.use("/api", semisterRoutes);
 app.use("/api", questionRoutes);
+app.use("/api/instructors", instructorRoutes);
 
 // 7. Connect to MongoDB using .env
 const DATABASE_URI = process.env.DATABASE;

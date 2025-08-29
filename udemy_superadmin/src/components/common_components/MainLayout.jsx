@@ -64,6 +64,13 @@ import AllExams from "../../pages/exam_pages/AllExams";
 import SingleExam from "../../pages/exam_pages/SingleExam";
 import UpdateExam from "../../pages/exam_pages/UpdateExam";
 
+// instructor pagees.
+import AllInstructorsApplications from "../../pages/instructor_pages/AllInstructorsApplications";
+import AllInstructors from "../../pages/instructor_pages/AllInstructors";
+import SingleInstructor from "../../pages/instructor_pages/SingleInstructor";
+import UpdateInstructor from "../../pages/instructor_pages/UpdateInstructor";
+import InstructorApproval from "../../pages/instructor_pages/InstructorApproval";
+
 const MainLayout = () => {
   return (
     <div className="min-h-screen text-gray-900">
@@ -574,6 +581,63 @@ const MainLayout = () => {
             }
           />
 
+          {/* instructor pages. routes  */}
+
+          <Route
+            path="/all-instructors-applications"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Instructors Applications">
+                  <AllInstructorsApplications />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-instructors"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Instructors">
+                  <AllInstructors />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-instructor/by-slug/:courseId/:slug"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Instructor Details">
+                  <SingleInstructor />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/update-instructor/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Update Instructor">
+                  <UpdateInstructor />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/instructor-approval"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Instructor Approval">
+                  <InstructorApproval />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/page-not-found"
             element={
@@ -582,6 +646,7 @@ const MainLayout = () => {
               </PageTitle>
             }
           />
+
           <Route
             path="/*"
             element={

@@ -394,7 +394,7 @@ module.exports = {
   verifyOTP,
   resetPassword,
   getUserCountsByRole,
-   getUsersByRole,
+  getUsersByRole,
   getInstructors,
   getAuthors,
 };
