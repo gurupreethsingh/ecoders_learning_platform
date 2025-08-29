@@ -21,48 +21,6 @@ import globalBackendRoute from "../../config/Config";
 const makeURL = (p) => `${globalBackendRoute}${p}`;
 const DELETE_USER = (id) => `${globalBackendRoute}/api/users/delete-user/${id}`;
 
-// Try many likely mounts. We stop at the first that returns 2xx.
-// const PATHS = [
-//   // preferred exact endpoints
-//   "/api/users/get-instructors",
-//   "/api/user/get-instructors",
-//   "/api/users/instructors",
-//   "/api/user/instructors",
-//   "/api/users/get-users-by-role?role=instructor",
-//   "/api/user/get-users-by-role?role=instructor",
-
-//   // common mounts without /users (router used as app.use('/api', userRouter))
-//   "/api/get-instructors",
-//   "/api/instructors",
-//   "/api/get-users-by-role?role=instructor",
-
-//   // versioned mounts
-//   "/api/v1/users/get-instructors",
-//   "/api/v1/user/get-instructors",
-//   "/api/v1/users/instructors",
-//   "/api/v1/user/instructors",
-//   "/api/v1/get-instructors",
-//   "/api/v1/instructors",
-//   "/api/v1/users/get-users-by-role?role=instructor",
-//   "/api/v1/get-users-by-role?role=instructor",
-
-//   // FINAL fallbacks: fetch all and filter client-side
-//   "/api/users/all-users",
-//   "/api/user/all-users",
-//   "/api/all-users",
-//   "/api/v1/users/all-users",
-//   "/api/v1/all-users",
-
-//   // super loose (no /api base)
-//   "/users/get-instructors",
-//   "/users/instructors",
-//   "/user/get-instructors",
-//   "/user/instructors",
-//   "/users/get-users-by-role?role=instructor",
-//   "/users/all-users",
-//   "/all-users",
-// ];
-
 const PATHS = [
   "/api/get-instructors",
   "/api/instructors",
@@ -151,11 +109,11 @@ export default function AllInstructors() {
             const res = await axios.get(url, {
               headers: authHeader,
               signal: ctrl.signal,
-              validateStatus: (s) => s >= 200 && s < 300, // only treat 2xx as success
+              validateStatus: (s) => s >= 200 && s < 300,
             });
             payload = res?.data;
             usedPath = path;
-            break; // success
+            break;
           } catch {
             // keep trying
           }
@@ -170,22 +128,18 @@ export default function AllInstructors() {
           );
         }
 
-        // extract and optionally filter if we used an all-users fallback
         let list = extractList(payload);
 
-        // If this was an /all-users fallback (or any path containing all-users), filter by role
         if (usedPath.includes("all-users")) {
           list = list.filter(
             (u) => String(u.role || "").toLowerCase() === "instructor"
           );
         }
 
-        // Be safe: if any superset slipped through, still filter
         list = list.filter(
           (u) => String(u.role || "").toLowerCase() === "instructor"
         );
 
-        // Sort newest first when createdAt is available
         list.sort((a, b) => {
           const da = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
           const db = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -238,27 +192,17 @@ export default function AllInstructors() {
     setMeta({ page: currentPage, limit: pageSize, total, totalPages });
   }, [allRows, searchTerm, page, pageSize]);
 
-  // showing X–Y of Z
   const pageCountText = useMemo(() => {
     const start = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
     const end = Math.min(meta.total, meta.page * meta.limit);
     return { start, end };
   }, [meta]);
 
-  // compact numeric pagination
   const buildPageList = () => {
     const total = meta.totalPages;
     const current = meta.page;
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = new Set([
-      1,
-      2,
-      total - 1,
-      total,
-      current,
-      current - 1,
-      current + 1,
-    ]);
+    const pages = new Set([1, 2, total - 1, total, current, current - 1, current + 1]);
     [...pages].forEach((p) => {
       if (p < 1 || p > total) pages.delete(p);
     });
@@ -266,21 +210,17 @@ export default function AllInstructors() {
     const withDots = [];
     for (let i = 0; i < sorted.length; i++) {
       withDots.push(sorted[i]);
-      if (i < sorted.length - 1 && sorted[i + 1] - sorted[i] > 1)
-        withDots.push("…");
+      if (i < sorted.length - 1 && sorted[i + 1] - sorted[i] > 1) withDots.push("…");
     }
     return withDots;
   };
 
-  // delete a user
   const deleteUser = async (e, id, name) => {
     e.preventDefault();
     e.stopPropagation();
 
     const ok = window.confirm(
-      `Permanently delete user "${
-        name || "Untitled"
-      }"? This action cannot be undone.`
+      `Permanently delete user "${name || "Untitled"}"? This action cannot be undone.`
     );
     if (!ok) return;
 
@@ -396,7 +336,11 @@ export default function AllInstructors() {
                   day: "numeric",
                 });
 
-              const path = `/profile/${u?._id || u?.id}`;
+              // Build SingleInstructor URL WITHOUT the 'by-slug' segment
+              const slug = makeSlug(u?.slug || name);
+              const courseId = u?._id || u?.id;
+              const path = `/single-instructor/${courseId}/${slug}`;
+
               const listLayout = view === "list";
 
               return (
@@ -456,9 +400,7 @@ export default function AllInstructors() {
                               {u?.email || "—"}
                               {u?.role ? (
                                 <>
-                                  <span className="ml-2 font-medium">
-                                    Role:
-                                  </span>{" "}
+                                  <span className="ml-2 font-medium">Role:</span>{" "}
                                   {u.role}
                                 </>
                               ) : null}

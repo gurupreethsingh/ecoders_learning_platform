@@ -605,16 +605,16 @@ const MainLayout = () => {
             }
           />
 
-          <Route
-            path="/single-instructor/by-slug/:courseId/:slug"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Instructor Details">
-                  <SingleInstructor />
-                </PageTitle>
-              </PrivateRoute>
-            }
-          />
+<Route
+  path="/single-instructor/:courseId/:slug"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Instructor Details">
+        <SingleInstructor />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
 
           <Route
             path="/update-instructor/:slug/:id"
