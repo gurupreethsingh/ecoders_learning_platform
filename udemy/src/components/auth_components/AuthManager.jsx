@@ -102,7 +102,6 @@ export const PublicRoute = ({ children }) => {
       case "instructor":
         return <Navigate to="/instructor-dashboard" />;
       case "user":
-        return <Navigate to="/instructor-dashboard" />;
       default:
         return <Navigate to="/user-dashboard" />;
     }

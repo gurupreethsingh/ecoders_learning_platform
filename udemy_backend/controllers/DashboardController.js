@@ -112,6 +112,8 @@ exports.getDashboardCounts = async (req, res) => {
     // Optional: separate instructors count for your dashboard
     counts.instructors = await User.countDocuments({ role: "instructor" });
 
+    counts.students = await User.countDocuments({ role: "student" });
+
     res.status(200).json(counts);
   } catch (error) {
     res.status(500).json({

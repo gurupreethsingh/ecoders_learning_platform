@@ -70,6 +70,9 @@ import AllInstructors from "../../pages/instructor_pages/AllInstructors";
 import SingleInstructor from "../../pages/instructor_pages/SingleInstructor";
 import UpdateInstructor from "../../pages/instructor_pages/UpdateInstructor";
 import InstructorApproval from "../../pages/instructor_pages/InstructorApproval";
+// student pages.
+import CreateStudent from "../../pages/student_pages/CreateStudent";
+import AllStudents from "../../pages/student_pages/AllStudents";
 
 const MainLayout = () => {
   return (
@@ -605,16 +608,16 @@ const MainLayout = () => {
             }
           />
 
-<Route
-  path="/single-instructor/:courseId/:slug"
-  element={
-    <PrivateRoute allowedRoles={["superadmin"]}>
-      <PageTitle title="Instructor Details">
-        <SingleInstructor />
-      </PageTitle>
-    </PrivateRoute>
-  }
-/>
+          <Route
+            path="/single-instructor/:courseId/:slug"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Instructor Details">
+                  <SingleInstructor />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
 
           <Route
             path="/update-instructor/:slug/:id"
@@ -638,6 +641,29 @@ const MainLayout = () => {
             }
           />
 
+          {/* student pages.  */}
+
+          <Route
+            path="/student-register"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Create Student">
+                  <CreateStudent />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-students"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Students">
+                  <AllStudents />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/page-not-found"
             element={

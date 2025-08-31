@@ -808,8 +808,6 @@ async function bulkAction(req, res) {
   }
 }
 
-/* ================================ QUICK SEARCH ============================ */
-/** Lightweight autocomplete for admin UIs */
 async function quickSearch(req, res) {
   try {
     const { q = "", limit = 10 } = req.query;

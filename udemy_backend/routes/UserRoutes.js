@@ -6,6 +6,7 @@ const router = express.Router();
 const User = require("../models/UserModel.js");
 const {
   register,
+  registerStudent,
   login,
   getUserById,
   updateUser,
@@ -20,6 +21,7 @@ const {
   getUsersByRole,
   getInstructors,
   getAuthors,
+  getStudents,
 } = require("../controllers/UserController");
 
 // Set up multer storage for handling file uploads
@@ -51,6 +53,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post("/register", register);
+router.post("/register-student", registerStudent);
 router.post("/login", login);
 router.get("/getUserById/:id", getUserById);
 router.put("/update-profile/:id", upload.single("avatar"), updateUser);
@@ -67,5 +70,6 @@ router.get("/get-users-by-role", getUsersByRole);
 router.get("/get-instructors", getInstructors);
 router.get("/instructors", getInstructors);
 router.get("/get-authors", getAuthors);
+router.get("/get-students", getStudents);
 
 module.exports = router;

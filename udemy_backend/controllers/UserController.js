@@ -97,6 +97,37 @@ const register = async (req, res) => {
   }
 };
 
+// --- add this near your other controller functions ---
+
+const registerStudent = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // same validations as register
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "student", // force role
+    });
+
+    res.status(201).json({ message: "Student registered successfully" });
+  } catch (error) {
+    console.error("Register Student Error:", error.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -380,8 +411,20 @@ const getAuthors = async (req, res) => {
   }
 };
 
+// --- add near other role-based getters ---
+const getStudents = async (req, res) => {
+  try {
+    const users = await User.find({ role: "student" }).select("-password");
+    return res.status(200).json(users);
+  } catch (err) {
+    console.error("getStudents error:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   register,
+  registerStudent,
   login,
   getUserById,
   updateUser,
@@ -397,4 +440,5 @@ module.exports = {
   getUsersByRole,
   getInstructors,
   getAuthors,
+  getStudents,
 };
