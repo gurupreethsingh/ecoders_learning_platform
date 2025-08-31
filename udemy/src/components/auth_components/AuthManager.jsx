@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 🔒 Private Route
+//Private Route
 export const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { isLoggedIn, user, loading } = useContext(AuthContext);
 
@@ -93,10 +93,6 @@ export const PublicRoute = ({ children }) => {
 
   if (isLoggedIn && user?.role) {
     switch (user.role) {
-      case "admin":
-        return <Navigate to="/admin-dashboard" />;
-      case "superadmin":
-        return <Navigate to="/superadmin-dashboard" />;
       case "student":
         return <Navigate to="/student-dashboard" />;
       case "instructor":
