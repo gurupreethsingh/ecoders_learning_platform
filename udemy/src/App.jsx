@@ -111,7 +111,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/dummy-dashboard"
             element={
@@ -120,7 +119,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/all-degrees"
             element={
@@ -129,7 +127,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/single-degree/:slug/:id"
             element={
@@ -138,7 +135,6 @@ function App() {
               </PageTitle>
             }
           />
-
           {/* /**instructor pages route.   */}
           <Route
             path="/apply-to-become-instructor"
@@ -148,7 +144,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/instructor-dashboard"
             element={
@@ -159,9 +154,7 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* user pages.  */}
-
           <Route
             path="/login"
             element={
@@ -170,7 +163,6 @@ function App() {
               </PublicRoute>
             }
           />
-
           <Route
             path="/register"
             element={
@@ -179,7 +171,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/user-dashboard"
             element={
@@ -190,7 +181,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/forgot-password"
             element={
@@ -199,7 +189,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/reset-password"
             element={
@@ -208,7 +197,6 @@ function App() {
               </PageTitle>
             }
           />
-
           <Route
             path="/profile/:id"
             element={
@@ -219,7 +207,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-profile/:id"
             element={
@@ -230,7 +217,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
           {/* student dashbaord.  */}
           <Route
             path="/student-dashboard"

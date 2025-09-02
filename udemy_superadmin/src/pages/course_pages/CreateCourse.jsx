@@ -142,7 +142,7 @@ export default function CreateCourse() {
   useEffect(() => {
     const loadDegrees = async () => {
       try {
-        const r = await fetch(`${API}/list-degrees`);
+        const r = await fetch(`${API}/api/list-degrees`);
         const j = await r.json();
         setDegrees(Array.isArray(j?.data) ? j.data : Array.isArray(j) ? j : []);
       } catch {
@@ -152,7 +152,7 @@ export default function CreateCourse() {
 
     const loadCategories = async () => {
       try {
-        const r = await fetch(`${API}/all-categories`);
+        const r = await fetch(`${API}/api/all-categories`);
         const j = await r.json();
         // Accept {categories:[]}, {data:[]}, or []
         const arr = Array.isArray(j?.categories)
@@ -183,7 +183,7 @@ export default function CreateCourse() {
     const loadSemisters = async () => {
       try {
         const r = await fetch(
-          `${API}/semisters?degree=${encodeURIComponent(
+          `${API}/api/semisters?degree=${encodeURIComponent(
             degreeId
           )}&degreeId=${encodeURIComponent(
             degreeId
@@ -220,7 +220,7 @@ export default function CreateCourse() {
 
       try {
         // Be compatible with different controller implementations
-        const url = `${API}/get-subcategories-by-category?categoryId=${encodeURIComponent(
+        const url = `${API}/api/get-subcategories-by-category?categoryId=${encodeURIComponent(
           categoryId
         )}&category=${encodeURIComponent(categoryId)}`;
 

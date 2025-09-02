@@ -1,3 +1,75 @@
+Ecoders learning platform. 
+
+ecoders homepage requirements.
+1. logo click opens the homepage.
+2. tutorials drop down , should show nested drop down , showinng categories. subcategories belonging to each category. then the courses belonging to each subcategory. 
+3. when clicked on any one of the courses from the dropdown, should open the single course details page.
+4. Become an Instructor link when clicked should open / navigate to apply-to-become-instructor  page should showing apply form.
+5. My couses link, should open the my course page, showing all the courses taken up the user ( people who are registered and with the role as "user"
+6. Certification/Degree link should navigate to AllDegree pages,
+7. Blogs link should navigate the user to AllBlogs page.
+8. Wishlist icons should show all the total number, indicating the total number of products added to cart.
+9. when clicked on wishlist icon should open wishlist.
+10. cart icon should show the total number on the cart icon, based on the total products added to cart.
+11. hovering on the cart icon should show a mini cart, showing all the products with price, 
+12. minicart will have two bottons or links at the bottom. (checkout and view cart) 
+13. when the user is logged out. there should be login link and user avatar. 
+14. when user clicks on avatar it should navigate / open the login page. 
+15. when the user clicks on the login link it should open / navigate user to login page.
+16. user when logged in the same avatar icon should show the initials of the logged in user. 
+17. when user is logged in the login link , should show the logged in user's name, and should be come a drop down showing , links , (profile, dashboard, and logout button) 
+18. when user after loggin in, when clicks on profile link user will get navigated to profile page. 
+19. when user clicks on dashboard link from the user drop down, it should navigate the user to the respective dashboard, 
+20. when the user clicks, on logout from the name drop down. user should get logged out. and user gets navigated to homepage. and the name drop down should again become or show login link.
+
+Homepage hero section requirements.
+
+1. on the left top corner of the hero section, Ecoders (links should display) and when clicked should navigate the user to the homepage.
+2. next to the ecoders link there should be the text showing the respective page name which is opened.(It will be a simple text).
+3. after the bread-chrome, There should be a section showing all the categories (all categories),
+4. when the page is loaded, the option All , should be higlighing,
+5. Which ever category is clicked should change the color to purple. 
+6. when the homepage is loaded. just below the category list section. there should be a main category section which shows all the course belonging to all the categories. 
+7, When clicked on any category name from the list category section. 
+in the main category section it should filter out all the courses belonging to that particular category. 
+8. when clicked on any one of the courses it should navigate the user to the single course details page.
+9. after the main categories section there should be slight border at the bottom of this section. 
+
+newsletter section. 
+
+1. there will be two dummy cards side by side. 
+2. first card should show the calender icon, in purple color, then on the right side the text regarding job opertunity and best practices. 
+3. second card should have the shaking hands icon in light green background, and icon should be in dark green color, and text about career path and about discoving top-rated courses.
+4. In next line, two more cards. should be shown in the same line. 
+5. bottom left card should have shield icon in bright red color, and background color should be light red color. then the text about learning , career and growth, unscribe anytime, text. 
+6. next card should be having heading. "Newsletter" in purple color. and in bold. 
+7. the newsletter card should have the text "Join 10,000+ learners receiving updates on tech news, career tips, and industry-focused learning paths every week."
+ just below this text, there should be an input field, 
+8. just next to the input field there should be pill shaped button, with the text "Subscribe" on it. 
+9. when the user enters the email id in the input field and clicks on the subscribe button there should be an text showing subscription successful.
+
+footer section in the homepage.
+
+1. footer should have totally five section. 
+2. First footer section should have address Heading , ( there should be an address icon and right next to that Address text in bold white color. 
+and just below the heading there should be a paragraph showing the address.
+just below the address, "Email:" label and email should display in the same line.
+just below the email, "Phone:" label and should show the phone number provided.
+3. second footer section should have the  link icon in purple color and right next to the icon there should be "Website" heading text in bold, white color.
+4. below the Website heading, there should be 5 links one below each other , ( Home, About Us, Contact , Testimonials, Blog ) each one should navigate to the respective pages. 
+5. third footer section should show a link icon in pink color, followed by Follow us text as the heading in white color, and in bold. 
+6. just below this Follow Us heading , there should be 4 icons (facebook, twitter, instagra, and linkedin) each when clicked, should open a new tab and go to the respective social media pages).
+7. the fourth section should have a shield icon  in red color, and "Legal" text as the heading in white color and font should be bold.
+8. below that it should have 4 links one below each other ( Terms & Conditions,Privacy Policy, Refund Policy,Code of Conduct) each link when hovered should change the color of the link to red color.
+9 each link should navigate to the respective pages.
+10. fifths section should have a book icon in green color and Popular Course as the heading in white and bold color, 
+10. in this section there should be 5 links showing the names. (Full Stack Web Dev
+Data Science
+AI & ML
+UI/UX Design
+DevOps & Cloud) when click shoud go to the respective page. and wen hovered should change the text color to green color. 
+
+
 
 
 1. i have the UserModel. from where i can change the role of any user to student , teacher , dean, principal. 
