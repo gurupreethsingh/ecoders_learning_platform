@@ -1,6 +1,6 @@
 Ecoders learning platform. 
 
-ecoders homepage requirements.
+ecoders header requirements.
 1. logo click opens the homepage.
 2. tutorials drop down , should show nested drop down , showinng categories. subcategories belonging to each category. then the courses belonging to each subcategory. 
 3. when clicked on any one of the courses from the dropdown, should open the single course details page.
@@ -8,7 +8,7 @@ ecoders homepage requirements.
 5. My couses link, should open the my course page, showing all the courses taken up the user ( people who are registered and with the role as "user"
 6. Certification/Degree link should navigate to AllDegree pages,
 7. Blogs link should navigate the user to AllBlogs page.
-8. Wishlist icons should show all the total number, indicating the total number of products added to cart.
+8. Wishlist icons should show all the total number, indicating the total number of products added to wishlist.
 9. when clicked on wishlist icon should open wishlist.
 10. cart icon should show the total number on the cart icon, based on the total products added to cart.
 11. hovering on the cart icon should show a mini cart, showing all the products with price, 

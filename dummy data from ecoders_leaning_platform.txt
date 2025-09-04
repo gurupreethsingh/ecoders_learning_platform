@@ -1,0 +1,423 @@
+{
+  "_id": {
+    "$oid": "68a9b746a8dde74b3a228fb8"
+  },
+  "name": "Diploma in Web Development",
+  "code": "DIP-WEBDEV",
+  "slug": "diploma-in-web-development",
+  "description": "Practical diploma covering HTML/CSS, JavaScript, React, Nextjs and Node.js.",
+  "level": "diploma",
+  "durationYears": 1,
+  "totalSemesters": 2,
+  "department": "Computer Science",
+  "awardingBody": "University of Orion",
+  "accreditation": [
+    "NSDC"
+  ],
+  "isActive": true,
+  "assets": {
+    "logoUrl": "https://example.educa/assets/dip-webdev-logo.png",
+    "brochureUrl": "https://example.educa/assets/dip-webdev-brochure.pdf"
+  },
+  "metadata": {
+    "portfolioRequired": false,
+    "mode": "full-time"
+  },
+  "__v": 1,
+  "coordinators": [],
+  "updatedAt": {
+    "$date": "2025-08-23T19:56:02.232Z"
+  }
+}
+
+this is the degree id. 
+
+this is to fetch all the semisters in the above provided. degree. 
+
+db.semisters.find({ degree: ObjectId("68a9b746a8dde74b3a228fb8") }).sort({ semNumber: 1 });
+
+ecoders_learning_platform> db.semisters.find({ degree: ObjectId("68a9b746a8dde74b3a228fb8") }).sort({ semNumber: 1 });
+[
+  {
+    _id: ObjectId('68ab4e6a3fffd68344464aaa'),
+    degree: ObjectId('68a9b746a8dde74b3a228fb8'),
+    semNumber: 1,
+    createdAt: ISODate('2025-08-24T17:39:54.654Z'),
+    isActive: true,
+    order: 1,
+    slug: 'diploma-in-web-development-semister-1',
+    title: 'Semister 1',
+    updatedAt: ISODate('2025-08-24T17:39:54.654Z')
+  },
+  {
+    _id: ObjectId('68ab4e6a3fffd68344464aac'),
+    degree: ObjectId('68a9b746a8dde74b3a228fb8'),
+    semNumber: 2,
+    createdAt: ISODate('2025-08-24T17:39:54.656Z'),
+    isActive: true,
+    order: 2,
+    slug: 'diploma-in-web-development-semister-2',
+    title: 'Semister 2',
+    updatedAt: ISODate('2025-08-24T17:39:54.656Z')
+  }
+]
+
+These are the two degrees i have. 
+
+
+
+
+this is the category i want. (web devlopement)
+
+_id
+689514204f1b2bc6412a036b
+category_name
+"Web Development"
+category_image
+"uploads/category_images/category_image-1754600480800.jpg"
+
+products
+Array (empty)
+createdAt
+2025-08-07T21:01:20.801+00:00
+updatedAt
+2025-08-07T21:01:20.802+00:00
+__v
+0
+
+
+
+in that one i have to select sub category as .  html , whose _id is 
+
+_id
+68a5e6a0796d139a01f96f26
+subcategory_name
+"Html"
+category
+689514204f1b2bc6412a036b
+isDeleted
+false
+createdAt
+2025-08-20T15:15:44.852+00:00
+updatedAt
+2025-08-20T15:15:44.852+00:00
+__v
+0
+
+
+
+, i have this instructor. 
+
+
+_id
+68b0a960aaf3d1123d598367
+firstName
+"john"
+lastName
+"john"
+email
+"john@gmail.com"
+phone
+"6454654"
+avatarUrl
+"sdfasdf"
+bio
+"asdfdfsaf"
+gender
+"male"
+dateOfBirth
+2025-08-04T00:00:00.000+00:00
+
+address
+Object
+
+languages
+Array (1)
+
+skills
+Array (1)
+
+areasOfExpertise
+Array (1)
+
+education
+Array (1)
+
+certifications
+Array (1)
+
+availability
+Array (1)
+hourlyRate
+100
+resumeUrl
+"asdfds"
+idProofUrl
+"asdf"
+website
+"fdsa"
+linkedin
+"asdf"
+github
+"fdsa"
+youtube
+"asdf"
+twitter
+"fdas"
+upiId
+"asdf"
+Show 16 more fields
+
+
+take the instructor id from here. 
+
+
+
+
+
+
+now give me an insert query, just to add one course. based on the 
+
+Degree, semister, category, subcategory, instructor id.. to be inserted from the backend. based on this model file. 
+
+
+// models/CourseModel.js
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
+
+// Helper to generate a slug from title when missing
+const slugify = (str = "") =>
+  String(str)
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-");
+
+// ---------- Subdocuments ----------
+const topicSchema = new Schema(
+  {
+    // SubTopic basics
+    title: { type: String, trim: true },
+
+    // 👇 NEW: learning content for each sub-topic
+    explanation: { type: String, default: "" },       // theory/explanation text
+    code: { type: String, default: "" },              // code snippet
+    codeExplanation: { type: String, default: "" },   // explanation about the code
+    codeLanguage: { type: String, default: "plaintext", trim: true }, // e.g., "javascript", "python"
+
+    // Existing media/metadata
+    videoUrl: { type: String, trim: true },
+    pdfUrl: { type: String, trim: true },
+    duration: { type: Number, min: 0 }, // minutes
+    isFreePreview: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const moduleSchema = new Schema(
+  {
+    title: { type: String, trim: true },
+    description: { type: String, trim: true },
+    topics: { type: [topicSchema], default: [] },
+  },
+  { _id: false }
+);
+
+// ---------- Main schema ----------
+const courseSchema = new Schema(
+  {
+    // Basic Info
+    title: { type: String, required: true, trim: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true, // single unique definition (no separate index() call)
+      lowercase: true,
+      trim: true,
+    },
+    description: { type: String, required: true },
+    language: { type: String, default: "English" },
+    level: {
+      type: String,
+      enum: ["Beginner", "Intermediate", "Advanced"],
+      default: "Beginner",
+    },
+    thumbnail: { type: String, trim: true },
+    promoVideoUrl: { type: String, trim: true }, // Trailer video
+    durationInHours: { type: Number, required: true, min: 0 },
+    price: { type: Number, default: 0, min: 0 },
+
+    // Categorization (MANDATORY)
+    category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
+    subCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "SubCategory",
+      required: true, // <- keep as-is per your current model; make false if you decide to make it optional
+    },
+
+    // Audience & Marketing
+    requirements: { type: [String], default: [] },
+    learningOutcomes: { type: [String], default: [] },
+    tags: { type: [String], default: [] },
+    metaTitle: { type: String, trim: true },
+    metaDescription: { type: String, trim: true },
+    keywords: { type: [String], default: [] },
+
+    // Authors & Instructor
+    authors: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    instructor: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      // no field-level index here (we add a schema-level one below)
+    },
+
+    // Course Content (main & sub-topics are optional at creation time)
+    modules: { type: [moduleSchema], default: [] },
+    totalModules: { type: Number, default: 0, min: 0 },
+    totalTopics: { type: Number, default: 0, min: 0 },
+
+    // Learning Materials
+    learningResources: {
+      videos: { type: [String], default: [] },
+      pdfs: { type: [String], default: [] },
+      assignments: { type: [String], default: [] },
+      externalLinks: { type: [String], default: [] },
+    },
+
+    // Course Access
+    accessType: {
+      type: String,
+      enum: ["Free", "Paid", "Subscription", "Lifetime"],
+      default: "Paid",
+    },
+    maxStudents: { type: Number, min: 0 },
+    enrollmentDeadline: Date,
+    completionCriteria: {
+      type: String,
+      enum: ["All Topics", "Final Exam", "Manual Approval"],
+      default: "All Topics",
+    },
+
+    // Enrollment Info (NOT required at creation time)
+    enrolledStudents: [
+      {
+        studentId: { type: Schema.Types.ObjectId, ref: "User" },
+        enrolledAt: { type: Date, default: Date.now },
+        completed: { type: Boolean, default: false },
+        progress: { type: Number, default: 0, min: 0, max: 100 },
+        completedTopics: { type: [String], default: [] },
+        // no examsTaken here (decoupled from Exam model)
+        certificateIssued: { type: Boolean, default: false },
+      },
+    ],
+
+    // Certificate
+    issueCertificate: { type: Boolean, default: true },
+    certificateTemplateUrl: { type: String, trim: true },
+
+    // Ratings & Reviews
+    ratings: [
+      {
+        studentId: { type: Schema.Types.ObjectId, ref: "User" },
+        rating: { type: Number, min: 1, max: 5 },
+        review: { type: String, trim: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+
+    // Community Q&A
+    discussionThreads: [
+      {
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
+        message: { type: String, trim: true },
+        createdAt: { type: Date, default: Date.now },
+        replies: [
+          {
+            userId: { type: Schema.Types.ObjectId, ref: "User" },
+            message: { type: String, trim: true },
+            createdAt: { type: Date, default: Date.now },
+          },
+        ],
+      },
+    ],
+
+    // Flags & Sorting
+    published: { type: Boolean, default: false },
+    isArchived: { type: Boolean, default: false },
+    isFeatured: { type: Boolean, default: false },
+    order: { type: Number, default: 0 },
+
+    // Versioning
+    version: { type: String, default: "1.0" },
+  },
+  { timestamps: true }
+);
+
+// ---------- Hooks ----------
+
+// Auto-generate slug from title if not provided
+courseSchema.pre("validate", function (next) {
+  if (!this.slug && this.title) {
+    this.slug = slugify(this.title);
+  }
+  next();
+});
+
+// Maintain totals & average rating
+courseSchema.pre("save", function (next) {
+  if (Array.isArray(this.modules)) {
+    this.totalModules = this.modules.length;
+    this.totalTopics = this.modules.reduce(
+      (sum, m) => sum + (Array.isArray(m.topics) ? m.topics.length : 0),
+      0
+    );
+  } else {
+    this.totalModules = 0;
+    this.totalTopics = 0;
+  }
+
+  if (Array.isArray(this.ratings) && this.ratings.length > 0) {
+    const avg =
+      this.ratings.reduce((s, r) => s + (Number(r.rating) || 0), 0) /
+      this.ratings.length;
+    this.averageRating = Math.max(0, Math.min(5, Number(avg.toFixed(2))));
+  } else {
+    this.averageRating = 0;
+  }
+
+  next();
+});
+
+// ---------- Indexes (schema-level; avoid duplicates) ----------
+
+// Text search
+courseSchema.index({
+  title: "text",
+  description: "text",
+  tags: "text",
+  keywords: "text",
+});
+
+// Common filters
+courseSchema.index({ category: 1, subCategory: 1 });
+courseSchema.index({ instructor: 1 });
+courseSchema.index({ published: 1, isArchived: 1, isFeatured: 1 });
+courseSchema.index({ createdAt: -1 });
+
+// Export with hot-reload guard
+module.exports =
+  mongoose.models.Course || mongoose.model("Course", courseSchema);
+
+
+
+i want it like this. 
+db.courses.insertOne({});
+
+
+
+but dont give any commented lines in between. 
+
