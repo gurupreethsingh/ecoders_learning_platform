@@ -15,16 +15,15 @@ const slugify = (str = "") =>
 // ---------- Subdocuments ----------
 const topicSchema = new Schema(
   {
-    // SubTopic basics
     title: { type: String, trim: true },
 
-    // 👇 NEW: learning content for each sub-topic
-    explanation: { type: String, default: "" },       // theory/explanation text
-    code: { type: String, default: "" },              // code snippet
-    codeExplanation: { type: String, default: "" },   // explanation about the code
-    codeLanguage: { type: String, default: "plaintext", trim: true }, // e.g., "javascript", "python"
+    // learning content per sub-topic
+    explanation: { type: String, default: "" },
+    code: { type: String, default: "" },
+    codeExplanation: { type: String, default: "" },
+    codeLanguage: { type: String, default: "plaintext", trim: true },
 
-    // Existing media/metadata
+    // media/metadata
     videoUrl: { type: String, trim: true },
     pdfUrl: { type: String, trim: true },
     duration: { type: Number, min: 0 }, // minutes
@@ -50,7 +49,7 @@ const courseSchema = new Schema(
     slug: {
       type: String,
       required: true,
-      unique: true, // single unique definition (no separate index() call)
+      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -62,7 +61,7 @@ const courseSchema = new Schema(
       default: "Beginner",
     },
     thumbnail: { type: String, trim: true },
-    promoVideoUrl: { type: String, trim: true }, // Trailer video
+    promoVideoUrl: { type: String, trim: true },
     durationInHours: { type: Number, required: true, min: 0 },
     price: { type: Number, default: 0, min: 0 },
 
@@ -71,7 +70,7 @@ const courseSchema = new Schema(
     subCategory: {
       type: Schema.Types.ObjectId,
       ref: "SubCategory",
-      required: true, // <- keep as-is per your current model; make false if you decide to make it optional
+      required: true,
     },
 
     // Audience & Marketing
@@ -88,10 +87,9 @@ const courseSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      // no field-level index here (we add a schema-level one below)
     },
 
-    // Course Content (main & sub-topics are optional at creation time)
+    // Course Content
     modules: { type: [moduleSchema], default: [] },
     totalModules: { type: Number, default: 0, min: 0 },
     totalTopics: { type: Number, default: 0, min: 0 },
@@ -118,7 +116,7 @@ const courseSchema = new Schema(
       default: "All Topics",
     },
 
-    // Enrollment Info (NOT required at creation time)
+    // Enrollment Info
     enrolledStudents: [
       {
         studentId: { type: Schema.Types.ObjectId, ref: "User" },
@@ -126,7 +124,6 @@ const courseSchema = new Schema(
         completed: { type: Boolean, default: false },
         progress: { type: Number, default: 0, min: 0, max: 100 },
         completedTopics: { type: [String], default: [] },
-        // no examsTaken here (decoupled from Exam model)
         certificateIssued: { type: Boolean, default: false },
       },
     ],
@@ -209,9 +206,7 @@ courseSchema.pre("save", function (next) {
   next();
 });
 
-// ---------- Indexes (schema-level; avoid duplicates) ----------
-
-// Text search
+// ---------- Indexes ----------
 courseSchema.index({
   title: "text",
   description: "text",
@@ -219,7 +214,6 @@ courseSchema.index({
   keywords: "text",
 });
 
-// Common filters
 courseSchema.index({ category: 1, subCategory: 1 });
 courseSchema.index({ instructor: 1 });
 courseSchema.index({ published: 1, isArchived: 1, isFeatured: 1 });

@@ -1,416 +1,4 @@
-// // // import React, { useState, useEffect } from "react";
-// // // import { FaPython, FaJava, FaDatabase, FaReact, FaRobot } from "react-icons/fa";
-// // // import { useNavigate } from "react-router-dom";
-// // // import axios from "axios";
-// // // import globalBackendRoute from "../../../../udemy_superadmin/src/config/Config";
-
-// // // const mockCourses = [
-// // //   {
-// // //     id: "1",
-// // //     title: "Mastering Java",
-// // //     slug: "mastering-java",
-// // //     category: "Java",
-// // //     description: "Learn Java from beginner to advanced level.",
-// // //     icon: <FaJava className="text-4xl text-red-500" />,
-// // //     isPaid: true,
-// // //   },
-// // //   {
-// // //     id: "2",
-// // //     title: "Complete Python Bootcamp",
-// // //     slug: "complete-python-bootcamp",
-// // //     category: "Python",
-// // //     description: "From basics to deep learning in Python.",
-// // //     icon: <FaPython className="text-4xl text-yellow-500" />,
-// // //     isPaid: false,
-// // //   },
-// // //   {
-// // //     id: "3",
-// // //     title: "Database Testing with MySQL",
-// // //     slug: "mysql-database-testing",
-// // //     category: "Database Testing Mysql",
-// // //     description: "Test databases effectively using MySQL.",
-// // //     icon: <FaDatabase className="text-4xl text-blue-500" />,
-// // //     isPaid: false,
-// // //   },
-// // //   {
-// // //     id: "4",
-// // //     title: "ReactJS for Web Development",
-// // //     slug: "reactjs-web-dev",
-// // //     category: "Web Development",
-// // //     description: "Frontend mastery with React.",
-// // //     icon: <FaReact className="text-4xl text-cyan-500" />,
-// // //     isPaid: true,
-// // //   },
-// // //   {
-// // //     id: "5",
-// // //     title: "Selenium with Java Automation",
-// // //     slug: "selenium-java-automation",
-// // //     category: "Selenium Java",
-// // //     description: "Automate real-world projects using Selenium + Java.",
-// // //     icon: <FaRobot className="text-4xl text-purple-700" />,
-// // //     isPaid: true,
-// // //   },
-// // //   {
-// // //     id: "6",
-// // //     title: "Selenium with Python Automation",
-// // //     slug: "selenium-python-automation",
-// // //     category: "Selenium Python",
-// // //     description: "Automate real-world projects using Selenium + Python.",
-// // //     icon: <FaRobot className="text-4xl text-purple-500" />,
-// // //     isPaid: false,
-// // //   },
-// // // ];
-
-// // // const AllCategories = () => {
-// // //   const [selectedCategory, setSelectedCategory] = useState("All");
-// // //   const [categories, setCategories] = useState([]);
-// // //   const navigate = useNavigate();
-
-// // //   useEffect(() => {
-// // //     fetchAllCategories();
-// // //   }, []);
-
-// // //   const fetchAllCategories = async () => {
-// // //     try {
-// // //       console.log("Fetching all the course categories...");
-// // //       const res = await axios.get(`${globalBackendRoute}/api/all-categories`);
-// // //       // adjust if your API route differs
-// // //       if (res.data && Array.isArray(res.data)) {
-// // //         setCategories(res.data.map((cat) => cat.name)); // assuming each category object has a 'name'
-// // //       } else {
-// // //         console.error("Unexpected response:", res.data);
-// // //       }
-// // //     } catch (err) {
-// // //       console.error("Error fetching categories:", err);
-// // //     }
-// // //   };
-
-// // //   const filteredCourses =
-// // //     selectedCategory === "All"
-// // //       ? mockCourses
-// // //       : mockCourses.filter((course) => course.category === selectedCategory);
-
-// // //   return (
-// // //     <div className="category_container">
-// // //       <div className="px-4 md:px-8 lg:px-12 py-8">
-// // //         {/* Category Tabs */}
-// // //         <div className="flex flex-wrap justify-center gap-3 mb-10">
-// // //           <button
-// // //             onClick={() => setSelectedCategory("All")}
-// // //             className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-// // //               selectedCategory === "All"
-// // //                 ? "text-purple-600 border-purple-600"
-// // //                 : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
-// // //             }`}
-// // //           >
-// // //             All
-// // //           </button>
-
-// // //           {categories.map((cat, index) => (
-// // //             <button
-// // //               key={index}
-// // //               onClick={() => setSelectedCategory(cat)}
-// // //               className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-// // //                 selectedCategory === cat
-// // //                   ? "text-purple-600 border-purple-600"
-// // //                   : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
-// // //               }`}
-// // //             >
-// // //               {cat}
-// // //             </button>
-// // //           ))}
-// // //         </div>
-
-// // //         {/* Course Cards */}
-// // //         <div className="all_categories border-t border-b py-5 container mx-auto">
-// // //           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-// // //             {filteredCourses.length === 0 ? (
-// // //               <div className="col-span-full text-center text-gray-500">
-// // //                 No courses found for "{selectedCategory}"
-// // //               </div>
-// // //             ) : (
-// // //               filteredCourses.map((course) => (
-// // //                 <div
-// // //                   key={course.id}
-// // //                   className="relative bg-white rounded-xl shadow-md hover:shadow-lg transition p-5 flex flex-col justify-between cursor-pointer hover:ring-2 hover:ring-purple-300"
-// // //                   onClick={() => {
-// // //                     const userId = localStorage.getItem("userId");
-
-// // //                     if (course.isPaid) {
-// // //                       if (userId) {
-// // //                         navigate(`/user-course/${userId}/${course.id}`);
-// // //                       } else {
-// // //                         alert("Please log in to access this paid course.");
-// // //                       }
-// // //                     } else {
-// // //                       navigate(`/user-course/${course.slug}/${course.id}`);
-// // //                     }
-// // //                   }}
-// // //                 >
-// // //                   {/* Paid Badge */}
-// // //                   {course.isPaid && (
-// // //                     <span className="absolute top-3 right-3 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-// // //                       Paid
-// // //                     </span>
-// // //                   )}
-
-// // //                   {/* Icon */}
-// // //                   <div className="mb-4 flex justify-center">{course.icon}</div>
-
-// // //                   {/* Title */}
-// // //                   <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
-// // //                     {course.title}
-// // //                   </h3>
-
-// // //                   {/* Description */}
-// // //                   <p className="text-sm text-gray-600 mb-4 text-center">
-// // //                     {course.description}
-// // //                   </p>
-
-// // //                   {/* View Details */}
-// // //                   <div className="mt-auto text-center text-sm text-purple-500 hover:underline">
-// // //                     View Details →
-// // //                   </div>
-// // //                 </div>
-// // //               ))
-// // //             )}
-// // //           </div>
-// // //         </div>
-// // //       </div>
-// // //     </div>
-// // //   );
-// // // };
-
-// // // export default AllCategories;
-
-
-// // // till here dummy data. 
-
-// // // courses fetched from the database. 
-
-// // //
-
-// // import React, { useState, useEffect, useMemo } from "react";
-// // import { FaPython, FaJava, FaDatabase, FaReact, FaRobot } from "react-icons/fa";
-// // import { useNavigate } from "react-router-dom";
-// // import axios from "axios";
-// // import globalBackendRoute from "../../../../udemy_superadmin/src/config/Config";
-
-// // const AllCategories = () => {
-// //   const [selectedCategory, setSelectedCategory] = useState("All");
-// //   const [categories, setCategories] = useState([]);      // ["Java", "Python", ...]
-// //   const [coursesRaw, setCoursesRaw] = useState([]);      // raw from API
-// //   const [loading, setLoading] = useState(true);
-// //   const [err, setErr] = useState(null);
-// //   const navigate = useNavigate();
-
-// //   useEffect(() => {
-// //     fetchAll();
-// //   }, []);
-
-// //   // ---- helper: normalize various API response shapes into an array ----
-// //   const extractArray = (payload) => {
-// //     const d = payload?.data;
-// //     if (Array.isArray(payload)) return payload;     // e.g. [ ... ]
-// //     if (Array.isArray(d)) return d;                 // e.g. { data: [ ... ], meta: {…} }
-// //     if (Array.isArray(d?.data)) return d.data;      // e.g. { data: { data: [ ... ] } }
-// //     if (Array.isArray(d?.items)) return d.items;    // e.g. { data: { items: [ ... ] } }
-// //     if (Array.isArray(payload?.items)) return payload.items;
-// //     if (Array.isArray(payload?.results)) return payload.results;
-// //     return [];
-// //   };
-
-// //   const fetchAll = async () => {
-// //     setLoading(true);
-// //     setErr(null);
-// //     try {
-// //       console.log("Fetching all categories & courses...");
-// //       const [catRes, courseRes] = await Promise.all([
-// //         axios.get(`${globalBackendRoute}/api/all-categories`),
-// //         axios.get(`${globalBackendRoute}/api/list-courses`),
-// //       ]);
-
-// //       // Categories: accept array of objects or strings
-// //       const cats = extractArray(catRes);
-// //       setCategories(
-// //         cats.map((c) => (typeof c === "string" ? c : c?.name)).filter(Boolean)
-// //       );
-
-// //       // Courses: FIX — your API returns { data: [...], meta: {...} }
-// //       const coursesArr = extractArray(courseRes);
-// //       setCoursesRaw(coursesArr);
-
-// //       // Debug (optional)
-// //       console.log("Categories parsed:", cats);
-// //       console.log("Courses parsed:", coursesArr.length, coursesArr.slice(0, 3));
-// //     } catch (e) {
-// //       console.error("Error fetching:", e);
-// //       setErr("Failed to load data. Please try again.");
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
-// //   // ---------- helpers to resolve category & flags ----------
-// //   const resolveCategoryName = (course) => {
-// //     return (
-// //       course?.category?.name ||      // populated object
-// //       course?.categoryName ||        // direct name
-// //       course?.category ||            // plain string
-// //       course?.category_label ||      // alt field
-// //       "Uncategorized"
-// //     );
-// //   };
-
-// //   const determineIsPaid = (course) => {
-// //     const price = Number(course?.price ?? 0);
-// //     const accessType = (course?.accessType || course?.visibility || "").toString().toLowerCase();
-// //     return price > 0 || accessType === "paid";
-// //   };
-
-// //   const getIconForCategory = (catName) => {
-// //     const name = (catName || "").toLowerCase();
-// //     if (name.includes("java")) return <FaJava className="text-4xl text-red-500" />;
-// //     if (name.includes("python")) return <FaPython className="text-4xl text-yellow-500" />;
-// //     if (name.includes("selenium")) return <FaRobot className="text-4xl text-purple-700" />;
-// //     if (name.includes("mysql") || name.includes("sql") || name.includes("db") || name.includes("database"))
-// //       return <FaDatabase className="text-4xl text-blue-500" />;
-// //     if (name.includes("react") || name.includes("web"))
-// //       return <FaReact className="text-4xl text-cyan-500" />;
-// //     // fallback
-// //     return <FaReact className="text-4xl text-cyan-500" />;
-// //   };
-
-// //   const normalizeCourse = (course) => {
-// //     const categoryName = resolveCategoryName(course);
-// //     const isPaid = determineIsPaid(course);
-// //     const fallbackSlug =
-// //       course?.title ? course.title.toLowerCase().replace(/\s+/g, "-") : "course";
-// //     return {
-// //       id: course?._id || course?.id || course?.slug || fallbackSlug,
-// //       title: course?.title || "Untitled Course",
-// //       slug: course?.slug || fallbackSlug,
-// //       category: categoryName,
-// //       description:
-// //         course?.shortDescription || course?.description || "Explore this course.",
-// //       isPaid,
-// //       icon: getIconForCategory(categoryName),
-// //     };
-// //   };
-
-// //   const courses = useMemo(() => coursesRaw.map(normalizeCourse), [coursesRaw]);
-
-// //   const filteredCourses =
-// //     selectedCategory === "All"
-// //       ? courses
-// //       : courses.filter((course) => course.category === selectedCategory);
-
-// //   return (
-// //     <div className="category_container">
-// //       <div className="px-4 md:px-8 lg:px-12 py-8">
-// //         {/* Category Tabs */}
-// //         <div className="flex flex-wrap justify-center gap-3 mb-10">
-// //           <button
-// //             onClick={() => setSelectedCategory("All")}
-// //             className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-// //               selectedCategory === "All"
-// //                 ? "text-purple-600 border-purple-600"
-// //                 : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
-// //             }`}
-// //           >
-// //             All
-// //           </button>
-
-// //           {categories.map((cat, index) => (
-// //             <button
-// //               key={index}
-// //               onClick={() => setSelectedCategory(cat)}
-// //               className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-// //                 selectedCategory === cat
-// //                   ? "text-purple-600 border-purple-600"
-// //                   : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
-// //               }`}
-// //             >
-// //               {cat}
-// //             </button>
-// //           ))}
-// //         </div>
-
-// //         {/* Course Cards */}
-// //         <div className="all_categories border-t border-b py-5 container mx-auto">
-// //           {loading ? (
-// //             <div className="text-center text-gray-500 py-10">Loading courses…</div>
-// //           ) : err ? (
-// //             <div className="text-center text-red-600 py-10">{err}</div>
-// //           ) : (
-// //             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-// //               {filteredCourses.length === 0 ? (
-// //                 <div className="col-span-full text-center text-gray-500">
-// //                   No courses found for "{selectedCategory}"
-// //                 </div>
-// //               ) : (
-// //                 filteredCourses.map((course) => (
-// //                   <div
-// //                     key={course.id}
-// //                     className="relative bg-white rounded-xl shadow-md hover:shadow-lg transition p-5 flex flex-col justify-between cursor-pointer hover:ring-2 hover:ring-purple-300"
-// //                     onClick={() => {
-// //                       const userId = localStorage.getItem("userId");
-// //                       if (course.isPaid) {
-// //                         if (userId) {
-// //                           navigate(`/user-course/${userId}/${course.id}`);
-// //                         } else {
-// //                           alert("Please log in to access this paid course.");
-// //                         }
-// //                       } else {
-// //                         navigate(`/user-course/${course.slug}/${course.id}`);
-// //                       }
-// //                     }}
-// //                   >
-// //                     {/* Paid Badge */}
-// //                     {course.isPaid && (
-// //                       <span className="absolute top-3 right-3 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-// //                         Paid
-// //                       </span>
-// //                     )}
-
-// //                     {/* Icon */}
-// //                     <div className="mb-4 flex justify-center">{course.icon}</div>
-
-// //                     {/* Title */}
-// //                     <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
-// //                       {course.title}
-// //                     </h3>
-
-// //                     {/* Description */}
-// //                     <p className="text-sm text-gray-600 mb-4 text-center">
-// //                       {course.description}
-// //                     </p>
-
-// //                     {/* View Details */}
-// //                     <div className="mt-auto text-center text-sm text-purple-500 hover:underline">
-// //                       View Details →
-// //                     </div>
-// //                   </div>
-// //                 ))
-// //               )}
-// //             </div>
-// //           )}
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // export default AllCategories;
-
-
-// //
-
-//  // with pargination 
-
-//  //
-
-//  import React, { useState, useEffect, useMemo } from "react";
+// import React, { useState, useEffect, useMemo } from "react";
 // import { FaPython, FaJava, FaDatabase, FaReact, FaRobot } from "react-icons/fa";
 // import { useNavigate } from "react-router-dom";
 // import axios from "axios";
@@ -418,23 +6,24 @@
 
 // const AllCategories = () => {
 //   const [selectedCategory, setSelectedCategory] = useState("All");
-//   const [categories, setCategories] = useState([]);   // ["Java", "Python", ...]
-//   const [coursesRaw, setCoursesRaw] = useState([]);   // raw from API
+//   const [categoryNames, setCategoryNames] = useState([]); // ["Java", "Python", ...]
+//   const [catIdToName, setCatIdToName] = useState({}); // {"68ab...": "Java", ...}
+//   const [coursesRaw, setCoursesRaw] = useState([]); // raw from API
 //   const [loading, setLoading] = useState(true);
 //   const [err, setErr] = useState(null);
-//   const [cols, setCols] = useState(4);                // responsive column count
-//   const [rowsPerPage, setRowsPerPage] = useState(2);  // default 2 rows
-//   const [page, setPage] = useState(1);                // 1-based
+//   const [cols, setCols] = useState(4);
+//   const [rowsPerPage, setRowsPerPage] = useState(2);
+//   const [page, setPage] = useState(1);
 //   const navigate = useNavigate();
 
-//   // ----- responsive columns (tailwind breakpoints approx) -----
+//   // responsive cols
 //   useEffect(() => {
 //     const computeCols = () => {
 //       const w = window.innerWidth;
-//       if (w >= 1280) return 5;  // xl
-//       if (w >= 1024) return 4;  // lg
-//       if (w >= 768)  return 3;  // md
-//       if (w >= 640)  return 2;  // sm
+//       if (w >= 1280) return 5;
+//       if (w >= 1024) return 4;
+//       if (w >= 768) return 3;
+//       if (w >= 640) return 2;
 //       return 1;
 //     };
 //     const onResize = () => setCols(computeCols());
@@ -446,13 +35,10 @@
 //   useEffect(() => {
 //     fetchAll();
 //   }, []);
-
-//   // reset to page 1 when filters change
 //   useEffect(() => {
 //     setPage(1);
 //   }, [selectedCategory, rowsPerPage, cols]);
 
-//   // ---- normalize various API response shapes into an array ----
 //   const extractArray = (payload) => {
 //     const d = payload?.data;
 //     if (Array.isArray(payload)) return payload;
@@ -463,23 +49,62 @@
 //     if (Array.isArray(payload?.results)) return payload.results;
 //     return [];
 //   };
+//   const extractMeta = (payload) => {
+//     // supports {data:[...], meta:{...}} or {meta:{...}}
+//     return payload?.data?.meta || payload?.meta || null;
+//   };
 
 //   const fetchAll = async () => {
 //     setLoading(true);
 //     setErr(null);
 //     try {
-//       const [catRes, courseRes] = await Promise.all([
-//         axios.get(`${globalBackendRoute}/api/all-categories`),
-//         axios.get(`${globalBackendRoute}/api/list-courses`),
-//       ]);
-
-//       const cats = extractArray(catRes);
-//       setCategories(
-//         cats.map((c) => (typeof c === "string" ? c : c?.name)).filter(Boolean)
+//       // 1) Categories (to build id->name)
+//       const catRes = await axios.get(
+//         `${globalBackendRoute}/api/all-categories`
 //       );
+//       const cats = extractArray(catRes);
+//       const names = [];
+//       const map = {};
+//       cats.forEach((c) => {
+//         const name = typeof c === "string" ? c : c?.name;
+//         if (name) names.push(name);
+//         const id = typeof c === "object" ? c?._id || c?.id : null;
+//         if (id && name) map[id] = name;
+//       });
+//       setCategoryNames(names.filter(Boolean));
+//       setCatIdToName(map);
 
-//       const coursesArr = extractArray(courseRes);
-//       setCoursesRaw(coursesArr);
+//       // 2) Courses — try to get everything in one call, fall back to paging
+//       let allCourses = [];
+//       let first = await axios.get(`${globalBackendRoute}/api/list-courses`, {
+//         params: { page: 1, limit: 5000, sortBy: "createdAt", order: "desc" },
+//       });
+//       let arr = extractArray(first);
+//       const meta = extractMeta(first);
+//       allCourses = arr;
+
+//       // if server still paginates (e.g., caps limit), fetch remaining pages
+//       if (
+//         meta?.totalPages &&
+//         meta.totalPages > 1 &&
+//         arr.length < (meta.total || Infinity)
+//       ) {
+//         for (let p = 2; p <= meta.totalPages; p++) {
+//           const next = await axios.get(
+//             `${globalBackendRoute}/api/list-courses`,
+//             {
+//               params: {
+//                 page: p,
+//                 limit: meta.limit || 20,
+//                 sortBy: meta.sortBy || "createdAt",
+//                 order: meta.order || "desc",
+//               },
+//             }
+//           );
+//           allCourses = allCourses.concat(extractArray(next));
+//         }
+//       }
+//       setCoursesRaw(allCourses);
 //     } catch (e) {
 //       console.error("Error fetching:", e);
 //       setErr("Failed to load data. Please try again.");
@@ -489,21 +114,58 @@
 //   };
 
 //   // ---------- helpers ----------
-//   const resolveCategoryName = (course) =>
-//     course?.category?.name || course?.categoryName || course?.category || course?.category_label || "Uncategorized";
+//   const looksLikeObjectId = (v) =>
+//     typeof v === "string" && /^[a-f0-9]{24}$/i.test(v);
+
+//   const resolveCategoryName = (course) => {
+//     // try populated object
+//     if (course?.category?.name) return course.category.name;
+//     // try direct name
+//     if (
+//       typeof course?.category === "string" &&
+//       !looksLikeObjectId(course.category)
+//     )
+//       return course.category;
+//     if (typeof course?.categoryName === "string") return course.categoryName;
+//     if (typeof course?.category_label === "string")
+//       return course.category_label;
+//     // try ids
+//     if (looksLikeObjectId(course?.category))
+//       return catIdToName[course.category] || "Uncategorized";
+//     if (looksLikeObjectId(course?.categoryId))
+//       return catIdToName[course.categoryId] || "Uncategorized";
+//     // array shape (pick first)
+//     if (Array.isArray(course?.categories) && course.categories.length) {
+//       const c0 = course.categories[0];
+//       if (c0?.name) return c0.name;
+//       if (looksLikeObjectId(c0)) return catIdToName[c0] || "Uncategorized";
+//       if (typeof c0 === "string") return c0;
+//     }
+//     return "Uncategorized";
+//   };
 
 //   const determineIsPaid = (course) => {
 //     const price = Number(course?.price ?? 0);
-//     const accessType = (course?.accessType || course?.visibility || "").toString().toLowerCase();
+//     const accessType = (course?.accessType || course?.visibility || "")
+//       .toString()
+//       .toLowerCase();
 //     return price > 0 || accessType === "paid";
 //   };
 
 //   const getIconForCategory = (catName) => {
 //     const name = (catName || "").toLowerCase();
-//     if (name.includes("java")) return <FaJava className="text-4xl text-red-500" />;
-//     if (name.includes("python")) return <FaPython className="text-4xl text-yellow-500" />;
-//     if (name.includes("selenium")) return <FaRobot className="text-4xl text-purple-700" />;
-//     if (name.includes("mysql") || name.includes("sql") || name.includes("db") || name.includes("database"))
+//     if (name.includes("java"))
+//       return <FaJava className="text-4xl text-red-500" />;
+//     if (name.includes("python"))
+//       return <FaPython className="text-4xl text-yellow-500" />;
+//     if (name.includes("selenium"))
+//       return <FaRobot className="text-4xl text-purple-700" />;
+//     if (
+//       name.includes("mysql") ||
+//       name.includes("sql") ||
+//       name.includes("db") ||
+//       name.includes("database")
+//     )
 //       return <FaDatabase className="text-4xl text-blue-500" />;
 //     if (name.includes("react") || name.includes("web"))
 //       return <FaReact className="text-4xl text-cyan-500" />;
@@ -512,7 +174,6 @@
 
 //   const truncateTwoLines = (text) => {
 //     if (!text) return "Explore this course.";
-//     // Add manual ellipsis if it's long; CSS below will clamp to 2 lines visually.
 //     const s = String(text);
 //     return s.length > 180 ? s.slice(0, 180).trim() + "..." : s;
 //   };
@@ -520,27 +181,33 @@
 //   const normalizeCourse = (course) => {
 //     const categoryName = resolveCategoryName(course);
 //     const isPaid = determineIsPaid(course);
-//     const fallbackSlug =
-//       course?.title ? course.title.toLowerCase().replace(/\s+/g, "-") : "course";
+//     const fallbackSlug = course?.title
+//       ? course.title.toLowerCase().replace(/\s+/g, "-")
+//       : "course";
 //     return {
 //       id: course?._id || course?.id || course?.slug || fallbackSlug,
 //       title: course?.title || "Untitled Course",
 //       slug: course?.slug || fallbackSlug,
-//       category: categoryName,
-//       description: truncateTwoLines(course?.shortDescription || course?.description),
+//       category: categoryName, // **normalized to NAME for filtering**
+//       description: truncateTwoLines(
+//         course?.shortDescription || course?.description
+//       ),
 //       isPaid,
 //       icon: getIconForCategory(categoryName),
 //     };
 //   };
 
-//   const courses = useMemo(() => coursesRaw.map(normalizeCourse), [coursesRaw]);
+//   const courses = useMemo(
+//     () => coursesRaw.map(normalizeCourse),
+//     [coursesRaw, catIdToName]
+//   );
 
 //   const filteredCourses =
 //     selectedCategory === "All"
 //       ? courses
 //       : courses.filter((c) => c.category === selectedCategory);
 
-//   // ----- pagination -----
+//   // pagination
 //   const pageSize = Math.max(1, (cols || 1) * (rowsPerPage || 1));
 //   const total = filteredCourses.length;
 //   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -548,10 +215,7 @@
 //   const startIdx = (currentPage - 1) * pageSize;
 //   const endIdx = Math.min(startIdx + pageSize, total);
 //   const visible = filteredCourses.slice(startIdx, endIdx);
-
 //   const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
-
-//   // build page buttons (compact with ellipsis)
 //   const buildPages = () => {
 //     const pages = [];
 //     const maxBtns = 7;
@@ -559,14 +223,13 @@
 //       for (let i = 1; i <= totalPages; i++) pages.push(i);
 //       return pages;
 //     }
-//     const add = (x) => pages.push(x);
-//     add(1);
-//     if (currentPage > 4) add("…");
-//     const start = Math.max(2, currentPage - 1);
-//     const end = Math.min(totalPages - 1, currentPage + 1);
-//     for (let i = start; i <= end; i++) add(i);
-//     if (currentPage < totalPages - 3) add("…");
-//     add(totalPages);
+//     pages.push(1);
+//     if (currentPage > 4) pages.push("…");
+//     const s = Math.max(2, currentPage - 1),
+//       e = Math.min(totalPages - 1, currentPage + 1);
+//     for (let i = s; i <= e; i++) pages.push(i);
+//     if (currentPage < totalPages - 3) pages.push("…");
+//     pages.push(totalPages);
 //     return pages;
 //   };
 
@@ -585,8 +248,7 @@
 //           >
 //             All
 //           </button>
-
-//           {categories.map((cat, index) => (
+//           {categoryNames.map((cat, index) => (
 //             <button
 //               key={index}
 //               onClick={() => setSelectedCategory(cat)}
@@ -604,8 +266,11 @@
 //         {/* Top-right status + rows selector */}
 //         <div className="flex items-center justify-end gap-4 mb-3">
 //           <div className="text-sm text-gray-600">
-//             Showing <span className="font-semibold">{total === 0 ? 0 : startIdx + 1}–{endIdx}</span> of{" "}
-//             <span className="font-semibold">{total}</span>
+//             Showing{" "}
+//             <span className="font-semibold">
+//               {total === 0 ? 0 : startIdx + 1}–{endIdx}
+//             </span>{" "}
+//             of <span className="font-semibold">{total}</span>
 //           </div>
 //           <div className="flex items-center gap-2">
 //             <label className="text-sm text-gray-600">Rows:</label>
@@ -625,7 +290,9 @@
 //         {/* Course Cards */}
 //         <div className="all_categories border-t border-b py-5 container mx-auto">
 //           {loading ? (
-//             <div className="text-center text-gray-500 py-10">Loading courses…</div>
+//             <div className="text-center text-gray-500 py-10">
+//               Loading courses…
+//             </div>
 //           ) : err ? (
 //             <div className="text-center text-red-600 py-10">{err}</div>
 //           ) : (
@@ -643,32 +310,29 @@
 //                       onClick={() => {
 //                         const userId = localStorage.getItem("userId");
 //                         if (course.isPaid) {
-//                           if (userId) {
+//                           if (userId)
 //                             navigate(`/user-course/${userId}/${course.id}`);
-//                           } else {
+//                           else
 //                             alert("Please log in to access this paid course.");
-//                           }
 //                         } else {
 //                           navigate(`/user-course/${course.slug}/${course.id}`);
 //                         }
 //                       }}
 //                     >
-//                       {/* Paid Badge */}
 //                       {course.isPaid && (
 //                         <span className="absolute top-3 right-3 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
 //                           Paid
 //                         </span>
 //                       )}
 
-//                       {/* Icon */}
-//                       <div className="mb-4 flex justify-center">{course.icon}</div>
+//                       <div className="mb-4 flex justify-center">
+//                         {course.icon}
+//                       </div>
 
-//                       {/* Title */}
 //                       <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
 //                         {course.title}
 //                       </h3>
 
-//                       {/* Description (2 lines + ellipsis) */}
 //                       <p
 //                         className="text-sm text-gray-600 mb-4 text-center"
 //                         style={{
@@ -677,14 +341,13 @@
 //                           WebkitBoxOrient: "vertical",
 //                           overflow: "hidden",
 //                         }}
-//                         title={course.description} // tooltip full description
+//                         title={course.description}
 //                       >
 //                         {course.description}
 //                       </p>
 
-//                       {/* View Details */}
-//                       <div className="mt-auto text-center text-sm text-purple-500 hover:underline">
-//                         View Details →
+//                       <div className="mt-auto text-center text-sm text-purple-500 hover:underline ">
+//                         Start learning →
 //                       </div>
 //                     </div>
 //                   ))
@@ -719,7 +382,10 @@
 
 //                   {buildPages().map((p, idx) =>
 //                     p === "…" ? (
-//                       <span key={`dots-${idx}`} className="px-2 text-gray-400 select-none">
+//                       <span
+//                         key={`dots-${idx}`}
+//                         className="px-2 text-gray-400 select-none"
+//                       >
 //                         …
 //                       </span>
 //                     ) : (
@@ -771,11 +437,10 @@
 
 // export default AllCategories;
 
-
-// with proper filtering. 
+// search filter
 
 //
-
+// src/pages/AllCategories.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { FaPython, FaJava, FaDatabase, FaReact, FaRobot } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -784,21 +449,38 @@ import globalBackendRoute from "../../../../udemy_superadmin/src/config/Config";
 
 const AllCategories = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [categoryNames, setCategoryNames] = useState([]);   // ["Java", "Python", ...]
-  const [catIdToName, setCatIdToName] = useState({});       // {"68ab...": "Java", ...}
-  const [coursesRaw, setCoursesRaw] = useState([]);         // raw from API
+  const [categoryNames, setCategoryNames] = useState([]); // ["Java", "Python", ...]
+  const [catIdToName, setCatIdToName] = useState({}); // {"68ab...": "Java", ...}
+  const [coursesRaw, setCoursesRaw] = useState([]); // raw from API
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [cols, setCols] = useState(4);
   const [rowsPerPage, setRowsPerPage] = useState(2);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(""); // ← driven by header global event
   const navigate = useNavigate();
+
+  // Listen for global search events emitted by Header
+  useEffect(() => {
+    const onSearch = (e) => {
+      const term = (e?.detail || "").toString();
+      setSearchTerm(term);
+      if (term) setSelectedCategory("All");
+      setPage(1);
+    };
+    window.addEventListener("ecoders:search", onSearch);
+    return () => window.removeEventListener("ecoders:search", onSearch);
+  }, []);
 
   // responsive cols
   useEffect(() => {
     const computeCols = () => {
       const w = window.innerWidth;
-      if (w >= 1280) return 5; if (w >= 1024) return 4; if (w >= 768) return 3; if (w >= 640) return 2; return 1;
+      if (w >= 1280) return 5;
+      if (w >= 1024) return 4;
+      if (w >= 768) return 3;
+      if (w >= 640) return 2;
+      return 1;
     };
     const onResize = () => setCols(computeCols());
     setCols(computeCols());
@@ -806,8 +488,12 @@ const AllCategories = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => { fetchAll(); }, []);
-  useEffect(() => { setPage(1); }, [selectedCategory, rowsPerPage, cols]);
+  useEffect(() => {
+    fetchAll();
+  }, []);
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, rowsPerPage, cols]);
 
   const extractArray = (payload) => {
     const d = payload?.data;
@@ -825,17 +511,20 @@ const AllCategories = () => {
   };
 
   const fetchAll = async () => {
-    setLoading(true); setErr(null);
+    setLoading(true);
+    setErr(null);
     try {
       // 1) Categories (to build id->name)
-      const catRes = await axios.get(`${globalBackendRoute}/api/all-categories`);
+      const catRes = await axios.get(
+        `${globalBackendRoute}/api/all-categories`
+      );
       const cats = extractArray(catRes);
       const names = [];
       const map = {};
       cats.forEach((c) => {
-        const name = typeof c === "string" ? c : c?.name;
+        const name = typeof c === "string" ? c : c?.name || c?.category_name;
         if (name) names.push(name);
-        const id = typeof c === "object" ? (c?._id || c?.id) : null;
+        const id = typeof c === "object" ? c?._id || c?.id : null;
         if (id && name) map[id] = name;
       });
       setCategoryNames(names.filter(Boolean));
@@ -844,18 +533,30 @@ const AllCategories = () => {
       // 2) Courses — try to get everything in one call, fall back to paging
       let allCourses = [];
       let first = await axios.get(`${globalBackendRoute}/api/list-courses`, {
-        params: { page: 1, limit: 5000, sortBy: "createdAt", order: "desc" }
+        params: { page: 1, limit: 5000, sortBy: "createdAt", order: "desc" },
       });
       let arr = extractArray(first);
       const meta = extractMeta(first);
       allCourses = arr;
 
       // if server still paginates (e.g., caps limit), fetch remaining pages
-      if (meta?.totalPages && meta.totalPages > 1 && arr.length < (meta.total || Infinity)) {
+      if (
+        meta?.totalPages &&
+        meta.totalPages > 1 &&
+        arr.length < (meta.total || Infinity)
+      ) {
         for (let p = 2; p <= meta.totalPages; p++) {
-          const next = await axios.get(`${globalBackendRoute}/api/list-courses`, {
-            params: { page: p, limit: meta.limit || 20, sortBy: meta.sortBy || "createdAt", order: meta.order || "desc" }
-          });
+          const next = await axios.get(
+            `${globalBackendRoute}/api/list-courses`,
+            {
+              params: {
+                page: p,
+                limit: meta.limit || 20,
+                sortBy: meta.sortBy || "createdAt",
+                order: meta.order || "desc",
+              },
+            }
+          );
           allCourses = allCourses.concat(extractArray(next));
         }
       }
@@ -869,22 +570,32 @@ const AllCategories = () => {
   };
 
   // ---------- helpers ----------
-  const looksLikeObjectId = (v) => typeof v === "string" && /^[a-f0-9]{24}$/i.test(v);
+  const looksLikeObjectId = (v) =>
+    typeof v === "string" && /^[a-f0-9]{24}$/i.test(v);
 
   const resolveCategoryName = (course) => {
-    // try populated object
+    // populated object
     if (course?.category?.name) return course.category.name;
-    // try direct name
-    if (typeof course?.category === "string" && !looksLikeObjectId(course.category)) return course.category;
+    if (course?.category?.category_name) return course.category.category_name;
+    // direct name
+    if (
+      typeof course?.category === "string" &&
+      !looksLikeObjectId(course.category)
+    )
+      return course.category;
     if (typeof course?.categoryName === "string") return course.categoryName;
-    if (typeof course?.category_label === "string") return course.category_label;
-    // try ids
-    if (looksLikeObjectId(course?.category)) return catIdToName[course.category] || "Uncategorized";
-    if (looksLikeObjectId(course?.categoryId)) return catIdToName[course.categoryId] || "Uncategorized";
+    if (typeof course?.category_label === "string")
+      return course.category_label;
+    // ids
+    if (looksLikeObjectId(course?.category))
+      return catIdToName[course.category] || "Uncategorized";
+    if (looksLikeObjectId(course?.categoryId))
+      return catIdToName[course.categoryId] || "Uncategorized";
     // array shape (pick first)
     if (Array.isArray(course?.categories) && course.categories.length) {
       const c0 = course.categories[0];
       if (c0?.name) return c0.name;
+      if (c0?.category_name) return c0.category_name;
       if (looksLikeObjectId(c0)) return catIdToName[c0] || "Uncategorized";
       if (typeof c0 === "string") return c0;
     }
@@ -893,16 +604,26 @@ const AllCategories = () => {
 
   const determineIsPaid = (course) => {
     const price = Number(course?.price ?? 0);
-    const accessType = (course?.accessType || course?.visibility || "").toString().toLowerCase();
+    const accessType = (course?.accessType || course?.visibility || "")
+      .toString()
+      .toLowerCase();
     return price > 0 || accessType === "paid";
   };
 
   const getIconForCategory = (catName) => {
     const name = (catName || "").toLowerCase();
-    if (name.includes("java")) return <FaJava className="text-4xl text-red-500" />;
-    if (name.includes("python")) return <FaPython className="text-4xl text-yellow-500" />;
-    if (name.includes("selenium")) return <FaRobot className="text-4xl text-purple-700" />;
-    if (name.includes("mysql") || name.includes("sql") || name.includes("db") || name.includes("database"))
+    if (name.includes("java"))
+      return <FaJava className="text-4xl text-red-500" />;
+    if (name.includes("python"))
+      return <FaPython className="text-4xl text-yellow-500" />;
+    if (name.includes("selenium"))
+      return <FaRobot className="text-4xl text-purple-700" />;
+    if (
+      name.includes("mysql") ||
+      name.includes("sql") ||
+      name.includes("db") ||
+      name.includes("database")
+    )
       return <FaDatabase className="text-4xl text-blue-500" />;
     if (name.includes("react") || name.includes("web"))
       return <FaReact className="text-4xl text-cyan-500" />;
@@ -918,22 +639,58 @@ const AllCategories = () => {
   const normalizeCourse = (course) => {
     const categoryName = resolveCategoryName(course);
     const isPaid = determineIsPaid(course);
-    const fallbackSlug = course?.title ? course.title.toLowerCase().replace(/\s+/g, "-") : "course";
+    const fallbackSlug = course?.title
+      ? course.title.toLowerCase().replace(/\s+/g, "-")
+      : "course";
     return {
       id: course?._id || course?.id || course?.slug || fallbackSlug,
       title: course?.title || "Untitled Course",
       slug: course?.slug || fallbackSlug,
       category: categoryName, // **normalized to NAME for filtering**
-      description: truncateTwoLines(course?.shortDescription || course?.description),
+      description: truncateTwoLines(
+        course?.shortDescription || course?.description
+      ),
       isPaid,
       icon: getIconForCategory(categoryName),
+      _search_blob: [
+        course?.title,
+        course?.shortDescription,
+        course?.description,
+        categoryName,
+        course?.slug,
+        ...(Array.isArray(course?.tags) ? course.tags : []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
     };
   };
 
-  const courses = useMemo(() => coursesRaw.map(normalizeCourse), [coursesRaw, catIdToName]);
+  const courses = useMemo(
+    () => coursesRaw.map(normalizeCourse),
+    [coursesRaw, catIdToName]
+  );
 
-  const filteredCourses =
-    selectedCategory === "All" ? courses : courses.filter((c) => c.category === selectedCategory);
+  // search matching: split by spaces, any token match ok (case-insensitive)
+  const matchesKeyword = (course, kw) => {
+    const s = (kw || "").toLowerCase().trim();
+    if (!s) return true;
+    const tokens = s.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return true;
+    const blob = course._search_blob || "";
+    // ANY token match = keep
+    return tokens.some((t) => blob.includes(t));
+  };
+
+  // filter by category (unless searching) and then by keyword
+  const baseFiltered =
+    selectedCategory === "All" || searchTerm
+      ? courses
+      : courses.filter((c) => c.category === selectedCategory);
+
+  const filteredCourses = baseFiltered.filter((c) =>
+    matchesKeyword(c, searchTerm)
+  );
 
   // pagination
   const pageSize = Math.max(1, (cols || 1) * (rowsPerPage || 1));
@@ -945,13 +702,20 @@ const AllCategories = () => {
   const visible = filteredCourses.slice(startIdx, endIdx);
   const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
   const buildPages = () => {
-    const pages = []; const maxBtns = 7;
-    if (totalPages <= maxBtns) { for (let i=1;i<=totalPages;i++) pages.push(i); return pages; }
-    pages.push(1); if (currentPage > 4) pages.push("…");
-    const s = Math.max(2, currentPage - 1), e = Math.min(totalPages - 1, currentPage + 1);
-    for (let i=s;i<=e;i++) pages.push(i);
+    const pages = [];
+    const maxBtns = 7;
+    if (totalPages <= maxBtns) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    pages.push(1);
+    if (currentPage > 4) pages.push("…");
+    const s = Math.max(2, currentPage - 1),
+      e = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = s; i <= e; i++) pages.push(i);
     if (currentPage < totalPages - 3) pages.push("…");
-    pages.push(totalPages); return pages;
+    pages.push(totalPages);
+    return pages;
   };
 
   return (
@@ -962,8 +726,9 @@ const AllCategories = () => {
           <button
             onClick={() => setSelectedCategory("All")}
             className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-              selectedCategory === "All" ? "text-purple-600 border-purple-600"
-              : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
+              selectedCategory === "All"
+                ? "text-purple-600 border-purple-600"
+                : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
             }`}
           >
             All
@@ -973,8 +738,9 @@ const AllCategories = () => {
               key={index}
               onClick={() => setSelectedCategory(cat)}
               className={`text-sm md:text-base px-3 py-1 font-medium border-b-2 transition whitespace-nowrap ${
-                selectedCategory === cat ? "text-purple-600 border-purple-600"
-                : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
+                selectedCategory === cat
+                  ? "text-purple-600 border-purple-600"
+                  : "text-gray-700 border-transparent hover:text-purple-600 hover:border-purple-600"
               }`}
             >
               {cat}
@@ -985,8 +751,16 @@ const AllCategories = () => {
         {/* Top-right status + rows selector */}
         <div className="flex items-center justify-end gap-4 mb-3">
           <div className="text-sm text-gray-600">
-            Showing <span className="font-semibold">{total === 0 ? 0 : startIdx + 1}–{endIdx}</span> of{" "}
-            <span className="font-semibold">{total}</span>
+            Showing{" "}
+            <span className="font-semibold">
+              {total === 0 ? 0 : startIdx + 1}–{endIdx}
+            </span>{" "}
+            of <span className="font-semibold">{total}</span>
+            {searchTerm ? (
+              <span className="ml-2 text-gray-500">
+                (search: <span className="italic">"{searchTerm}"</span>)
+              </span>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">Rows:</label>
@@ -1006,7 +780,9 @@ const AllCategories = () => {
         {/* Course Cards */}
         <div className="all_categories border-t border-b py-5 container mx-auto">
           {loading ? (
-            <div className="text-center text-gray-500 py-10">Loading courses…</div>
+            <div className="text-center text-gray-500 py-10">
+              Loading courses…
+            </div>
           ) : err ? (
             <div className="text-center text-red-600 py-10">{err}</div>
           ) : (
@@ -1014,7 +790,12 @@ const AllCategories = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {visible.length === 0 ? (
                   <div className="col-span-full text-center text-gray-500">
-                    No courses found for "{selectedCategory}"
+                    No courses found
+                    {searchTerm
+                      ? ` for the search "${searchTerm}"`
+                      : selectedCategory !== "All"
+                      ? ` for "${selectedCategory}"`
+                      : ""}
                   </div>
                 ) : (
                   visible.map((course) => (
@@ -1024,8 +805,10 @@ const AllCategories = () => {
                       onClick={() => {
                         const userId = localStorage.getItem("userId");
                         if (course.isPaid) {
-                          if (userId) navigate(`/user-course/${userId}/${course.id}`);
-                          else alert("Please log in to access this paid course.");
+                          if (userId)
+                            navigate(`/user-course/${userId}/${course.id}`);
+                          else
+                            alert("Please log in to access this paid course.");
                         } else {
                           navigate(`/user-course/${course.slug}/${course.id}`);
                         }
@@ -1037,7 +820,9 @@ const AllCategories = () => {
                         </span>
                       )}
 
-                      <div className="mb-4 flex justify-center">{course.icon}</div>
+                      <div className="mb-4 flex justify-center">
+                        {course.icon}
+                      </div>
 
                       <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
                         {course.title}
@@ -1092,7 +877,12 @@ const AllCategories = () => {
 
                   {buildPages().map((p, idx) =>
                     p === "…" ? (
-                      <span key={`dots-${idx}`} className="px-2 text-gray-400 select-none">…</span>
+                      <span
+                        key={`dots-${idx}`}
+                        className="px-2 text-gray-400 select-none"
+                      >
+                        …
+                      </span>
                     ) : (
                       <button
                         key={p}

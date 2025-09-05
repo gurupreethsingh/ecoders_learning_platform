@@ -29,15 +29,27 @@ router.post("/courses/:id/modules", CourseController.addModule);
 router.patch("/courses/:id/modules/:mIndex", CourseController.updateModule);
 router.delete("/courses/:id/modules/:mIndex", CourseController.deleteModule);
 router.post("/courses/:id/modules/:mIndex/topics", CourseController.addTopic);
-router.patch("/courses/:id/modules/:mIndex/topics/:tIndex", CourseController.updateTopic);
-router.delete("/courses/:id/modules/:mIndex/topics/:tIndex", CourseController.deleteTopic);
+router.patch(
+  "/courses/:id/modules/:mIndex/topics/:tIndex",
+  CourseController.updateTopic
+);
+router.delete(
+  "/courses/:id/modules/:mIndex/topics/:tIndex",
+  CourseController.deleteTopic
+);
 router.patch("/courses/:id/modules/reorder", CourseController.reorderModules);
-router.patch("/courses/:id/modules/:mIndex/topics/reorder", CourseController.reorderTopics);
+router.patch(
+  "/courses/:id/modules/:mIndex/topics/reorder",
+  CourseController.reorderTopics
+);
 
 // enrollment
 router.post("/courses/:id/enroll", CourseController.enrollStudent);
 router.patch("/courses/:id/enrollment", CourseController.updateEnrollment);
-router.delete("/courses/:id/enrollment/:studentId", CourseController.unenrollStudent);
+router.delete(
+  "/courses/:id/enrollment/:studentId",
+  CourseController.unenrollStudent
+);
 
 // ratings
 router.post("/courses/:id/ratings", CourseController.addOrUpdateRating);

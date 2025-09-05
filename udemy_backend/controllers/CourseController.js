@@ -23,12 +23,10 @@ const boolFrom = (v) =>
 const toArray = (v) => {
   if (Array.isArray(v)) return v;
   if (typeof v === "string") {
-    // try JSON array
     try {
       const parsed = JSON.parse(v);
       if (Array.isArray(parsed)) return parsed;
     } catch {}
-    // fallback CSV
     return v
       .split(",")
       .map((x) => String(x).trim())
@@ -59,8 +57,7 @@ const toDate = (v) => {
   return isNaN(d) ? undefined : d;
 };
 
-const normalizeString = (v) =>
-  v == null ? undefined : String(v).trim();
+const normalizeString = (v) => (v == null ? undefined : String(v).trim());
 
 const normalizeStringArray = (v) => {
   const arr = toArray(v);
@@ -72,20 +69,21 @@ const normalizeObjectId = (v) => {
   return id || undefined;
 };
 
-// ---------- TOPIC NORMALIZER (updated to match schema) ----------
+// ---------- TOPIC NORMALIZER ----------
 const normTopic = (t = {}) => {
   const o = {};
   if (t.title !== undefined) o.title = normalizeString(t.title);
 
-  // NEW: learning content fields on sub-topic
-  if (t.explanation !== undefined) o.explanation = normalizeString(t.explanation);
+  // learning content
+  if (t.explanation !== undefined)
+    o.explanation = normalizeString(t.explanation);
   if (t.code !== undefined) o.code = String(t.code);
   if (t.codeExplanation !== undefined)
     o.codeExplanation = normalizeString(t.codeExplanation);
   if (t.codeLanguage !== undefined)
     o.codeLanguage = normalizeString(t.codeLanguage);
 
-  // Existing media/metadata
+  // media/metadata
   if (t.videoUrl !== undefined) o.videoUrl = normalizeString(t.videoUrl);
   if (t.pdfUrl !== undefined) o.pdfUrl = normalizeString(t.pdfUrl);
   if (t.duration !== undefined) {
@@ -99,7 +97,6 @@ const normTopic = (t = {}) => {
 };
 
 const normalizeModules = (input) => {
-  // accept JSON string or array
   let mods = input;
   if (typeof input === "string") {
     const parsed = parseJSON(input);
@@ -113,7 +110,6 @@ const normalizeModules = (input) => {
     if (m.description !== undefined)
       out.description = normalizeString(m.description);
 
-    // topics
     let topics = m.topics;
     if (typeof topics === "string") {
       const parsed = parseJSON(topics);
@@ -256,8 +252,7 @@ const normalizeCourseInput = (payload = {}) => {
     out.description = normalizeString(payload.description);
   if (payload.language !== undefined)
     out.language = normalizeString(payload.language);
-  if (payload.level !== undefined)
-    out.level = normalizeString(payload.level);
+  if (payload.level !== undefined) out.level = normalizeString(payload.level);
   if (payload.thumbnail !== undefined)
     out.thumbnail = normalizeString(payload.thumbnail);
   if (payload.promoVideoUrl !== undefined)
@@ -372,32 +367,37 @@ const normalizeCourseInput = (payload = {}) => {
   }
 
   // Version
-  if (payload.version !== undefined) out.version = normalizeString(payload.version);
+  if (payload.version !== undefined)
+    out.version = normalizeString(payload.version);
 
   return out;
 };
 
 const buildFilter = (q = {}) => {
   const {
-    search,                 // text or regex
-    useText,                // "true" -> uses $text
+    search,
+    useText,
     language,
     level,
     accessType,
     category,
     subCategory,
     instructor,
-    author,                 // any author id (in authors array)
-    tag,                    // string or csv
-    keyword,                // string or csv
+    author,
+    tag,
+    keyword,
     published,
     isArchived,
     isFeatured,
-    minPrice, maxPrice,
-    minHours, maxHours,
-    minRating, maxRating,
+    minPrice,
+    maxPrice,
+    minHours,
+    maxHours,
+    minRating,
+    maxRating,
     hasCertificate,
-    from, to,               // createdAt range
+    from,
+    to,
   } = q;
 
   const filter = {};
@@ -539,7 +539,7 @@ exports.createCourse = async (req, res) => {
     }
 
     const doc = new Course(data);
-    await doc.save(); // triggers pre-validate & pre-save (slug, totals, averageRating)
+    await doc.save(); // triggers hooks
     res.status(201).json(doc.toObject());
   } catch (err) {
     if (err?.code === 11000) {
@@ -630,13 +630,12 @@ exports.updateCourse = async (req, res) => {
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    // set only provided fields
     Object.entries(data).forEach(([k, v]) => {
       if (v === undefined) return;
       doc.set(k, v);
     });
 
-    await doc.save(); // recompute totals/average
+    await doc.save();
     res.json(doc.toObject());
   } catch (err) {
     if (err?.code === 11000) {
@@ -800,16 +799,23 @@ exports.countsByAccessType = async (_req, res) => {
 
 exports.facets = async (_req, res) => {
   try {
-    const [languages, levels, tags, keywords, categories, subCategories, instructors] =
-      await Promise.all([
-        Course.distinct("language"),
-        Course.distinct("level"),
-        Course.distinct("tags"),
-        Course.distinct("keywords"),
-        Course.distinct("category"),
-        Course.distinct("subCategory"),
-        Course.distinct("instructor"),
-      ]);
+    const [
+      languages,
+      levels,
+      tags,
+      keywords,
+      categories,
+      subCategories,
+      instructors,
+    ] = await Promise.all([
+      Course.distinct("language"),
+      Course.distinct("level"),
+      Course.distinct("tags"),
+      Course.distinct("keywords"),
+      Course.distinct("category"),
+      Course.distinct("subCategory"),
+      Course.distinct("instructor"),
+    ]);
 
     res.json({
       languages: languages.filter(Boolean).sort(),
@@ -830,8 +836,6 @@ exports.facets = async (_req, res) => {
 
 /* ----------------------------- modules & topics ----------------------------- */
 
-// Add a module
-// POST /courses/:id/modules  body: { title, description, topics? }
 exports.addModule = async (req, res) => {
   try {
     const doc = await Course.findById(req.params.id);
@@ -851,8 +855,6 @@ exports.addModule = async (req, res) => {
   }
 };
 
-// Update module by index
-// PATCH /courses/:id/modules/:mIndex
 exports.updateModule = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -877,8 +879,6 @@ exports.updateModule = async (req, res) => {
   }
 };
 
-// Delete module by index
-// DELETE /courses/:id/modules/:mIndex
 exports.deleteModule = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -899,8 +899,6 @@ exports.deleteModule = async (req, res) => {
   }
 };
 
-// Add topic to a module
-// POST /courses/:id/modules/:mIndex/topics
 exports.addTopic = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -913,7 +911,8 @@ exports.addTopic = async (req, res) => {
     if (!mod) return res.status(404).json({ message: "Module not found" });
 
     const t = normTopic(req.body);
-    if (!t.title) return res.status(400).json({ message: "Topic title is required" });
+    if (!t.title)
+      return res.status(400).json({ message: "Topic title is required" });
 
     mod.topics = Array.isArray(mod.topics) ? mod.topics : [];
     mod.topics.push(t);
@@ -926,8 +925,6 @@ exports.addTopic = async (req, res) => {
   }
 };
 
-// Update topic
-// PATCH /courses/:id/modules/:mIndex/topics/:tIndex
 exports.updateTopic = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -958,8 +955,6 @@ exports.updateTopic = async (req, res) => {
   }
 };
 
-// Delete topic
-// DELETE /courses/:id/modules/:mIndex/topics/:tIndex
 exports.deleteTopic = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -986,8 +981,8 @@ exports.deleteTopic = async (req, res) => {
   }
 };
 
-// Reorder modules / topics
-// PATCH /courses/:id/modules/reorder  body: { order: [mIndices...] } OR [{from,to}]
+/* ----------------------------- reorder ----------------------------- */
+
 exports.reorderModules = async (req, res) => {
   try {
     const doc = await Course.findById(req.params.id);
@@ -998,9 +993,6 @@ exports.reorderModules = async (req, res) => {
       return res.status(400).json({ message: "Invalid reorder payload" });
     }
 
-    // Two modes:
-    // 1) array of indices new order (length = old length)
-    // 2) array of {from,to} swaps
     let modules = [...doc.modules];
 
     if (order.length && typeof order[0] === "number") {
@@ -1037,7 +1029,6 @@ exports.reorderModules = async (req, res) => {
   }
 };
 
-// PATCH /courses/:id/modules/:mIndex/topics/reorder  body: { order: [...] }
 exports.reorderTopics = async (req, res) => {
   try {
     const mIndex = Number(req.params.mIndex);
@@ -1093,11 +1084,11 @@ exports.reorderTopics = async (req, res) => {
 
 /* ----------------------------- enrollment ----------------------------- */
 
-// POST /courses/:id/enroll  body: { studentId }
 exports.enrollStudent = async (req, res) => {
   try {
     const studentId = normalizeObjectId(req.body.studentId);
-    if (!studentId) return res.status(400).json({ message: "Invalid studentId" });
+    if (!studentId)
+      return res.status(400).json({ message: "Invalid studentId" });
 
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
@@ -1128,11 +1119,11 @@ exports.enrollStudent = async (req, res) => {
   }
 };
 
-// PATCH /courses/:id/enrollment  body: { studentId, progress?, completed?, certificateIssued?, completedTopics?[] }
 exports.updateEnrollment = async (req, res) => {
   try {
     const studentId = normalizeObjectId(req.body.studentId);
-    if (!studentId) return res.status(400).json({ message: "Invalid studentId" });
+    if (!studentId)
+      return res.status(400).json({ message: "Invalid studentId" });
 
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
@@ -1140,7 +1131,8 @@ exports.updateEnrollment = async (req, res) => {
     const idx = (doc.enrolledStudents || []).findIndex(
       (s) => String(s.studentId) === String(studentId)
     );
-    if (idx === -1) return res.status(404).json({ message: "Enrollment not found" });
+    if (idx === -1)
+      return res.status(404).json({ message: "Enrollment not found" });
 
     const patch = {};
     if (req.body.progress !== undefined) {
@@ -1164,11 +1156,11 @@ exports.updateEnrollment = async (req, res) => {
   }
 };
 
-// DELETE /courses/:id/enrollment/:studentId
 exports.unenrollStudent = async (req, res) => {
   try {
     const studentId = normalizeObjectId(req.params.studentId);
-    if (!studentId) return res.status(400).json({ message: "Invalid studentId" });
+    if (!studentId)
+      return res.status(400).json({ message: "Invalid studentId" });
 
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
@@ -1192,12 +1184,12 @@ exports.unenrollStudent = async (req, res) => {
 
 /* ----------------------------- ratings ----------------------------- */
 
-// POST /courses/:id/ratings  body: { studentId, rating (1..5), review? }
 exports.addOrUpdateRating = async (req, res) => {
   try {
     const studentId = normalizeObjectId(req.body.studentId);
     const rating = toNumber(req.body.rating);
-    if (!studentId) return res.status(400).json({ message: "Invalid studentId" });
+    if (!studentId)
+      return res.status(400).json({ message: "Invalid studentId" });
     if (rating === undefined || rating < 1 || rating > 5)
       return res.status(400).json({ message: "rating must be 1..5" });
 
@@ -1223,7 +1215,7 @@ exports.addOrUpdateRating = async (req, res) => {
       });
     }
 
-    await doc.save(); // recomputes averageRating
+    await doc.save();
     res.json(doc.toObject());
   } catch (err) {
     console.error("addOrUpdateRating error:", err);
@@ -1233,13 +1225,14 @@ exports.addOrUpdateRating = async (req, res) => {
 
 /* ----------------------------- threads (Q&A) ----------------------------- */
 
-// POST /courses/:id/threads  body: { userId, message }
 exports.addThread = async (req, res) => {
   try {
     const userId = normalizeObjectId(req.body.userId);
     const message = normalizeString(req.body.message);
     if (!userId || !message)
-      return res.status(400).json({ message: "userId and message are required" });
+      return res
+        .status(400)
+        .json({ message: "userId and message are required" });
 
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
@@ -1262,7 +1255,6 @@ exports.addThread = async (req, res) => {
   }
 };
 
-// POST /courses/:id/threads/:tIndex/replies  body: { userId, message }
 exports.addReply = async (req, res) => {
   try {
     const tIndex = Number(req.params.tIndex);
@@ -1272,7 +1264,9 @@ exports.addReply = async (req, res) => {
     const userId = normalizeObjectId(req.body.userId);
     const message = normalizeString(req.body.message);
     if (!userId || !message)
-      return res.status(400).json({ message: "userId and message are required" });
+      return res
+        .status(400)
+        .json({ message: "userId and message are required" });
 
     const doc = await Course.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Course not found" });

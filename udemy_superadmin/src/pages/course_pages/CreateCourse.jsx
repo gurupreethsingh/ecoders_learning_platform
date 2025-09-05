@@ -424,7 +424,7 @@ export default function CreateCourse() {
     };
 
     try {
-      const r = await fetch(`${API}/create-courses`, {
+      const r = await fetch(`${API}/api/create-courses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
