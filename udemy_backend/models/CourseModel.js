@@ -106,7 +106,7 @@ const courseSchema = new Schema(
     accessType: {
       type: String,
       enum: ["Free", "Paid", "Subscription", "Lifetime"],
-      default: "Paid",
+      default: "Free",
     },
     maxStudents: { type: Number, min: 0 },
     enrollmentDeadline: Date,
