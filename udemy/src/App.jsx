@@ -7,6 +7,8 @@ import {
   PublicRoute,
 } from "./components/auth_components/AuthManager";
 
+import TopArrow from "./components/common_components/TopArrow";
+
 import { AuthProvider } from "./components/auth_components/AuthManager";
 
 import Header from "./components/header_components/Header";
@@ -50,204 +52,208 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Header />
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <PageTitle title="Home">
-                <Homepage />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/home"
-            element={
-              <PageTitle title="Home">
-                <Homepage />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/homepage"
-            element={
-              <PageTitle title="Home">
-                <Homepage />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/all-blogs"
-            element={
-              <PageTitle title="All Blogs">
-                <AllBlogs />
-              </PageTitle>
-            }
-          />
-
-          <Route
-            path="/single-blog/:slug/:id"
-            element={
-              <PageTitle title="Blog Details">
-                <SingleBlog />
-              </PageTitle>
-            }
-          />
-
-          <Route
-            path="/my-courses/:userid"
-            element={
-              <PageTitle title="My Courses">
-                <MyCourses />
-              </PageTitle>
-            }
-          />
-
-          <Route
-            path="/user-course/:userid/:courseid"
-            element={
-              <PageTitle title="Course">
-                <SingleCourse />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/dummy-dashboard"
-            element={
-              <PageTitle title="Dummy Dashboard">
-                <DummyDashboard />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/all-degrees"
-            element={
-              <PageTitle title="All Degrees">
-                <AllDegrees />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/single-degree/:slug/:id"
-            element={
-              <PageTitle title="Degree Details">
-                <SingleDegree />
-              </PageTitle>
-            }
-          />
-          {/* /**instructor pages route.   */}
-          <Route
-            path="/apply-to-become-instructor"
-            element={
-              <PageTitle title="Apply To Become Instructor">
-                <ApplyToBecomeInstructor />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/instructor-dashboard"
-            element={
-              <PrivateRoute allowedRoles={["superadmin", "instructor"]}>
-                <PageTitle title="Instructor Dashboard">
-                  <InstructorDashBoard />
+        <div id="app-scroll" className="min-h-screen overflow-y-auto">
+          <Header />
+          <div id="scroll-sentinel" style={{ height: 1 }} />
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <PageTitle title="Home">
+                  <Homepage />
                 </PageTitle>
-              </PrivateRoute>
-            }
-          />
-          {/* user pages.  */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PageTitle title="Register">
-                <Register />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/user-dashboard"
-            element={
-              <PrivateRoute allowedRoles={["user", "superadmin"]}>
-                <PageTitle title="User Dashboard">
-                  <Dashboard />
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                <PageTitle title="Home">
+                  <Homepage />
                 </PageTitle>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/forgot-password"
-            element={
-              <PageTitle title="Forgot Password">
-                <ForgotPassword />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/reset-password"
-            element={
-              <PageTitle title="Reset Password">
-                <ResetPassword />
-              </PageTitle>
-            }
-          />
-          <Route
-            path="/profile/:id"
-            element={
-              <PrivateRoute>
-                <PageTitle title="Profile">
-                  <Profile />
+              }
+            />
+            <Route
+              path="/homepage"
+              element={
+                <PageTitle title="Home">
+                  <Homepage />
                 </PageTitle>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/update-profile/:id"
-            element={
-              <PrivateRoute>
-                <PageTitle title="Update Profile">
-                  <UpdateProfile />
+              }
+            />
+            <Route
+              path="/all-blogs"
+              element={
+                <PageTitle title="All Blogs">
+                  <AllBlogs />
                 </PageTitle>
-              </PrivateRoute>
-            }
-          />
-          {/* student dashbaord.  */}
-          <Route
-            path="/student-dashboard"
-            element={
-              <PrivateRoute>
-                <PageTitle title="Student Dashboard">
-                  <StudentDashboard />
-                </PageTitle>
-              </PrivateRoute>
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/page-not-found"
-            element={
-              <PageTitle title="404 Not Found">
-                <PageNotFound />
-              </PageTitle>
-            }
-          />
+            <Route
+              path="/single-blog/:slug/:id"
+              element={
+                <PageTitle title="Blog Details">
+                  <SingleBlog />
+                </PageTitle>
+              }
+            />
 
-          <Route
-            path="/*"
-            element={
-              <PageTitle title="404 Not Found">
-                <PageNotFound />
-              </PageTitle>
-            }
-          />
-        </Routes>
-        <Footer />
+            <Route
+              path="/my-courses/:userid"
+              element={
+                <PageTitle title="My Courses">
+                  <MyCourses />
+                </PageTitle>
+              }
+            />
+
+            <Route
+              path="/user-course/:userid/:courseid"
+              element={
+                <PageTitle title="Course">
+                  <SingleCourse />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/dummy-dashboard"
+              element={
+                <PageTitle title="Dummy Dashboard">
+                  <DummyDashboard />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/all-degrees"
+              element={
+                <PageTitle title="All Degrees">
+                  <AllDegrees />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/single-degree/:slug/:id"
+              element={
+                <PageTitle title="Degree Details">
+                  <SingleDegree />
+                </PageTitle>
+              }
+            />
+            {/* /**instructor pages route.   */}
+            <Route
+              path="/apply-to-become-instructor"
+              element={
+                <PageTitle title="Apply To Become Instructor">
+                  <ApplyToBecomeInstructor />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/instructor-dashboard"
+              element={
+                <PrivateRoute allowedRoles={["superadmin", "instructor"]}>
+                  <PageTitle title="Instructor Dashboard">
+                    <InstructorDashBoard />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+            {/* user pages.  */}
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PageTitle title="Register">
+                  <Register />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/user-dashboard"
+              element={
+                <PrivateRoute allowedRoles={["user", "superadmin"]}>
+                  <PageTitle title="User Dashboard">
+                    <Dashboard />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <PageTitle title="Forgot Password">
+                  <ForgotPassword />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <PageTitle title="Reset Password">
+                  <ResetPassword />
+                </PageTitle>
+              }
+            />
+            <Route
+              path="/profile/:id"
+              element={
+                <PrivateRoute>
+                  <PageTitle title="Profile">
+                    <Profile />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/update-profile/:id"
+              element={
+                <PrivateRoute>
+                  <PageTitle title="Update Profile">
+                    <UpdateProfile />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+            {/* student dashbaord.  */}
+            <Route
+              path="/student-dashboard"
+              element={
+                <PrivateRoute>
+                  <PageTitle title="Student Dashboard">
+                    <StudentDashboard />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/page-not-found"
+              element={
+                <PageTitle title="404 Not Found">
+                  <PageNotFound />
+                </PageTitle>
+              }
+            />
+
+            <Route
+              path="/*"
+              element={
+                <PageTitle title="404 Not Found">
+                  <PageNotFound />
+                </PageTitle>
+              }
+            />
+          </Routes>
+          <Footer />
+        </div>
+        <TopArrow scrollTargetId="app-scroll" />
       </Router>
     </AuthProvider>
   );

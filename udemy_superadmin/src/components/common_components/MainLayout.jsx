@@ -9,11 +9,16 @@ import PageTitle from "./PageTitle";
 // Pages
 import Homepage from "../../pages/common_pages/Homepage";
 import PageNotFound from "../../pages/common_pages/PageNotFound";
-// contact page.
+
+// contact pages
 import ContactUs from "../../pages/contact_pages/ContactUs";
 import AllMessages from "../../pages/contact_pages/AllMessages";
 import ReplyMessage from "../../pages/contact_pages/ReplyMessage";
 import AllReplies from "../../pages/contact_pages/AllReplies";
+import Trash from "../../pages/contact_pages/Trash";
+import Messages from "../../pages/contact_pages/Messages";
+
+// common pages
 import AboutUs from "../../pages/common_pages/AboutUs";
 import Register from "../../pages/user_pages/Register";
 import Login from "../../pages/user_pages/Login";
@@ -25,59 +30,66 @@ import AllUsers from "../../pages/superadmin_pages/AllUsers";
 import SingleUser from "../../pages/superadmin_pages/SingleUser";
 import ForgotPassword from "../../pages/user_pages/ForgotPassword";
 import ResetPassword from "../../pages/user_pages/ResetPassword";
-// category pages.
+
+// category pages
 import AddCategory from "../../pages/category_pages/AddCategory";
 import AllCategories from "../../pages/category_pages/AllCategories";
 import SingleCategory from "../../pages/category_pages/SingleCategory";
 import CategoryAllProducts from "../../pages/category_pages/CategoryAllProducts";
-// subcategory pages.
+
+// subcategory pages
 import AddSubCategory from "../../pages/subcategory_pages/AddSubcategory";
-// all subcategory pages.
 import AllSubCategories from "../../pages/subcategory_pages/AllSubCategories";
 import SingleSubCategory from "../../pages/subcategory_pages/SingleSubCategory";
 
-// blog pages.
+// blog pages
 import AddBlog from "../../pages/blog_pages/AddBlog";
 import AllBlogs from "../../pages/blog_pages/AllBlogs";
 import SingleBlog from "../../pages/blog_pages/SingleBlog";
 import UpdateBlog from "../../pages/blog_pages/UpdateBlog";
 
-// course routes. pages.
+// course pages
 import CreateCourse from "../../pages/course_pages/CreateCourse";
 import AllCourses from "../../pages/course_pages/AllCourses";
-// defree routes, pages.
+import SingleCourse from "../../pages/course_pages/SingleCourse";
+import UpdateCourse from "../../pages/course_pages/UpdateCourse";
+
+// degree pages
 import CreateDegree from "../../pages/degree_pages/CreateDegree";
 import AllDegrees from "../../pages/degree_pages/AllDegrees";
 import SingleDegree from "../../pages/degree_pages/SingleDegree";
 import UpdateDegree from "../../pages/degree_pages/UpdateDegree";
-// semister routes, pages.
+
+// semister pages
 import CreateSemister from "../../pages/semister_pages/CreateSemister";
 import AllSemisters from "../../pages/semister_pages/AllSemisters";
 import SingleSemister from "../../pages/semister_pages/SingleSemister";
 import UpdateSemister from "../../pages/semister_pages/UpdateSemister";
-import SingleCourse from "../../pages/course_pages/SingleCourse";
-import UpdateCourse from "../../pages/course_pages/UpdateCourse";
 
-// exam routes / pages.
+// exam pages
 import CreateExam from "../../pages/exam_pages/CreateExam";
 import AllExams from "../../pages/exam_pages/AllExams";
 import SingleExam from "../../pages/exam_pages/SingleExam";
 import UpdateExam from "../../pages/exam_pages/UpdateExam";
 
-// instructor pagees.
+// instructor pages
 import AllInstructorsApplications from "../../pages/instructor_pages/AllInstructorsApplications";
 import AllInstructors from "../../pages/instructor_pages/AllInstructors";
 import SingleInstructor from "../../pages/instructor_pages/SingleInstructor";
 import UpdateInstructor from "../../pages/instructor_pages/UpdateInstructor";
 import InstructorApproval from "../../pages/instructor_pages/InstructorApproval";
-// student pages.
+
+// student pages
 import CreateStudent from "../../pages/student_pages/CreateStudent";
 import AllStudents from "../../pages/student_pages/AllStudents";
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen text-gray-900">
+    <div id="app-scroll" className="h-full overflow-y-auto">
       <Header />
+      {/* Sentinel for the TopArrow observer (keep this directly under Header) */}
+      <div id="scroll-sentinel" style={{ height: 1 }} />
+
       <main className="flex-grow py-6">
         <Routes>
           <Route
@@ -110,6 +122,8 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
+
+          {/* contact pages */}
           <Route
             path="/contact-us"
             element={
@@ -118,13 +132,22 @@ const MainLayout = () => {
               </PageTitle>
             }
           />
-
           <Route
             path="/all-messages"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="All-messages">
                   <AllMessages />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Messages">
+                  <Messages />
                 </PageTitle>
               </PrivateRoute>
             }
@@ -139,7 +162,16 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
+          <Route
+            path="/trash"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Trash">
+                  <Trash />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/all-replies"
             element={
@@ -151,6 +183,7 @@ const MainLayout = () => {
             }
           />
 
+          {/* common */}
           <Route
             path="/about-us"
             element={
@@ -181,7 +214,6 @@ const MainLayout = () => {
               </PublicRoute>
             }
           />
-
           <Route
             path="/dashboard"
             element={
@@ -192,7 +224,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/forgot-password"
             element={
@@ -201,7 +232,6 @@ const MainLayout = () => {
               </PageTitle>
             }
           />
-
           <Route
             path="/reset-password"
             element={
@@ -210,7 +240,6 @@ const MainLayout = () => {
               </PageTitle>
             }
           />
-
           <Route
             path="/superadmin-dashboard"
             element={
@@ -221,7 +250,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/profile/:id"
             element={
@@ -232,7 +260,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-profile/:id"
             element={
@@ -244,29 +271,7 @@ const MainLayout = () => {
             }
           />
 
-          <Route
-            path="/all-users"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="All Users">
-                  <AllUsers />
-                </PageTitle>
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/single-user/:id"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Single User">
-                  <SingleUser />
-                </PageTitle>
-              </PrivateRoute>
-            }
-          />
-
-          {/* category routes.  */}
+          {/* categories & subcategories */}
           <Route
             path="/add-category"
             element={
@@ -277,7 +282,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/add-sub-category"
             element={
@@ -288,7 +292,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-categories"
             element={
@@ -309,7 +312,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-category/:id"
             element={
@@ -320,7 +322,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-subcategory/:id"
             element={
@@ -331,7 +332,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-category-all-products/:id"
             element={
@@ -343,7 +343,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* blog routes.  */}
+          {/* blogs */}
           <Route
             path="/add-blog"
             element={
@@ -354,7 +354,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-blogs"
             element={
@@ -365,7 +364,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-blog/:slug/:id"
             element={
@@ -376,7 +374,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-blog/:id"
             element={
@@ -388,7 +385,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* Degree pages.  */}
+          {/* degrees */}
           <Route
             path="/create-degree"
             element={
@@ -399,7 +396,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-degrees"
             element={
@@ -410,7 +406,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-degree/:slug/:id"
             element={
@@ -421,7 +416,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-degree/:slug/:id"
             element={
@@ -433,7 +427,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* LIST (GET /api/semisters) */}
+          {/* semisters */}
           <Route
             path="/all-semisters"
             element={
@@ -444,8 +438,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
-          {/* CREATE (POST /api/semisters) */}
           <Route
             path="/create-semister"
             element={
@@ -456,9 +448,8 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           {/* READ BY ID (GET /api/semisters/:id)
-    URL keeps a user-friendly slug first, like your Degree routes */}
+              URL keeps a user-friendly slug first, like your Degree routes */}
           <Route
             path="/single-semister/:slug/:id"
             element={
@@ -469,7 +460,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-semister/by-slug/:degreeId/:slug"
             element={
@@ -480,7 +470,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           {/* UPDATE BY ID (PATCH /api/semisters/:id) */}
           <Route
             path="/update-semister/:slug/:id"
@@ -493,7 +482,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* course pages.  */}
+          {/* courses */}
           <Route
             path="/create-course"
             element={
@@ -504,7 +493,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-courses"
             element={
@@ -515,7 +503,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-course/:slug/:id"
             element={
@@ -526,7 +513,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-course/:slug/:id"
             element={
@@ -538,8 +524,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* exam routes.  */}
-          {/* course pages.  */}
+          {/* exams */}
           <Route
             path="/create-exam"
             element={
@@ -550,7 +535,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-exams"
             element={
@@ -561,7 +545,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/single-exam/:slug/:id"
             element={
@@ -572,7 +555,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/update-exam/:slug/:id"
             element={
@@ -584,8 +566,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* instructor pages. routes  */}
-
+          {/* instructors */}
           <Route
             path="/all-instructors-applications"
             element={
@@ -596,7 +577,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-instructors"
             element={
@@ -607,9 +587,9 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
+          {/* Single + Update Instructor routes */}
           <Route
-            path="/single-instructor/:courseId/:slug"
+            path="/single-instructor/:instructorId/:slug"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="Instructor Details">
@@ -629,7 +609,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/instructor-approval"
             element={
@@ -641,8 +620,7 @@ const MainLayout = () => {
             }
           />
 
-          {/* student pages.  */}
-
+          {/* students */}
           <Route
             path="/student-register"
             element={
@@ -653,7 +631,6 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/all-students"
             element={
@@ -664,6 +641,8 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
+
+          {/* 404s */}
           <Route
             path="/page-not-found"
             element={
@@ -672,7 +651,6 @@ const MainLayout = () => {
               </PageTitle>
             }
           />
-
           <Route
             path="/*"
             element={
@@ -683,6 +661,7 @@ const MainLayout = () => {
           />
         </Routes>
       </main>
+
       <Footer />
     </div>
   );

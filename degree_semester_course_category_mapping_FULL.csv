@@ -1,0 +1,215 @@
+Degree,Semester,Course,Category,Subcategory
+Bachelor of Business Administration (BBA),1,Principles of Management,Business & Management,Management Fundamentals
+Bachelor of Business Administration (BBA),1,Financial Accounting I,Business & Management,Accounting & Finance Basics
+Bachelor of Business Administration (BBA),1,Business Mathematics,Business & Management,Quantitative Techniques
+Bachelor of Business Administration (BBA),1,Microeconomics for Managers,Business & Management,Economics for Business
+Bachelor of Business Administration (BBA),1,Business Communication,Business & Management,Business Communication
+Bachelor of Business Administration (BBA),1,IT Tools for Business,Business & Management,Quantitative Techniques
+Bachelor of Business Administration (BBA),2,Marketing Management,Business & Management,Marketing Management
+Bachelor of Business Administration (BBA),2,Financial Accounting II,Business & Management,Accounting & Finance Basics
+Bachelor of Business Administration (BBA),2,Macroeconomics,Business & Management,Economics for Business
+Bachelor of Business Administration (BBA),2,Business Statistics,Business & Management,Quantitative Techniques
+Bachelor of Business Administration (BBA),2,Organizational Behavior,Business & Management,Human Resource Management
+Bachelor of Business Administration (BBA),2,Environmental Studies,Business & Management,Business Law & Ethics
+Bachelor of Business Administration (BBA),3,Human Resource Management,Business & Management,Human Resource Management
+Bachelor of Business Administration (BBA),3,Financial Management,Business & Management,Accounting & Finance Basics
+Bachelor of Business Administration (BBA),3,Operations Management,Business & Management,Operations & Supply Chain
+Bachelor of Business Administration (BBA),3,Business Law,Business & Management,Business Law & Ethics
+Bachelor of Business Administration (BBA),3,Research Methodology (Intro),Business & Management,Business Analytics Foundations
+Bachelor of Business Administration (BBA),4,Consumer Behavior,Business & Management,Marketing Management
+Bachelor of Business Administration (BBA),4,Management Accounting,Business & Management,Accounting & Finance Basics
+Bachelor of Business Administration (BBA),4,Logistics & Supply Chain Basics,Business & Management,Operations & Supply Chain
+Bachelor of Business Administration (BBA),4,Entrepreneurship & Innovation,Business & Management,Entrepreneurship & Innovation
+Bachelor of Business Administration (BBA),4,Business Analytics (Foundations),Data Science,Introduction to Data Science
+Bachelor of Business Administration (BBA),5,Strategic Management,Business & Management,Strategic Management
+Bachelor of Business Administration (BBA),5,Services Marketing,Business & Management,Marketing Management
+Bachelor of Business Administration (BBA),5,International Business,Business & Management,International Business
+Bachelor of Business Administration (BBA),5,Project Management,Business & Management,Project & Program Management
+Bachelor of Business Administration (BBA),5,Elective I (Domain),Business & Management,Management Fundamentals
+Bachelor of Business Administration (BBA),6,Business Ethics & Corporate Governance,Business & Management,Business Law & Ethics
+Bachelor of Business Administration (BBA),6,Digital Marketing Fundamentals,Digital marketing,SEO and Analytics
+Bachelor of Business Administration (BBA),6,Taxation Basics,Business & Management,Taxation
+Bachelor of Business Administration (BBA),6,Capstone Project / Internship,Professional Skills,Capstone/Internship
+Bachelor of Business Administration (BBA),6,Elective II (Domain),Business & Management,Management Fundamentals
+Bachelor of Arts in Psychology (BA-PSY),1,Introduction to Psychology,Psychology,Introduction to Psychology
+Bachelor of Arts in Psychology (BA-PSY),1,Biological Psychology I,Psychology,Biological Psychology
+Bachelor of Arts in Psychology (BA-PSY),1,Statistics for Behavioral Sciences I,Data Science,Statistics for Data Science
+Bachelor of Arts in Psychology (BA-PSY),1,Psychology of Learning,Psychology,Cognitive Psychology
+Bachelor of Arts in Psychology (BA-PSY),1,Academic Writing for Social Sciences,Psychology,Social Psychology
+Bachelor of Arts in Psychology (BA-PSY),2,Developmental Psychology I,Psychology,Developmental Psychology
+Bachelor of Arts in Psychology (BA-PSY),2,Cognitive Psychology I,Psychology,Cognitive Psychology
+Bachelor of Arts in Psychology (BA-PSY),2,Research Methods I,Psychology,Research Methods
+Bachelor of Arts in Psychology (BA-PSY),2,Social Psychology I,Psychology,Social Psychology
+Bachelor of Arts in Psychology (BA-PSY),2,Statistics for Behavioral Sciences II,Data Science,Statistics for Data Science
+Bachelor of Arts in Psychology (BA-PSY),3,Developmental Psychology II,Psychology,Developmental Psychology
+Bachelor of Arts in Psychology (BA-PSY),3,Cognitive Psychology II,Psychology,Cognitive Psychology
+Bachelor of Arts in Psychology (BA-PSY),3,Psychopathology I,Psychology,Psychopathology
+Bachelor of Arts in Psychology (BA-PSY),3,Research Methods II (Design),Psychology,Research Methods
+Bachelor of Arts in Psychology (BA-PSY),3,Personality Theories,Psychology,Cognitive Psychology
+Bachelor of Arts in Psychology (BA-PSY),4,Psychopathology II,Psychology,Psychopathology
+Bachelor of Arts in Psychology (BA-PSY),4,Counseling Skills (Intro),Psychology,Counseling Skills
+Bachelor of Arts in Psychology (BA-PSY),4,Health Psychology,Psychology,Health & Positive Psychology
+Bachelor of Arts in Psychology (BA-PSY),4,Positive Psychology,Psychology,Health & Positive Psychology
+Bachelor of Arts in Psychology (BA-PSY),4,Testing & Assessment I,Psychology,Testing & Assessment
+Bachelor of Arts in Psychology (BA-PSY),5,Industrial & Organizational Psychology,Psychology,Industrial & Organizational Psychology
+Bachelor of Arts in Psychology (BA-PSY),5,Community Psychology,Psychology,Community Psychology
+Bachelor of Arts in Psychology (BA-PSY),5,Neuropsychology (Intro),Psychology,Neuropsychology
+Bachelor of Arts in Psychology (BA-PSY),5,Testing & Assessment II,Psychology,Testing & Assessment
+Bachelor of Arts in Psychology (BA-PSY),5,Elective Seminar,Psychology,Ethics & Professional Practice
+Bachelor of Arts in Psychology (BA-PSY),6,Counseling Techniques (Advanced),Psychology,Counseling Skills
+Bachelor of Arts in Psychology (BA-PSY),6,Forensic Psychology (Intro),Psychology,Forensic Psychology
+Bachelor of Arts in Psychology (BA-PSY),6,Applied Research Project,Psychology,Research Methods
+Bachelor of Arts in Psychology (BA-PSY),6,Ethics in Psychology,Psychology,Ethics & Professional Practice
+Bachelor of Arts in Psychology (BA-PSY),6,Field Work / Practicum,Psychology,Field Work & Practicum
+Bachelor of Engineering in Mechanical (BE-MECH),1,Engineering Mathematics I,Mechanical Engineering,Engineering Mathematics
+Bachelor of Engineering in Mechanical (BE-MECH),1,Engineering Physics,Mechanical Engineering,Basic Sciences (Physics/Chemistry)
+Bachelor of Engineering in Mechanical (BE-MECH),1,Engineering Chemistry,Mechanical Engineering,Basic Sciences (Physics/Chemistry)
+Bachelor of Engineering in Mechanical (BE-MECH),1,Engineering Graphics,Mechanical Engineering,Engineering Graphics & CAD
+Bachelor of Engineering in Mechanical (BE-MECH),1,Basics of Programming,Computer Science,Algorithms & Data Structures
+Bachelor of Engineering in Mechanical (BE-MECH),2,Engineering Mathematics II,Mechanical Engineering,Engineering Mathematics
+Bachelor of Engineering in Mechanical (BE-MECH),2,Mechanics of Solids,Mechanical Engineering,Mechanics of Solids
+Bachelor of Engineering in Mechanical (BE-MECH),2,Basic Electrical & Electronics,Mechanical Engineering,Basic Sciences (Physics/Chemistry)
+Bachelor of Engineering in Mechanical (BE-MECH),2,Workshop Practice,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),2,Materials Science,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),3,Thermodynamics,Mechanical Engineering,Thermodynamics & Heat Transfer
+Bachelor of Engineering in Mechanical (BE-MECH),3,Fluid Mechanics,Mechanical Engineering,Fluid Mechanics
+Bachelor of Engineering in Mechanical (BE-MECH),3,Manufacturing Processes I,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),3,Kinematics of Machines,Mechanical Engineering,Machine Design
+Bachelor of Engineering in Mechanical (BE-MECH),3,Metrology & Measurements,Mechanical Engineering,Metrology & Measurements
+Bachelor of Engineering in Mechanical (BE-MECH),4,Heat Transfer,Mechanical Engineering,Thermodynamics & Heat Transfer
+Bachelor of Engineering in Mechanical (BE-MECH),4,Theory of Machines,Mechanical Engineering,Machine Design
+Bachelor of Engineering in Mechanical (BE-MECH),4,Manufacturing Processes II,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),4,Machine Drawing & CAD,Mechanical Engineering,Engineering Graphics & CAD
+Bachelor of Engineering in Mechanical (BE-MECH),4,Numerical Methods,Mechanical Engineering,Engineering Mathematics
+Bachelor of Engineering in Mechanical (BE-MECH),5,Design of Machine Elements I,Mechanical Engineering,Machine Design
+Bachelor of Engineering in Mechanical (BE-MECH),5,Applied Thermodynamics (IC Engines),Mechanical Engineering,Thermodynamics & Heat Transfer
+Bachelor of Engineering in Mechanical (BE-MECH),5,Mechanical Vibrations,Mechanical Engineering,Mechanics of Solids
+Bachelor of Engineering in Mechanical (BE-MECH),5,Finite Element Methods (Intro),Mechanical Engineering,Mechanics of Solids
+Bachelor of Engineering in Mechanical (BE-MECH),5,Open Elective I,Mechanical Engineering,Projects & Internship
+Bachelor of Engineering in Mechanical (BE-MECH),6,Design of Machine Elements II,Mechanical Engineering,Machine Design
+Bachelor of Engineering in Mechanical (BE-MECH),6,Refrigeration & Air Conditioning,Mechanical Engineering,Thermodynamics & Heat Transfer
+Bachelor of Engineering in Mechanical (BE-MECH),6,Mechatronics (Intro),Mechanical Engineering,Mechatronics & Robotics
+Bachelor of Engineering in Mechanical (BE-MECH),6,Operations Research,Mechanical Engineering,Operations Research
+Bachelor of Engineering in Mechanical (BE-MECH),6,Open Elective II,Mechanical Engineering,Projects & Internship
+Bachelor of Engineering in Mechanical (BE-MECH),7,Automobile Engineering,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),7,Power Plant Engineering,Mechanical Engineering,Energy Systems
+Bachelor of Engineering in Mechanical (BE-MECH),7,Industrial Engineering,Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),7,Additive Manufacturing (Intro),Mechanical Engineering,Materials & Manufacturing
+Bachelor of Engineering in Mechanical (BE-MECH),7,Program Elective I,Mechanical Engineering,Projects & Internship
+Bachelor of Engineering in Mechanical (BE-MECH),8,Robotics (Intro),Mechanical Engineering,Mechatronics & Robotics
+Bachelor of Engineering in Mechanical (BE-MECH),8,Energy Systems & Sustainability,Mechanical Engineering,Energy Systems
+Bachelor of Engineering in Mechanical (BE-MECH),8,Project Management for Engineers,Mechanical Engineering,Projects & Internship
+Bachelor of Engineering in Mechanical (BE-MECH),8,Major Project / Internship,Mechanical Engineering,Projects & Internship
+Bachelor of Engineering in Mechanical (BE-MECH),8,Program Elective II,Mechanical Engineering,Projects & Internship
+Diploma in Web Development (DIP-WEBDEV),1,HTML & CSS Fundamentals,Web Development,HTML & CSS Fundamentals
+Diploma in Web Development (DIP-WEBDEV),1,Modern JavaScript (ES6+),Web Development,JavaScript Basics
+Diploma in Web Development (DIP-WEBDEV),1,Git & GitHub Basics,Web Development,Deployment & DevOps for Web
+Diploma in Web Development (DIP-WEBDEV),1,Responsive Web Design,Web Development,Responsive Web Design
+Diploma in Web Development (DIP-WEBDEV),1,UI/UX Foundations,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+Diploma in Web Development (DIP-WEBDEV),2,Frontend with React,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+Diploma in Web Development (DIP-WEBDEV),2,Backend with Node.js & Express,Web Development,"Backend Development (Node.js, Express)"
+Diploma in Web Development (DIP-WEBDEV),2,Databases (MongoDB / SQL),Web Development,Databases for Web (SQL & NoSQL)
+Diploma in Web Development (DIP-WEBDEV),2,Next.js Fundamentals,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+Diploma in Web Development (DIP-WEBDEV),2,Full-Stack Capstone Project,Web Development,Full-Stack Web Development
+Certificate in Digital Marketing (CERT-DM),1,Digital Marketing Overview,Digital marketing,SEO and Analytics
+Certificate in Digital Marketing (CERT-DM),1,Search Engine Optimization (SEO),Digital marketing,SEO and Analytics
+Certificate in Digital Marketing (CERT-DM),1,Search Engine Marketing (SEM),Digital marketing,SEO and Analytics
+Certificate in Digital Marketing (CERT-DM),1,Social Media Marketing,Digital marketing,SEO and Analytics
+Certificate in Digital Marketing (CERT-DM),1,Analytics & Reporting (Intro),Digital marketing,SEO and Analytics
+Master of Computer Applications (MCA),1,Advanced Data Structures & Algorithms,Computer Science,Algorithms & Data Structures
+Master of Computer Applications (MCA),1,Computer Organization & Architecture,Computer Science,Computer Organization & Architecture
+Master of Computer Applications (MCA),1,Database Systems,Sql,SQL Basics
+Master of Computer Applications (MCA),1,Discrete Mathematics for Computing,Computer Science,Algorithms & Data Structures
+Master of Computer Applications (MCA),1,Programming in Python/Java,Python,Core Python
+Master of Computer Applications (MCA),2,Operating Systems,Computer Science,Operating Systems
+Master of Computer Applications (MCA),2,Computer Networks,Computer Science,Computer Networks
+Master of Computer Applications (MCA),2,Software Engineering,Computer Science,Software Engineering
+Master of Computer Applications (MCA),2,Web Technologies,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+Master of Computer Applications (MCA),2,Data Warehousing & Mining (Intro),Data Science,Introduction to Data Science
+Master of Computer Applications (MCA),3,Distributed Systems,Computer Science,Distributed Systems
+Master of Computer Applications (MCA),3,Cloud Computing (Intro),Computer Science,Cloud & DevOps
+Master of Computer Applications (MCA),3,Information Security Fundamentals,Computer Science,Information Security Fundamentals
+Master of Computer Applications (MCA),3,Machine Learning (Intro),Data Science,Machine Learning Basics
+Master of Computer Applications (MCA),3,Elective I,Computer Science,Project/Dissertation
+Master of Computer Applications (MCA),4,Mobile Application Development,Computer Science,Mobile Application Development
+Master of Computer Applications (MCA),4,Big Data Processing (Intro),Data Science,Big Data & Spark
+Master of Computer Applications (MCA),4,DevOps & CI/CD,Computer Science,Cloud & DevOps
+Master of Computer Applications (MCA),4,Project / Dissertation,Computer Science,Project/Dissertation
+Master of Computer Applications (MCA),4,Elective II,Computer Science,Project/Dissertation
+Master of Business Administration (Finance) (MBA-FIN),1,Managerial Economics,Business & Management,Economics for Business
+Master of Business Administration (Finance) (MBA-FIN),1,Financial Accounting & Reporting,Business & Management,Accounting & Finance Basics
+Master of Business Administration (Finance) (MBA-FIN),1,Quantitative Techniques for Managers,Business & Management,Quantitative Techniques
+Master of Business Administration (Finance) (MBA-FIN),1,Marketing Management,Business & Management,Marketing Management
+Master of Business Administration (Finance) (MBA-FIN),1,Organizational Behavior,Business & Management,Human Resource Management
+Master of Business Administration (Finance) (MBA-FIN),2,Corporate Finance,Finance,Corporate Finance
+Master of Business Administration (Finance) (MBA-FIN),2,Financial Markets & Institutions,Finance,Financial Markets & Institutions
+Master of Business Administration (Finance) (MBA-FIN),2,Operations & Supply Chain Management,Business & Management,Operations & Supply Chain
+Master of Business Administration (Finance) (MBA-FIN),2,Business Research Methods,Business & Management,Business Analytics Foundations
+Master of Business Administration (Finance) (MBA-FIN),2,Business Communication & Negotiation,Business & Management,Business Communication
+Master of Business Administration (Finance) (MBA-FIN),3,Investment Analysis & Portfolio Management,Finance,Investment Analysis & Portfolio
+Master of Business Administration (Finance) (MBA-FIN),3,Derivatives & Risk Management,Finance,Derivatives & Risk Management
+Master of Business Administration (Finance) (MBA-FIN),3,Management Accounting & Control Systems,Business & Management,Accounting & Finance Basics
+Master of Business Administration (Finance) (MBA-FIN),3,Banking & Financial Services,Finance,Banking & Financial Services
+Master of Business Administration (Finance) (MBA-FIN),3,Elective I,Finance,Corporate Finance
+Master of Business Administration (Finance) (MBA-FIN),4,International Finance,Finance,International Finance
+Master of Business Administration (Finance) (MBA-FIN),4,Financial Modeling (Excel/Python),Finance,Financial Modeling (Excel/Python)
+Master of Business Administration (Finance) (MBA-FIN),4,Strategic Management,Business & Management,Strategic Management
+Master of Business Administration (Finance) (MBA-FIN),4,FinTech & Analytics,Finance,FinTech & Analytics
+Master of Business Administration (Finance) (MBA-FIN),4,Capstone Project / Internship,Professional Skills,Capstone/Internship
+Doctor of Philosophy in Physics (PhD-PHY),1,Advanced Classical Mechanics,Physics,Classical Mechanics (Advanced)
+Doctor of Philosophy in Physics (PhD-PHY),1,Quantum Mechanics I,Physics,Quantum Mechanics
+Doctor of Philosophy in Physics (PhD-PHY),1,Mathematical Methods for Physicists,Physics,Mathematical Methods
+Doctor of Philosophy in Physics (PhD-PHY),1,Research Methodology & Scientific Writing,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),1,Departmental Seminar I,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),2,Statistical Mechanics,Physics,Statistical Mechanics
+Doctor of Philosophy in Physics (PhD-PHY),2,Quantum Mechanics II,Physics,Quantum Mechanics
+Doctor of Philosophy in Physics (PhD-PHY),2,Electrodynamics (Advanced),Physics,Electrodynamics
+Doctor of Philosophy in Physics (PhD-PHY),2,Experimental Techniques / Computational Physics,Physics,Experimental & Computational Physics
+Doctor of Philosophy in Physics (PhD-PHY),2,Departmental Seminar II,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),3,Special Topics in Condensed Matter,Physics,Condensed Matter Physics
+Doctor of Philosophy in Physics (PhD-PHY),3,Optics & Photonics (Advanced),Physics,Optics & Photonics
+Doctor of Philosophy in Physics (PhD-PHY),3,High-Energy Physics (Intro),Physics,High-Energy Physics
+Doctor of Philosophy in Physics (PhD-PHY),3,Comprehensive Literature Survey,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),3,Qualifying Examination Preparation,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),4,Research Progress Seminar,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),4,Thesis Proposal / Literature Review,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),4,Research & Publication Work,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),5,Research Progress Seminar,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),5,Thesis Proposal / Literature Review,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),5,Research & Publication Work,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),6,Research Progress Seminar,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),6,Thesis Proposal / Literature Review,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),6,Research & Publication Work,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),7,Research Progress Seminar,Physics,Seminars & Journal Club
+Doctor of Philosophy in Physics (PhD-PHY),7,Thesis Proposal / Literature Review,Physics,Thesis/Dissertation
+Doctor of Philosophy in Physics (PhD-PHY),7,Research & Publication Work,Physics,Thesis/Dissertation
+Postgraduate Diploma in Cyber Security (PGD-CYBER),1,Foundations of Cyber Security,Cyber Security,Foundations of Cyber Security
+Postgraduate Diploma in Cyber Security (PGD-CYBER),1,Network Security,Cyber Security,Network Security
+Postgraduate Diploma in Cyber Security (PGD-CYBER),1,Linux & Scripting for Security,Cyber Security,Linux & Scripting for Security
+Postgraduate Diploma in Cyber Security (PGD-CYBER),1,Web Application Security (Intro),Cyber Security,Web Application Security
+Postgraduate Diploma in Cyber Security (PGD-CYBER),1,Cryptography (Basics),Cyber Security,Cryptography (Basics)
+Postgraduate Diploma in Cyber Security (PGD-CYBER),2,Ethical Hacking & Penetration Testing,Cyber Security,Ethical Hacking & Penetration Testing
+Postgraduate Diploma in Cyber Security (PGD-CYBER),2,Incident Response & Forensics,Cyber Security,Incident Response & Forensics
+Postgraduate Diploma in Cyber Security (PGD-CYBER),2,Cloud Security (Intro),Cyber Security,Cloud Security
+Postgraduate Diploma in Cyber Security (PGD-CYBER),2,Security Operations Center (SOC) Fundamentals,Cyber Security,SOC Fundamentals
+Postgraduate Diploma in Cyber Security (PGD-CYBER),2,Blue Team vs Red Team Lab / Project,Cyber Security,Blue vs Red Team Labs
+Master of Data Science (MDS),1,Statistics & Probability for Data Science,Data Science,Statistics for Data Science
+Master of Data Science (MDS),1,Programming for Data Science (Python),Python,Python for Data Science
+Master of Data Science (MDS),1,Linear Algebra & Optimization,Data Science,Statistics for Data Science
+Master of Data Science (MDS),1,Data Wrangling & Visualization,Data Science,Data Wrangling & Cleaning
+Master of Data Science (MDS),1,Communication for Data Professionals,Professional Skills,Communication for Tech Professionals
+Master of Data Science (MDS),2,Machine Learning I (Supervised),Data Science,Machine Learning Basics
+Master of Data Science (MDS),2,Databases & Data Engineering Basics,Sql,SQL Basics
+Master of Data Science (MDS),2,Experimentation & A/B Testing,Data Science,Exploratory Data Analysis (EDA)
+Master of Data Science (MDS),2,Responsible AI & Ethics,Professional Skills,Ethics & Governance
+Master of Data Science (MDS),2,Elective I,Professional Skills,Research Methodology & Writing
+Master of Data Science (MDS),3,Machine Learning II (Unsupervised/Advanced),Data Science,Machine Learning Basics
+Master of Data Science (MDS),3,Deep Learning (Intro),Data Science,Deep Learning
+Master of Data Science (MDS),3,Big Data Systems (Spark),Data Science,Big Data & Spark
+Master of Data Science (MDS),3,MLOps & Model Deployment,Web Development,Deployment & DevOps for Web
+Master of Data Science (MDS),3,Elective II,Professional Skills,Research Methodology & Writing
+Master of Data Science (MDS),4,Time Series & Forecasting,Data Science,Data Science Projects & Case Studies
+Master of Data Science (MDS),4,NLP (Intro),Data Science,Natural Language Processing (NLP)
+Master of Data Science (MDS),4,Applied Analytics for Business/Science,Data Science,Data Science Projects & Case Studies
+Master of Data Science (MDS),4,Capstone Project,Professional Skills,Capstone/Internship
+Master of Data Science (MDS),4,Seminar & Portfolio,Professional Skills,Seminar & Portfolio

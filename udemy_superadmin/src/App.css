@@ -1,0 +1,19 @@
+/* Window shouldn't scroll */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;           /* <— important */
+}
+
+/* App container scrolls (hide scrollbar UI) */
+#app-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;   /* IE/Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+#app-scroll::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0;
+  display: none;
+}

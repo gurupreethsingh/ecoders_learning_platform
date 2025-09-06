@@ -46,7 +46,6 @@ const addCategory = async (req, res) => {
   }
 };
 
-
 // Get all categories
 // ✅ FINAL getAllCategories
 const getAllCategories = async (req, res) => {
@@ -66,8 +65,6 @@ const getAllCategories = async (req, res) => {
     res.status(500).json({ message: "Error fetching categories" });
   }
 };
-
-
 
 // Get category by ID
 const getCategoryById = async (req, res) => {
@@ -170,7 +167,6 @@ const getCategoryCourseCounts = async (req, res) => {
         const CourseCount = await Course.countDocuments({
           category: category._id,
         });
-
         return {
           categoryId: category._id,
           categoryName: category.category_name,

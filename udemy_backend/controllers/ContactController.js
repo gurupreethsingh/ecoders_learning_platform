@@ -188,3 +188,98 @@ exports.getMessagesCount = async (req, res) => {
     res.status(500).json({ error: "An error occurred while fetching counts." });
   }
 };
+
+// --- TRASH / SOFT DELETE FEATURES ---
+
+// Move one message to trash (soft delete)
+exports.moveMessageToTrash = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // allow unknown fields by using strict:false
+    const result = await ContactModel.findByIdAndUpdate(
+      id,
+      { $set: { isTrashed: true, trashedAt: new Date() } },
+      { new: true, strict: false, lean: true }
+    );
+    if (!result) return res.status(404).json({ error: "Message not found" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Moved to trash", result });
+  } catch (error) {
+    console.error("moveMessageToTrash error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Get trashed messages (auto-purge older than 30 days first)
+exports.getTrashedMessages = async (req, res) => {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    // purge silently
+    await ContactModel.deleteMany(
+      { isTrashed: true, trashedAt: { $lt: cutoff } },
+      { strict: false }
+    );
+
+    const trashed = await ContactModel.find({ isTrashed: true })
+      .sort({ trashedAt: -1 })
+      .lean();
+    return res.status(200).json(trashed);
+  } catch (error) {
+    console.error("getTrashedMessages error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Explicit purge endpoint: delete all trashed older than 30 days
+exports.purgeOldTrashed = async (req, res) => {
+  try {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const result = await ContactModel.deleteMany(
+      { isTrashed: true, trashedAt: { $lt: cutoff } },
+      { strict: false }
+    );
+    return res
+      .status(200)
+      .json({ success: true, deletedCount: result.deletedCount || 0 });
+  } catch (error) {
+    console.error("purgeOldTrashed error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Permanently delete a single message
+exports.deleteMessagePermanently = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await ContactModel.deleteOne({ _id: id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    return res
+      .status(200)
+      .json({ success: true, message: "Deleted permanently" });
+  } catch (error) {
+    console.error("deleteMessagePermanently error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Restore a trashed message back to active list
+exports.restoreMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await ContactModel.findByIdAndUpdate(
+      id,
+      { $set: { isTrashed: false }, $unset: { trashedAt: "" } },
+      { new: true, strict: false, lean: true }
+    );
+    if (!result) return res.status(404).json({ error: "Message not found" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Message restored", result });
+  } catch (error) {
+    console.error("restoreMessage error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};

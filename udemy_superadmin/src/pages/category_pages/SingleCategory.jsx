@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { FaImage, FaUser, FaCalendarAlt } from "react-icons/fa";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { FaImage, FaUser, FaCalendarAlt, FaIdBadge } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
@@ -8,6 +8,57 @@ import globalBackendRoute from "../../config/Config";
 import ModernFileInput from "../../components/common_components/ModernFileInput";
 import ModernTextInput from "../../components/common_components/MordernTextInput";
 
+/* ---------- SmartImage (no flicker, cached fallbacks) ---------- */
+const failedImageCache = new Set();
+
+function SmartImage({
+  src,
+  alt = "Category",
+  fallback = "/images/default-category.jpg",
+  containerClass = "",
+  imgClass = "",
+}) {
+  const initialSrc = useMemo(() => {
+    if (!src || failedImageCache.has(src)) return fallback;
+    return src;
+  }, [src, fallback]);
+
+  const [currentSrc, setCurrentSrc] = useState(initialSrc);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!src || failedImageCache.has(src)) {
+      setCurrentSrc(fallback);
+      setLoaded(true); // already using fallback; no fade flash
+    } else {
+      setCurrentSrc(src);
+      setLoaded(false);
+    }
+  }, [src, fallback]);
+
+  return (
+    <div
+      className={`overflow-hidden rounded-xl bg-gray-100 border ${containerClass}`}
+    >
+      <img
+        src={currentSrc}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        draggable="false"
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          if (src) failedImageCache.add(src);
+          if (currentSrc !== fallback) setCurrentSrc(fallback);
+        }}
+        className={`${imgClass} object-cover transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </div>
+  );
+}
+
 export default function SingleCategory() {
   const [categoryData, setCategoryData] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -15,20 +66,28 @@ export default function SingleCategory() {
   const [newCategoryImage, setNewCategoryImage] = useState(null);
   const { id } = useParams();
 
-  useEffect(() => {
-    const fetchCategoryData = async () => {
-      try {
-        const response = await axios.get(
-          `${globalBackendRoute}/api/single-category/${id}`
-        );
-        setCategoryData(response.data);
-        setUpdatedCategoryName(response.data.category_name);
-      } catch (error) {
-        console.error("Error fetching category data:", error);
-      }
-    };
-    fetchCategoryData();
+  const getImageUrl = useCallback((imagePath) => {
+    if (!imagePath || typeof imagePath !== "string") return null;
+    const normalized = imagePath.replace(/\\/g, "/").replace(/^\/+/, "");
+    return `${globalBackendRoute}/${normalized}`;
+  }, []);
+
+  const fetchCategoryData = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `${globalBackendRoute}/api/single-category/${id}`
+      );
+      const data = response.data || null;
+      setCategoryData(data);
+      setUpdatedCategoryName(data?.category_name || "");
+    } catch (error) {
+      console.error("Error fetching category data:", error);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchCategoryData();
+  }, [fetchCategoryData]);
 
   const handleUpdateCategory = async () => {
     if (!updatedCategoryName.trim()) {
@@ -47,25 +106,23 @@ export default function SingleCategory() {
         `${globalBackendRoute}/api/update-category/${id}`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
       alert("Category updated successfully!");
-      window.location.reload();
+      setEditMode(false);
+      setNewCategoryImage(null);
+      // Refresh from server to reflect any updated image path, timestamps, etc.
+      await fetchCategoryData();
     } catch (error) {
       console.error("Error updating category:", error);
       alert("Failed to update the category. Please try again.");
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/150";
-    return `${globalBackendRoute}/${imagePath.replace(/\\/g, "/")}`;
-  };
-
   if (!categoryData) return <div className="text-center py-8">Loading...</div>;
+
+  const imageUrl = getImageUrl(categoryData.category_image);
 
   return (
     <motion.div
@@ -75,21 +132,18 @@ export default function SingleCategory() {
       className="containerWidth my-6"
     >
       <div className="flex flex-col sm:flex-row sm:items-start items-center gap-6">
-        {/* Category Image */}
+        {/* Category Image (flicker-free) */}
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-auto h-full sm:w-48 sm:h-48"
+          className="w-40 h-40 sm:w-48 sm:h-48"
         >
-         <img
-  src={
-    categoryData.category_image
-      ? getImageUrl(categoryData.category_image)
-      : "https://via.placeholder.com/150"
-  }
-  alt={categoryData.category_name || "Category"}
-  className="w-full h-full object-cover rounded-xl border"
-/>
+          <SmartImage
+            src={imageUrl}
+            alt={categoryData.category_name || "Category"}
+            containerClass="w-full h-full"
+            imgClass="w-full h-full"
+          />
         </motion.div>
 
         {/* Category Details */}
@@ -103,6 +157,18 @@ export default function SingleCategory() {
           </motion.h3>
 
           <div className="border-t border-gray-200 divide-y divide-gray-100">
+            {/* Category ID (read-only) */}
+            <CategoryField
+              icon={<FaIdBadge className="text-purple-600" />}
+              label="Category ID"
+              value={
+                <code className="text-xs sm:text-sm bg-gray-100 px-2 py-1 rounded">
+                  {categoryData?._id}
+                </code>
+              }
+            />
+
+            {/* Category Name */}
             <CategoryField
               icon={<FaUser className="text-blue-600" />}
               label="Category Name"
@@ -118,12 +184,29 @@ export default function SingleCategory() {
               }
             />
 
+            {/* Created At */}
             <CategoryField
               icon={<FaCalendarAlt className="text-green-600" />}
               label="Created At"
-              value={new Date(categoryData.createdAt).toLocaleDateString()}
+              value={
+                categoryData?.createdAt
+                  ? new Date(categoryData.createdAt).toLocaleString()
+                  : "-"
+              }
             />
 
+            {/* Updated At */}
+            <CategoryField
+              icon={<FaCalendarAlt className="text-amber-600" />}
+              label="Updated At"
+              value={
+                categoryData?.updatedAt
+                  ? new Date(categoryData.updatedAt).toLocaleString()
+                  : "-"
+              }
+            />
+
+            {/* New Image (only in edit mode) */}
             {editMode && (
               <CategoryField
                 icon={<FaImage className="text-indigo-600" />}

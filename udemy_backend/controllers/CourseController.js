@@ -555,48 +555,54 @@ exports.createCourse = async (req, res) => {
 
 exports.listCourses = async (req, res) => {
   try {
-    const filter = buildFilter(req.query);
-
-    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const page = Math.max(1, parseInt(req.query.page ?? "1", 10));
     const limit = Math.max(
       1,
-      Math.min(200, parseInt(req.query.limit || "20", 10))
+      Math.min(5000, parseInt(req.query.limit ?? "20", 10))
     );
-    const skip = (page - 1) * limit;
+    const sortBy = (req.query.sortBy || "createdAt").toString();
+    const order =
+      (req.query.order || "desc").toString().toLowerCase() === "asc" ? 1 : -1;
+    const search = (req.query.search || "").trim();
 
-    const sortBy = String(req.query.sortBy || "createdAt");
-    const sortDir = String(req.query.sortDir || "desc");
-    const sort = applySort(sortBy, sortDir);
-
-    const projection = {};
-    if (filter.$text) {
-      projection.score = { $meta: "textScore" };
+    // Build query
+    const q = {};
+    if (search) {
+      // If you have a text index on Course fields, prefer $text:
+      // q.$text = { $search: search };
+      // Otherwise simple regex on title/description:
+      q.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { shortDescription: { $regex: search, $options: "i" } },
+        { slug: { $regex: search, $options: "i" } },
+      ];
     }
 
-    const [rows, total] = await Promise.all([
-      Course.find(filter, projection)
-        .sort(filter.$text ? { score: { $meta: "textScore" } } : sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Course.countDocuments(filter),
-    ]);
+    const total = await Course.countDocuments(q);
+
+    const items = await Course.find(q)
+      .sort({ [sortBy]: order })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      // populate category so your AllCategories.jsx can resolve names
+      .populate("category", "category_name name")
+      .lean();
 
     res.json({
-      data: rows,
+      data: items,
       meta: {
         page,
         limit,
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
         sortBy,
-        sortDir,
-        filter,
+        order: order === 1 ? "asc" : "desc",
       },
     });
   } catch (err) {
     console.error("listCourses error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Failed to list courses" });
   }
 };
 

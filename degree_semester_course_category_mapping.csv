@@ -1,0 +1,72 @@
+Degree,Semester,Course,Category,Subcategory
+BBA,1,Principles of Management,Business & Management,Management Fundamentals
+BBA,1,Financial Accounting I,Business & Management,Accounting & Finance Basics
+BBA,1,Business Mathematics,Business & Management,Quantitative Techniques
+BBA,1,Microeconomics for Managers,Business & Management,Economics for Business
+BBA,1,Business Communication,Business & Management,Business Communication
+BBA,2,Marketing Management,Business & Management,Management Fundamentals
+BBA,2,Financial Accounting II,Business & Management,Accounting & Finance Basics
+BBA,2,Macroeconomics,Business & Management,Economics for Business
+BBA,2,Business Statistics,Business & Management,Quantitative Techniques
+BBA,2,Organizational Behavior,Business & Management,Human Resource Management
+BBA,3,Human Resource Management,Business & Management,Human Resource Management
+BBA,3,Financial Management,Finance,Corporate Finance
+BBA,3,Operations Management,Business & Management,Operations & Supply Chain
+BBA,3,Business Law,Business & Management,Business Law & Ethics
+BBA,3,Research Methodology (Intro),Professional Skills,Research Methodology & Writing
+BBA,4,Consumer Behavior,Business & Management,Marketing
+BBA,4,Management Accounting,Business & Management,Accounting & Finance Basics
+BBA,4,Logistics & Supply Chain Basics,Business & Management,Operations & Supply Chain
+BBA,4,Entrepreneurship & Innovation,Business & Management,Entrepreneurship & Innovation
+BBA,5,Strategic Management,Business & Management,Strategic Management
+BBA,5,International Business,Business & Management,International Business
+BBA,5,Project Management,Business & Management,Project & Program Management
+BBA,6,Business Ethics & Corporate Governance,Business & Management,Business Law & Ethics
+BBA,6,Digital Marketing Fundamentals,Digital marketing,SEO and Analytics
+BBA,6,Taxation Basics,Business & Management,Taxation
+BA Psychology,1,Introduction to Psychology,Psychology,Introduction to Psychology
+BA Psychology,1,Biological Psychology I,Psychology,Biological Psychology
+BA Psychology,1,Statistics for Behavioral Sciences I,Psychology,Research Methods
+BA Psychology,2,Developmental Psychology I,Psychology,Developmental Psychology
+BA Psychology,2,Cognitive Psychology I,Psychology,Cognitive Psychology
+BA Psychology,3,Psychopathology I,Psychology,Psychopathology
+BA Psychology,3,Research Methods II,Psychology,Research Methods
+BA Psychology,4,Counseling Skills (Intro),Psychology,Counseling Skills
+BA Psychology,4,Testing & Assessment I,Psychology,Testing & Assessment
+BA Psychology,5,Industrial & Organizational Psychology,Psychology,Industrial & Organizational Psychology
+BA Psychology,5,Neuropsychology,Psychology,Neuropsychology
+BA Psychology,6,Forensic Psychology (Intro),Psychology,Forensic Psychology
+BA Psychology,6,Ethics in Psychology,Psychology,Ethics & Professional Practice
+Diploma Web Dev,1,HTML & CSS Fundamentals,Web Development,HTML & CSS Fundamentals
+Diploma Web Dev,1,Modern JavaScript (ES6+),Web Development,JavaScript Basics
+Diploma Web Dev,1,Responsive Web Design,Web Development,Responsive Web Design
+Diploma Web Dev,2,Frontend with React,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+Diploma Web Dev,2,Backend with Node.js & Express,Web Development,"Backend Development (Node.js, Express)"
+Diploma Web Dev,2,Databases (MongoDB / SQL),Web Development,Databases for Web (SQL & NoSQL)
+MCA,1,Database Systems,Sql,SQL Basics
+MCA,1,Programming in Python/Java,Python,Core Python
+MCA,2,Software Engineering,Software Testing,Automation Testing Fundamentals
+MCA,2,Web Technologies,Web Development,"Frontend Frameworks (React, Angular, Vue)"
+MCA,3,Information Security Fundamentals,Cyber Security,Foundations of Cyber Security
+MCA,3,Machine Learning (Intro),Data Science,Machine Learning Basics
+MCA,4,Big Data Processing,Data Science,Big Data & Spark
+MCA,4,DevOps & CI/CD,Web Development,Deployment & DevOps for Web
+MBA Finance,1,Corporate Finance,Finance,Corporate Finance
+MBA Finance,2,Financial Markets,Finance,Financial Markets & Institutions
+MBA Finance,3,Derivatives & Risk Management,Finance,Derivatives & Risk Management
+MBA Finance,4,Financial Modeling,Finance,Financial Modeling (Excel/Python)
+PGD Cyber,1,Foundations of Cyber Security,Cyber Security,Foundations of Cyber Security
+PGD Cyber,1,Network Security,Cyber Security,Network Security
+PGD Cyber,1,Web Application Security,Cyber Security,Web Application Security
+PGD Cyber,2,Ethical Hacking & Penetration Testing,Cyber Security,Ethical Hacking & Penetration Testing
+PGD Cyber,2,Incident Response & Forensics,Cyber Security,Incident Response & Forensics
+PGD Cyber,2,Cloud Security,Cyber Security,Cloud Security
+MDS,1,Statistics & Probability,Data Science,Statistics for Data Science
+MDS,1,Programming for Data Science,Python,Python for Data Science
+MDS,1,Data Wrangling & Visualization,Data Science,Data Wrangling & Cleaning
+MDS,2,Machine Learning I (Supervised),Data Science,Machine Learning Basics
+MDS,2,Databases & Data Engineering Basics,Sql,SQL Basics
+MDS,3,Deep Learning,Data Science,Deep Learning
+MDS,3,Big Data Systems (Spark),Data Science,Big Data & Spark
+MDS,4,NLP (Intro),Data Science,Natural Language Processing (NLP)
+MDS,4,Applied Analytics,Data Science,Data Science Projects & Case Studies

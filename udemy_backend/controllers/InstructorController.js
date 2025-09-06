@@ -44,16 +44,10 @@ const populateSlim = [
 ];
 
 /* =============================== CREATE/APPLY ============================== */
-/**
- * Public-facing apply/create endpoint.
- * Accepts identity/profile, arrays, relations (optional at apply time),
- * sets applicationStatus=pending.
- */
 async function apply(req, res) {
   try {
     const b = req.body || {};
 
-    // identity / profile
     const firstName = (b.firstName || "").trim();
     const lastName = (b.lastName || "").trim();
     const email = (b.email || "").trim().toLowerCase();
@@ -66,7 +60,6 @@ async function apply(req, res) {
     }
 
     const doc = await Instructor.create({
-      // identity
       firstName,
       lastName,
       email,
@@ -77,7 +70,6 @@ async function apply(req, res) {
       dateOfBirth: b.dateOfBirth ? new Date(b.dateOfBirth) : undefined,
       address: b.address || undefined,
 
-      // teaching profile
       languages: csvToArray(b.languages),
       skills: csvToArray(b.skills),
       areasOfExpertise: csvToArray(b.areasOfExpertise),
@@ -86,7 +78,6 @@ async function apply(req, res) {
       certifications: Array.isArray(b.certifications) ? b.certifications : [],
       availability: Array.isArray(b.availability) ? b.availability : [],
 
-      // billing & docs
       hourlyRate:
         b.hourlyRate === "" || b.hourlyRate == null
           ? undefined
@@ -94,23 +85,19 @@ async function apply(req, res) {
       resumeUrl: b.resumeUrl || undefined,
       idProofUrl: b.idProofUrl || undefined,
 
-      // socials
       website: b.website || undefined,
       linkedin: b.linkedin || undefined,
       github: b.github || undefined,
       youtube: b.youtube || undefined,
       twitter: b.twitter || undefined,
 
-      // payouts
       upiId: b.upiId || undefined,
       payoutPreference: b.payoutPreference || "UPI",
 
-      // relations (optional here)
       degrees: toObjectIdArray(b.degrees),
       semesters: toObjectIdArray(b.semesters),
       courses: toObjectIdArray(b.courses),
 
-      // flags
       isEmailVerified: !!b.isEmailVerified,
       isKycVerified: !!b.isKycVerified,
       isActive: b.isActive != null ? !!b.isActive : true,
@@ -127,21 +114,16 @@ async function apply(req, res) {
 }
 
 /* ================================== LIST ================================== */
-/**
- * Flexible list with regex-based search (no text index needed).
- * Supports filtering by status/active/deleted/location/relations/verification/rating.
- * Pagination + sorting.
- */
 async function list(req, res) {
   try {
     const {
-      q, // regex search: firstName/lastName/email/skills/languages/bio
-      status, // pending|approved|rejected|deleted
-      active, // true|false
-      deleted, // true|false
-      emailVerified, // true|false
-      kycVerified, // true|false
-      minRating, // number
+      q,
+      status,
+      active,
+      deleted,
+      emailVerified,
+      kycVerified,
+      minRating,
       city,
       state,
       degree,
@@ -154,7 +136,6 @@ async function list(req, res) {
 
     const filter = {};
 
-    // regex search across multiple fields
     if (q && q !== "all") {
       const rx = like(q);
       filter.$or = [
@@ -255,12 +236,34 @@ async function counts(req, res) {
 }
 
 /* ================================ GET BY ID ================================ */
+// controllers/InstructorController.js
 async function getById(req, res) {
   try {
     const { id } = req.params;
-    const doc = await Instructor.findById(id).populate(populateSlim);
+    const soft = String(req.query.soft || "") === "1"; // ← add this
+
+    const isObjId = Types.ObjectId.isValid(id);
+    console.log("[GET] /api/instructors/get-by-id/:id", { id, isObjId });
+
+    let doc = null;
+    if (isObjId) doc = await Instructor.findById(id).populate(populateSlim);
     if (!doc)
-      return res.status(404).json({ success: false, message: "Not found" });
+      doc = await Instructor.findOne({ _id: id }).populate(populateSlim);
+
+    if (!doc) {
+      const payload = {
+        success: false,
+        message: "Not found",
+        debug: {
+          id,
+          isObjectId: isObjId,
+          totalInstructors: await Instructor.countDocuments({}),
+        },
+      };
+      // ← use soft mode to avoid 404
+      return soft ? res.json(payload) : res.status(404).json(payload);
+    }
+
     return res.json({ success: true, data: doc });
   } catch (err) {
     return res.status(400).json({ success: false, message: err.message });
@@ -289,17 +292,12 @@ async function getByEmail(req, res) {
 }
 
 /* ============================ UPDATE (PATCH MIX) =========================== */
-/**
- * Non-destructive partial update for general fields you already supported.
- * (Kept for backward-compatibility with your existing frontends.)
- */
 async function update(req, res) {
   try {
     const { id } = req.params;
     const b = req.body || {};
 
     const allowed = [
-      // profile/identity (adding now for completeness)
       "firstName",
       "lastName",
       "email",
@@ -309,38 +307,26 @@ async function update(req, res) {
       "gender",
       "dateOfBirth",
       "address",
-
-      // teaching
       "languages",
       "skills",
       "areasOfExpertise",
       "education",
       "certifications",
       "availability",
-
-      // billing/docs
       "hourlyRate",
       "resumeUrl",
       "idProofUrl",
-
-      // social
       "website",
       "linkedin",
       "github",
       "youtube",
       "twitter",
-
-      // payouts
       "upiId",
       "payoutPreference",
-
-      // flags
       "isActive",
       "isEmailVerified",
       "isKycVerified",
       "applicationStatus",
-
-      // relations (optional)
       "degrees",
       "semesters",
       "courses",
@@ -348,7 +334,6 @@ async function update(req, res) {
 
     const patch = pick(b, allowed);
 
-    // normalize arrays/csv
     if (typeof patch.languages !== "undefined")
       patch.languages = csvToArray(patch.languages);
     if (typeof patch.skills !== "undefined")
@@ -389,7 +374,6 @@ async function update(req, res) {
 }
 
 /* =========================== PROFILE & ADDRESS SETS ======================== */
-/** Focused profile update (handy for separate forms) */
 async function setProfile(req, res) {
   try {
     const { id } = req.params;
@@ -423,7 +407,6 @@ async function setProfile(req, res) {
   }
 }
 
-/** Focused address update */
 async function setAddress(req, res) {
   try {
     const { id } = req.params;
@@ -829,40 +812,25 @@ async function quickSearch(req, res) {
 }
 
 module.exports = {
-  // create/apply
   apply,
-
-  // reads
   list,
   counts,
   getById,
   getByEmail,
   quickSearch,
-
-  // updates
   update,
   setProfile,
   setAddress,
-
-  // verifications
   verifyEmail,
   verifyKyc,
-
-  // deletes
   remove,
   hardDelete,
-
-  // statuses
   approve,
   reject,
   toggleActive,
   setStatus,
-
-  // assignments
   updateAssignments,
   assignAdd,
   assignRemove,
-
-  // bulk
   bulkAction,
 };

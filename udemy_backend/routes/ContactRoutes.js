@@ -26,4 +26,16 @@ router.post("/messages/mark-as-read", ContactController.markMessageAsRead);
 // to get the count of each and every message.
 router.get("/messages/get-messages-count", ContactController.getMessagesCount);
 
+// --- TRASH / SOFT DELETE ROUTES ---
+router.post("/messages/:id/trash", ContactController.moveMessageToTrash);
+router.get("/messages/trashed", ContactController.getTrashedMessages);
+router.post("/messages/purge-trashed", ContactController.purgeOldTrashed);
+router.delete(
+  "/messages/:id/permanent",
+  ContactController.deleteMessagePermanently
+);
+
+// Restore from trash
+router.post("/messages/:id/restore", ContactController.restoreMessage);
+
 module.exports = router;
