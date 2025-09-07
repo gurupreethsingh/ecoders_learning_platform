@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "../../config/Config.js";
 import {
   FiSave,
   FiX,
