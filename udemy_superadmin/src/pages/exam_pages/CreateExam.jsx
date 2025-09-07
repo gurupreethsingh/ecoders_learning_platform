@@ -1,16 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import globalBackendRoute from "../../config/Config";
 
-/**
- * CreateExam screen (no /courses calls; robust client filtering)
- *
- * Uses:
- *  - GET  /api/list-degrees
- *  - GET  /api/semisters?degree=<id>&limit=...
- *  - GET  /api/list-courses? ... (may ignore filters server-side)
- *  - POST /api/create-exam
- */
-
 const DEGREES_PATH = "list-degrees";
 const SEMESTERS_PATH = "semisters";
 const LIST_COURSES_PATH = "list-courses"; // <- only list endpoint your server provides

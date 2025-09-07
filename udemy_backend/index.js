@@ -27,6 +27,7 @@ const wishlistRoutes = require("./routes/WishlistRoutes");
 const dashboardRoutes = require("./routes/DashboardRoutes");
 const degreeRoutes = require("./routes/DegreeRoutes");
 const semisterRoutes = require("./routes/SemisterRoutes");
+const QuizRoutes = require("./routes/QuizRoutes.js");
 const questionRoutes = require("./routes/QuestionRoutes");
 const instructorRoutes = require("./routes/InstructorRoutes");
 
@@ -79,6 +80,7 @@ app.use("/api", userRoutes);
 app.use("/api", wishlistRoutes);
 app.use("/api", semisterRoutes);
 app.use("/api", questionRoutes);
+app.use("/api", QuizRoutes);
 app.use("/api/instructors", instructorRoutes);
 
 // 7. Connect to MongoDB using .env

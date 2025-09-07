@@ -1,3 +1,4 @@
+// src/pages/quizzes/UpdateQuiz.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import globalBackendRoute from "../../config/Config.js";
@@ -12,14 +13,6 @@ import {
 const API = globalBackendRoute;
 
 // Select options
-const EXAM_TYPES = [
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "half_yearly", label: "Half Yearly" },
-  { value: "mid_term", label: "Mid Term" },
-  { value: "preparatory", label: "Preparatory" },
-  { value: "final", label: "Final Exam" },
-];
 const DIFFICULTIES = [
   { value: "easy", label: "Easy" },
   { value: "medium", label: "Medium" },
@@ -33,12 +26,6 @@ const cleanCsv = (s) =>
     .filter(Boolean);
 
 const pad = (n) => String(n).padStart(2, "0");
-const toInputDate = (val) => {
-  if (!val) return "";
-  const d = new Date(val);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
 const toInputDateTimeLocal = (val) => {
   if (!val) return "";
   const d = new Date(val);
@@ -55,58 +42,14 @@ const normId = (v) =>
   !v ? "" : typeof v === "string" ? v : v._id || v.id || String(v);
 
 const makeSlug = (s) =>
-  String(s || "exam")
+  String(s || "quiz")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
-const courseMatchesSemester = (course, semesterId) => {
-  if (!semesterId) return true;
-  const s = String(semesterId);
-  const direct = [
-    course.semester,
-    course.semister,
-    course.semesterId,
-    course.semisterId,
-    course.semId,
-  ]
-    .map(normId)
-    .some((x) => x === s);
-  if (direct) return true;
-
-  const objMatch =
-    normId(course.semester) === s ||
-    normId(course.semister) === s ||
-    normId(course.semester?._id) === s ||
-    normId(course.semister?._id) === s;
-
-  const arrMatch = [course.semesters, course.semisters]
-    .filter(Array.isArray)
-    .some((arr) => arr.map(normId).includes(s));
-
-  return objMatch || arrMatch;
-};
-
-const courseMatchesDegree = (course, degreeId) => {
-  if (!degreeId) return true;
-  const d = String(degreeId);
-  const direct = [course.degree, course.degreeId, course.program]
-    .map(normId)
-    .some((x) => x === d);
-  if (direct) return true;
-
-  const objMatch =
-    normId(course.degree) === d || normId(course.degree?._id) === d;
-  const arrMatch = [course.degrees]
-    .filter(Array.isArray)
-    .some((arr) => arr.map(normId).includes(d));
-
-  return objMatch || arrMatch;
-};
-
-const UpdateExam = () => {
+const UpdateQuiz = () => {
   // include :slug param only for building the “view” link
   const { id, slug: slugParam } = useParams();
 
@@ -116,19 +59,14 @@ const UpdateExam = () => {
   const [msg, setMsg] = useState({ type: "", text: "" });
 
   // lookups
-  const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
 
   const [form, setForm] = useState({
-    degree: "",
-    semester: "",
     course: "",
 
-    examName: "",
-    examCode: "",
-    examDurationMinutes: 60,
-    examType: "final",
+    quizName: "",
+    quizCode: "",
+    quizDurationMinutes: 60,
     passPercentage: 35,
     isPaid: false,
     numberOfAttemptsAllowed: 1,
@@ -140,14 +78,13 @@ const UpdateExam = () => {
     allowedLanguagesCsv: "",
     tagsCsv: "",
 
-    examDate: "",
     startTimeLocal: "",
     endTimeLocal: "",
 
     negativeMarking: false,
     negativeMarkPerQuestion: 0,
     maxStudents: 0,
-    difficultyLevel: "medium",
+    difficulty: "medium",
 
     isPublished: false,
 
@@ -157,7 +94,7 @@ const UpdateExam = () => {
   const [attemptCount, setAttemptCount] = useState(0);
   const [createdBy, setCreatedBy] = useState("");
 
-  // Load exam + lookups
+  // Load quiz + lookups
   useEffect(() => {
     let active = true;
     (async () => {
@@ -166,12 +103,8 @@ const UpdateExam = () => {
         setErr("");
         setMsg({ type: "", text: "" });
 
-        const [examRes, degRes, semRes, courseRes] = await Promise.allSettled([
-          fetch(`${API}/api/get-exam/${id}`).then((r) => r.json()),
-          fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
-            r.json()
-          ),
-          fetch(`${API}/api/semisters?page=1&limit=5000`).then((r) => r.json()),
+        const [quizRes, courseRes] = await Promise.allSettled([
+          fetch(`${API}/api/get-quiz/${id}`).then((r) => r.json()),
           fetch(`${API}/api/list-courses?page=1&limit=5000`).then((r) =>
             r.json()
           ),
@@ -179,38 +112,27 @@ const UpdateExam = () => {
 
         if (!active) return;
 
-        if (examRes.status !== "fulfilled" || !examRes.value) {
-          throw new Error("Failed to load exam.");
+        if (quizRes.status !== "fulfilled" || !quizRes.value) {
+          throw new Error("Failed to load quiz.");
         }
-        const x = examRes.value?.data || examRes.value;
-        if (!x || x.message) throw new Error(x?.message || "Exam not found.");
+        const x = quizRes.value?.data || quizRes.value;
+        if (!x || x.message) throw new Error(x?.message || "Quiz not found.");
 
-        if (degRes.status === "fulfilled") {
-          setDegrees(degRes.value?.data || degRes.value || []);
-        }
-        if (semRes.status === "fulfilled") {
-          setSemisters(semRes.value?.data || semRes.value || []);
-        }
         if (courseRes.status === "fulfilled") {
           setAllCourses(courseRes.value?.data || courseRes.value || []);
         }
 
-        const degreeId = normId(x.degree);
-        const semesterId = normId(x.semester ?? x.semister);
         const courseId = normId(x.course);
 
         setForm({
-          degree: degreeId || "",
-          semester: semesterId || "",
           course: courseId || "",
 
-          examName: x.examName || "",
-          examCode: x.examCode || "",
-          examDurationMinutes:
-            typeof x.examDurationMinutes === "number"
-              ? x.examDurationMinutes
+          quizName: x.quizName || "",
+          quizCode: x.quizCode || "",
+          quizDurationMinutes:
+            typeof x.quizDurationMinutes === "number"
+              ? x.quizDurationMinutes
               : 60,
-          examType: x.examType || "final",
           passPercentage:
             typeof x.passPercentage === "number" ? x.passPercentage : 35,
           isPaid: !!x.isPaid,
@@ -229,7 +151,6 @@ const UpdateExam = () => {
             : "",
           tagsCsv: Array.isArray(x.tags) ? x.tags.join(", ") : "",
 
-          examDate: toInputDate(x.examDate),
           startTimeLocal: toInputDateTimeLocal(x.startTime),
           endTimeLocal: toInputDateTimeLocal(x.endTime),
 
@@ -239,12 +160,12 @@ const UpdateExam = () => {
               ? x.negativeMarkPerQuestion
               : 0,
           maxStudents: typeof x.maxStudents === "number" ? x.maxStudents : 0,
-          difficultyLevel: x.difficultyLevel || "medium",
+          difficulty: x.difficulty || "medium",
 
           isPublished: !!x.isPublished,
 
           slug:
-            x.slug || makeSlug(x.examName || x.examCode || slugParam || "exam"),
+            x.slug || makeSlug(x.quizName || x.quizCode || slugParam || "quiz"),
         });
 
         setAttemptCount(
@@ -262,21 +183,10 @@ const UpdateExam = () => {
     };
   }, [API, id, slugParam]);
 
-  // Filter courses by degree + semester
-  const filteredCourses = useMemo(() => {
-    const { degree, semester } = form;
-    return (allCourses || []).filter(
-      (c) =>
-        courseMatchesDegree(c, degree) && courseMatchesSemester(c, semester)
-    );
-  }, [allCourses, form.degree, form.semester]);
-
   const canSave = useMemo(() => {
     return (
-      !!form.examName.trim() &&
-      !!form.examCode.trim() &&
-      !!form.degree &&
-      !!form.semester &&
+      !!form.quizName.trim() &&
+      !!form.quizCode.trim() &&
       !!form.course &&
       !saving
     );
@@ -295,31 +205,28 @@ const UpdateExam = () => {
     e.preventDefault();
     setMsg({ type: "", text: "" });
 
-    if (!form.examName.trim()) {
-      setMsg({ type: "error", text: "Exam Name is required." });
+    if (!form.quizName.trim()) {
+      setMsg({ type: "error", text: "Quiz Name is required." });
       return;
     }
-    if (!form.examCode.trim()) {
-      setMsg({ type: "error", text: "Exam Code is required." });
+    if (!form.quizCode.trim()) {
+      setMsg({ type: "error", text: "Quiz Code is required." });
       return;
     }
-    if (!form.degree || !form.semester || !form.course) {
+    if (!form.course) {
       setMsg({
         type: "error",
-        text: "Please select Degree, Semister and Course.",
+        text: "Please select Course.",
       });
       return;
     }
 
     const payload = {
-      degree: form.degree,
-      semester: form.semester,
       course: form.course,
 
-      examName: form.examName.trim(),
-      examCode: form.examCode.trim(),
-      examDurationMinutes: Number(form.examDurationMinutes) || 60,
-      examType: form.examType,
+      quizName: form.quizName.trim(),
+      quizCode: form.quizCode.trim(),
+      quizDurationMinutes: Number(form.quizDurationMinutes) || 60,
       passPercentage: Number(form.passPercentage) || 0,
       isPaid: !!form.isPaid,
       numberOfAttemptsAllowed: Number(form.numberOfAttemptsAllowed) || 1,
@@ -334,12 +241,11 @@ const UpdateExam = () => {
       negativeMarking: !!form.negativeMarking,
       negativeMarkPerQuestion: Number(form.negativeMarkPerQuestion) || 0,
       maxStudents: Number(form.maxStudents) || 0,
-      difficultyLevel: form.difficultyLevel,
+      difficulty: form.difficulty,
 
       isPublished: !!form.isPublished,
     };
 
-    if (form.examDate) payload.examDate = new Date(form.examDate).toISOString();
     if (form.startTimeLocal)
       payload.startTime = new Date(form.startTimeLocal).toISOString();
     if (form.endTimeLocal)
@@ -349,7 +255,7 @@ const UpdateExam = () => {
 
     try {
       setSaving(true);
-      const res = await fetch(`${API}/api/update-exam/${id}`, {
+      const res = await fetch(`${API}/api/update-quiz/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -360,9 +266,9 @@ const UpdateExam = () => {
         ? await res.json()
         : { message: await res.text() };
 
-      if (!res.ok) throw new Error(body?.message || "Failed to update exam.");
+      if (!res.ok) throw new Error(body?.message || "Failed to update quiz.");
 
-      setMsg({ type: "success", text: "Exam updated successfully." });
+      setMsg({ type: "success", text: "Quiz updated successfully." });
     } catch (e) {
       setMsg({ type: "error", text: e.message || "Something went wrong." });
     } finally {
@@ -390,8 +296,8 @@ const UpdateExam = () => {
             {err}
           </div>
           <div className="mt-4 flex gap-3">
-            <Link to="/all-exams" className="text-gray-900 underline">
-              ← Back to All Exams
+            <Link to="/all-quizes" className="text-gray-900 underline">
+              ← Back to All Quizzes
             </Link>
             <Link to="/dashboard" className="text-gray-900 underline">
               Back to Dashboard
@@ -404,7 +310,7 @@ const UpdateExam = () => {
 
   const viewSlug =
     form.slug ||
-    makeSlug(form.examName || form.examCode || slugParam || "exam");
+    makeSlug(form.quizName || form.quizCode || slugParam || "quiz");
 
   return (
     <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-8">
@@ -413,20 +319,20 @@ const UpdateExam = () => {
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Update Exam
+              Update Quiz
             </h1>
             <p className="text-gray-600 mt-1">
-              Edit and save changes to this exam.
+              Edit and save changes to this quiz.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
-              to={`/single-exam/${encodeURIComponent(viewSlug)}/${id}`}
+              to={`/single-quiz/${encodeURIComponent(viewSlug)}/${id}`}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-gray-900 text-sm font-semibold border hover:bg-gray-50"
-              title="Back to Exam"
+              title="Back to Quiz"
             >
               <FiRefreshCcw className="h-4 w-4" />
-              View Exam
+              View Quiz
             </Link>
           </div>
         </div>
@@ -457,31 +363,31 @@ const UpdateExam = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-800">
-                  Exam Name *
+                  Quiz Name *
                 </label>
                 <input
-                  name="examName"
+                  name="quizName"
                   type="text"
-                  value={form.examName}
+                  value={form.quizName}
                   onChange={onChange}
                   required
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900"
-                  placeholder="e.g., BBA OIA – Intermediate"
+                  placeholder="e.g., BBA OIA – Quiz 1"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-800">
-                  Exam Code *
+                  Quiz Code *
                 </label>
                 <input
-                  name="examCode"
+                  name="quizCode"
                   type="text"
-                  value={form.examCode}
+                  value={form.quizCode}
                   onChange={onChange}
                   required
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900"
-                  placeholder="e.g., BBA-OIA-INT"
+                  placeholder="e.g., BBA-OIA-Q1"
                 />
               </div>
 
@@ -490,32 +396,14 @@ const UpdateExam = () => {
                   Duration (minutes) *
                 </label>
                 <input
-                  name="examDurationMinutes"
+                  name="quizDurationMinutes"
                   type="number"
-                  min={10}
-                  value={form.examDurationMinutes}
+                  min={5}
+                  value={form.quizDurationMinutes}
                   onChange={onChange}
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900"
-                  placeholder="e.g., 90"
+                  placeholder="e.g., 30"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800">
-                  Exam Type *
-                </label>
-                <select
-                  name="examType"
-                  value={form.examType}
-                  onChange={onChange}
-                  className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
-                >
-                  {EXAM_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div>
@@ -558,7 +446,7 @@ const UpdateExam = () => {
                     onChange={onChange}
                     className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                   />
-                  Paid Exam
+                  Paid Quiz
                 </label>
 
                 <label className="flex items-center gap-2 text-gray-800">
@@ -599,8 +487,8 @@ const UpdateExam = () => {
                   Difficulty
                 </label>
                 <select
-                  name="difficultyLevel"
-                  value={form.difficultyLevel}
+                  name="difficulty"
+                  value={form.difficulty}
                   onChange={onChange}
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                 >
@@ -717,55 +605,6 @@ const UpdateExam = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-800">
-                  Degree *
-                </label>
-                <select
-                  name="degree"
-                  value={form.degree || ""}
-                  onChange={onChange}
-                  className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
-                >
-                  <option value="">—</option>
-                  {degrees.map((d) => (
-                    <option key={d._id || d.id} value={d._id || d.id}>
-                      {d.name || d.title || "Untitled Degree"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800">
-                  Semister *
-                </label>
-                <select
-                  name="semester"
-                  value={form.semester || ""}
-                  onChange={onChange}
-                  className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
-                >
-                  <option value="">—</option>
-                  {semisters
-                    .filter(
-                      (s) => !form.degree || normId(s.degree) === form.degree
-                    )
-                    .map((s) => {
-                      const label =
-                        s.title ||
-                        s.semister_name ||
-                        (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                        "Semister";
-                      return (
-                        <option key={s._id || s.id} value={s._id || s.id}>
-                          {label}
-                        </option>
-                      );
-                    })}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800">
                   Course *
                 </label>
                 <select
@@ -775,13 +614,11 @@ const UpdateExam = () => {
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                 >
                   <option value="">—</option>
-                  {(filteredCourses.length ? filteredCourses : allCourses).map(
-                    (c) => (
-                      <option key={c._id || c.id} value={c._id || c.id}>
-                        {c.title || c.name || c.code || "Untitled Course"}
-                      </option>
-                    )
-                  )}
+                  {(allCourses || []).map((c) => (
+                    <option key={c._id || c.id} value={c._id || c.id}>
+                      {c.title || c.name || c.code || "Untitled Course"}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -791,19 +628,7 @@ const UpdateExam = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg border p-4">
               <h3 className="font-semibold text-gray-900 mb-2">Schedule</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-800">
-                    Exam Date
-                  </label>
-                  <input
-                    type="date"
-                    name="examDate"
-                    value={form.examDate}
-                    onChange={onChange}
-                    className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-800">
                     Start Time
@@ -877,18 +702,18 @@ const UpdateExam = () => {
             </button>
 
             <Link
-              to={`/single-exam/${encodeURIComponent(viewSlug)}/${id}`}
+              to={`/single-quiz/${encodeURIComponent(viewSlug)}/${id}`}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-gray-900 text-sm font-semibold border hover:bg-gray-50"
-              title="Cancel and view exam"
+              title="Cancel and view quiz"
             >
               <FiX className="h-4 w-4" /> Cancel
             </Link>
 
             <Link
-              to="/all-exams"
+              to="/all-quizes"
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-gray-900 text-sm font-semibold border hover:bg-gray-50"
             >
-              Back to All Exams
+              Back to All Quizzes
             </Link>
           </div>
         </form>
@@ -897,4 +722,4 @@ const UpdateExam = () => {
   );
 };
 
-export default UpdateExam;
+export default UpdateQuiz;

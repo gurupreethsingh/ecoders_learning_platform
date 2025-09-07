@@ -1,28 +1,21 @@
+// models/QuizModel.js
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const ExamSchema = new Schema(
+const QuizSchema = new Schema(
   {
-    degree: { type: Schema.Types.ObjectId, ref: "Degree", required: true },
+    // Link ONLY to Course (no Degree/Semister here)
+    course: { type: Schema.Types.ObjectId, ref: "Course", required: false },
 
-    // ⬇️ IMPORTANT: match your model name "Semister"
-    semester: { type: Schema.Types.ObjectId, ref: "Semister", required: true },
+    // Identity
+    quizName: { type: String, required: true, trim: true },
+    quizCode: { type: String, required: true, unique: true, trim: true },
 
-    course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
-
-    examName: { type: String, required: true, trim: true },
-    examCode: { type: String, required: true, unique: true, trim: true },
-    examDurationMinutes: { type: Number, required: true, min: 10 },
-    examType: {
+    // Timing / rules
+    quizDurationMinutes: { type: Number, required: true, min: 5 },
+    quizType: {
       type: String,
-      enum: [
-        "weekly",
-        "monthly",
-        "half_yearly",
-        "mid_term",
-        "preparatory",
-        "final",
-      ],
+      enum: ["practice", "chapter_end", "module_end", "final"],
       required: true,
     },
     passPercentage: { type: Number, required: true, min: 0, max: 100 },
@@ -32,7 +25,8 @@ const ExamSchema = new Schema(
     isPublished: { type: Boolean, default: false },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
-    subject: { type: String, required: true, trim: true },
+    // Content / meta
+    subject: { type: String, trim: true }, // optional label similar to Exam.subject
     totalMarks: { type: Number, default: 100 },
     instructions: {
       type: String,
@@ -42,19 +36,26 @@ const ExamSchema = new Schema(
     allowedLanguages: [{ type: String, trim: true }],
     tags: [{ type: String, trim: true }],
 
-    examDate: { type: Date },
+    // Availability window (optional)
+    quizDate: { type: Date },
     startTime: { type: Date },
     endTime: { type: Date },
+
+    // Scoring options
     negativeMarking: { type: Boolean, default: false },
     negativeMarkPerQuestion: { type: Number, default: 0 },
+
+    // Capacity (optional)
     maxStudents: { type: Number, default: 0 },
-    difficultyLevel: {
+
+    // Difficulty for UI grouping (matches your frontend buckets)
+    difficulty: {
       type: String,
-      enum: ["easy", "medium", "hard"],
-      default: "medium",
+      enum: ["basic", "intermediate", "advanced"],
+      default: "basic",
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Exam", ExamSchema);
+module.exports = mongoose.model("Quiz", QuizSchema);

@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config.js";
 
 export default function AllExams() {
   const [view, setView] = useState("grid");

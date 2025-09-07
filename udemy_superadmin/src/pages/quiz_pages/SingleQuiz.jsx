@@ -1,3 +1,4 @@
+// src/pages/quiz_pages/SingleQuiz.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import globalBackendRoute from "../../config/Config.js";
@@ -31,7 +32,7 @@ const fmtDateTime = (d) => {
   }
 };
 const makeSlug = (s) =>
-  String(s || "exam")
+  String(s || "quiz")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -45,8 +46,7 @@ const getId = (val) => {
   return val; // string/ObjectId as string
 };
 
-const SingleExam = () => {
-  // NOTE: include :slug (optional) to allow using it as a fallback
+const SingleQuiz = () => {
   const { id, slug: slugParam } = useParams();
 
   const [data, setData] = useState(null);
@@ -56,22 +56,20 @@ const SingleExam = () => {
   const [busy, setBusy] = useState(false);
 
   // Lookups (in case backend didn't populate)
-  const [degreeMap, setDegreeMap] = useState({});
-  const [semMap, setSemMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
   const [userMap, setUserMap] = useState({}); // optional, best-effort
 
   useEffect(() => {
     let active = true;
 
-    const loadExam = async () => {
+    const loadQuiz = async () => {
       try {
         setLoading(true);
         setErr("");
 
-        const res = await fetch(`${API}/api/get-exam/${id}`);
+        const res = await fetch(`${API}/api/get-quiz/${id}`);
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.message || "Failed to fetch exam.");
+        if (!res.ok) throw new Error(json?.message || "Failed to fetch quiz.");
         if (!active) return;
 
         setData(json?.data || json); // support {data} or plain object
@@ -84,11 +82,7 @@ const SingleExam = () => {
 
     const loadLookups = async () => {
       try {
-        const [deg, sem, course, users] = await Promise.allSettled([
-          fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
-            r.json()
-          ),
-          fetch(`${API}/api/semisters?page=1&limit=2000`).then((r) => r.json()),
+        const [courses, users] = await Promise.allSettled([
           fetch(`${API}/api/list-courses?page=1&limit=2000`).then((r) =>
             r.json()
           ),
@@ -100,31 +94,8 @@ const SingleExam = () => {
 
         if (!active) return;
 
-        if (deg.status === "fulfilled") {
-          const list = deg.value?.data || deg.value || [];
-          const map = {};
-          (Array.isArray(list) ? list : []).forEach((d) => {
-            map[d._id || d.id] = d.name || d.title || "Degree";
-          });
-          setDegreeMap(map);
-        }
-
-        if (sem.status === "fulfilled") {
-          const list = sem.value?.data || sem.value || [];
-          const map = {};
-          (Array.isArray(list) ? list : []).forEach((s) => {
-            const label =
-              s.title ||
-              s.semister_name ||
-              (s.semNumber ? `Sem ${s.semNumber}` : s.slug) ||
-              "Semister";
-            map[s._id || s.id] = label;
-          });
-          setSemMap(map);
-        }
-
-        if (course.status === "fulfilled") {
-          const list = course.value?.data || course.value || [];
+        if (courses.status === "fulfilled") {
+          const list = courses.value?.data || courses.value || [];
           const map = {};
           (Array.isArray(list) ? list : []).forEach((c) => {
             map[c._id || c.id] = c.title || c.name || c.code || "Course";
@@ -145,7 +116,7 @@ const SingleExam = () => {
       }
     };
 
-    loadExam();
+    loadQuiz();
     loadLookups();
 
     return () => {
@@ -153,11 +124,11 @@ const SingleExam = () => {
     };
   }, [API, id]);
 
-  // Safe slug for links (fixes "slug is not defined")
+  // Safe slug for links
   const viewSlug = useMemo(() => {
     if (data?.slug) return data.slug;
     if (slugParam) return slugParam;
-    return makeSlug(data?.examName || data?.examCode);
+    return makeSlug(data?.quizName || data?.quizCode);
   }, [data, slugParam]);
 
   // Derived fields
@@ -169,20 +140,6 @@ const SingleExam = () => {
     () => (data?.updatedAt ? new Date(data.updatedAt).toLocaleString() : "—"),
     [data]
   );
-
-  const degreeName =
-    (typeof data?.degree === "object" &&
-      (data?.degree?.name || data?.degree?.title)) ||
-    degreeMap[data?.degree] ||
-    (typeof data?.degree === "string" ? data.degree : "—");
-
-  const semName =
-    (typeof data?.semester === "object" &&
-      (data?.semester?.title ||
-        data?.semester?.semister_name ||
-        (data?.semester?.semNumber ? `Sem ${data.semester.semNumber}` : ""))) ||
-    semMap[data?.semester] ||
-    (typeof data?.semester === "string" ? data.semester : "—");
 
   const courseName =
     (typeof data?.course === "object" &&
@@ -198,30 +155,41 @@ const SingleExam = () => {
     userMap[data?.createdBy] ||
     (typeof data?.createdBy === "string" ? data.createdBy : "—");
 
-  const examId = data?._id || data?.id || "—";
-
-  // Raw IDs for display
-  const degreeId = getId(data?.degree);
-  const semId = getId(data?.semester);
+  const quizId = data?._id || data?.id || "—";
   const courseId = getId(data?.course);
+
+  // Flags (handle multiple possible fields)
+  const isPublished = !!(data?.isPublished ?? data?.published ?? false);
+  const difficulty = data?.difficulty ?? data?.difficultyLevel ?? "—";
+  const type = data?.quizType ?? data?.type ?? "—";
 
   // Actions
   const togglePublish = async () => {
     if (!data?._id) return;
+    const willPublish = !isPublished;
     const ok = window.confirm(
-      `Toggle Published for "${data.examName || data.examCode}"?`
+      `${willPublish ? "Publish" : "Unpublish"} "${
+        data.quizName || data.quizCode
+      }"?`
     );
     if (!ok) return;
     try {
       setBusy(true);
       setMsg({ type: "", text: "" });
-      const res = await fetch(`${API}/api/toggle-publish/${data._id}`, {
-        method: "POST",
-      });
+
+      const url = willPublish
+        ? `${API}/api/publish-quiz/${data._id}`
+        : `${API}/api/unpublish-quiz/${data._id}`;
+      const res = await fetch(url, { method: "PATCH" });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.message || "Failed to toggle.");
-      setData((p) => (p ? { ...p, isPublished: !p.isPublished } : p));
-      setMsg({ type: "success", text: "Publish state toggled." });
+      if (!res.ok)
+        throw new Error(json?.message || "Failed to change publish state.");
+
+      setData((p) => (p ? { ...p, isPublished: willPublish } : p));
+      setMsg({
+        type: "success",
+        text: willPublish ? "Quiz published." : "Quiz unpublished.",
+      });
     } catch (e) {
       setMsg({ type: "error", text: e.message || "Action failed." });
     } finally {
@@ -229,41 +197,42 @@ const SingleExam = () => {
     }
   };
 
-  const incrementAttempt = async () => {
+  const duplicateQuiz = async () => {
     if (!data?._id) return;
+    const ok = window.confirm(
+      `Duplicate quiz "${data.quizName || data.quizCode}"?`
+    );
+    if (!ok) return;
     try {
       setBusy(true);
       setMsg({ type: "", text: "" });
-      const res = await fetch(`${API}/api/increment-attempt/${data._id}`, {
+      const res = await fetch(`${API}/api/duplicate-quiz/${data._id}`, {
         method: "POST",
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.message || "Failed to increment.");
-      setData((p) =>
-        p ? { ...p, attemptCount: Number(p.attemptCount || 0) + 1 } : p
-      );
-      setMsg({ type: "success", text: "Attempt count incremented." });
+      if (!res.ok) throw new Error(json?.message || "Duplicate failed.");
+      setMsg({ type: "success", text: "Quiz duplicated successfully." });
     } catch (e) {
-      setMsg({ type: "error", text: e.message || "Action failed." });
+      setMsg({ type: "error", text: e.message || "Duplicate failed." });
     } finally {
       setBusy(false);
     }
   };
 
-  const deleteExam = async () => {
+  const deleteQuiz = async () => {
     if (!data?._id) return;
     const ok = window.confirm(
-      `Delete exam "${data.examName || data.examCode}"? This cannot be undone.`
+      `Delete quiz "${data.quizName || data.quizCode}"? This cannot be undone.`
     );
     if (!ok) return;
     try {
       setBusy(true);
-      const res = await fetch(`${API}/api/delete-exam/${data._id}`, {
+      const res = await fetch(`${API}/api/delete-quiz/${data._id}`, {
         method: "DELETE",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.message || "Delete failed.");
-      setMsg({ type: "success", text: "Exam deleted. Navigate back to list." });
+      setMsg({ type: "success", text: "Quiz deleted. Navigate back to list." });
     } catch (e) {
       setMsg({ type: "error", text: e.message || "Delete failed." });
     } finally {
@@ -291,8 +260,8 @@ const SingleExam = () => {
             {err}
           </div>
           <div className="mt-4 flex gap-3">
-            <Link to="/all-exams" className="text-gray-900 underline">
-              ← Back to All Exams
+            <Link to="/all-quizes" className="text-gray-900 underline">
+              ← Back to All Quizzes
             </Link>
             <Link to="/dashboard" className="text-gray-900 underline">
               Back to Dashboard
@@ -312,23 +281,23 @@ const SingleExam = () => {
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Exam Details
+              Quiz Details
             </h1>
             <p className="text-gray-600 mt-1">
-              View exam information, relations, schedule and actions.
+              View quiz information, relations, schedule and actions.
             </p>
 
-            {/* Exam ID under the header */}
+            {/* Quiz ID under the header */}
             <div className="mt-2 inline-flex items-center gap-2 text-xs text-gray-700">
               <FiHash className="text-purple-600" />
               <code className="bg-gray-100 border px-2 py-0.5 rounded">
-                {examId}
+                {quizId}
               </code>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {data.isPublished ? (
+            {isPublished ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 text-green-700 border border-green-200 px-3 py-1 text-xs font-semibold">
                 <FiCheckCircle /> Published
               </span>
@@ -337,14 +306,14 @@ const SingleExam = () => {
                 <FiSlash /> Draft
               </span>
             )}
-            {data.difficultyLevel ? (
+            {difficulty && difficulty !== "—" ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 text-xs font-semibold">
-                <FiTrendingUp /> {data.difficultyLevel}
+                <FiTrendingUp /> {difficulty}
               </span>
             ) : null}
-            {data.examType ? (
+            {type && type !== "—" ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 text-xs font-semibold">
-                <FiFlag /> {data.examType}
+                <FiFlag /> {type}
               </span>
             ) : null}
 
@@ -354,40 +323,40 @@ const SingleExam = () => {
               className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-white text-sm font-semibold ${
                 busy ? "bg-gray-400" : "bg-gray-900 hover:bg-gray-800"
               }`}
-              title="Toggle Published"
+              title={isPublished ? "Unpublish" : "Publish"}
             >
               <FiRefreshCcw className="h-4 w-4" />
-              Publish
+              {isPublished ? "Unpublish" : "Publish"}
             </button>
 
             <button
-              onClick={incrementAttempt}
+              onClick={duplicateQuiz}
               disabled={busy}
               className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-white text-sm font-semibold ${
                 busy ? "bg-gray-400" : "bg-yellow-600 hover:bg-yellow-500"
               }`}
-              title="Increment attemptCount"
+              title="Duplicate quiz"
             >
               <FiStar className="h-4 w-4" />
-              Attempt+
+              Duplicate
             </button>
 
             <button
-              onClick={deleteExam}
+              onClick={deleteQuiz}
               disabled={busy}
               className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-white text-sm font-semibold ${
                 busy ? "bg-gray-400" : "bg-red-600 hover:bg-red-500"
               }`}
-              title="Delete exam"
+              title="Delete quiz"
             >
               <FiAlertTriangle className="h-4 w-4" />
               Delete
             </button>
 
             <Link
-              to={`/update-exam/${encodeURIComponent(viewSlug)}/${data._id}`}
+              to={`/update-quiz/${encodeURIComponent(viewSlug)}/${data._id}`}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-white text-sm font-semibold bg-indigo-600 hover:bg-indigo-500"
-              title="Update Exam"
+              title="Update Quiz"
             >
               <FiEdit className="h-4 w-4" />
               Update
@@ -412,13 +381,13 @@ const SingleExam = () => {
         <div className="mt-6 rounded-lg border p-4">
           <h2 className="font-semibold text-gray-900 mb-3">Basic</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {/* Exam ID field in Basic section */}
+            {/* Quiz ID field in Basic section */}
             <div className="flex items-center gap-2 text-gray-800">
               <FiHash className="shrink-0" />
               <span className="truncate">
-                <span className="font-medium">Exam ID:</span>{" "}
+                <span className="font-medium">Quiz ID:</span>{" "}
                 <code className="bg-gray-100 border px-1.5 py-0.5 rounded">
-                  {examId}
+                  {quizId}
                 </code>
               </span>
             </div>
@@ -426,15 +395,15 @@ const SingleExam = () => {
             <div className="flex items-center gap-2 text-gray-800">
               <FiTag className="shrink-0" />
               <span className="truncate">
-                <span className="font-medium">Exam Name:</span>{" "}
-                {pretty(data.examName)}
+                <span className="font-medium">Quiz Name:</span>{" "}
+                {pretty(data.quizName)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-gray-800">
               <FiHash className="shrink-0" />
               <span className="truncate">
-                <span className="font-medium">Exam Code:</span>{" "}
-                {pretty(data.examCode)}
+                <span className="font-medium">Quiz Code:</span>{" "}
+                {pretty(data.quizCode)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-gray-800">
@@ -448,8 +417,8 @@ const SingleExam = () => {
               <FiClock className="shrink-0" />
               <span className="truncate">
                 <span className="font-medium">Duration:</span>{" "}
-                {data.examDurationMinutes
-                  ? `${data.examDurationMinutes} min`
+                {data.quizDurationMinutes
+                  ? `${data.quizDurationMinutes} min`
                   : "—"}
               </span>
             </div>
@@ -493,28 +462,10 @@ const SingleExam = () => {
         {/* Relations */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Program</h3>
-
-            {/* Degree name + ID */}
-            <p className="text-sm text-gray-700 flex items-center gap-2">
-              <span className="font-medium">Degree:</span>
-              <span className="truncate">{degreeName}</span>
-              <code className="bg-gray-100 border px-1.5 py-0.5 rounded text-xs">
-                {degreeId}
-              </code>
-            </p>
-
-            {/* Semister name + ID */}
-            <p className="text-sm text-gray-700 flex items-center gap-2 mt-1">
-              <span className="font-medium">Semister:</span>
-              <span className="truncate">{semName}</span>
-              <code className="bg-gray-100 border px-1.5 py-0.5 rounded text-xs">
-                {semId}
-              </code>
-            </p>
+            <h3 className="font-semibold text-gray-900 mb-2">Relations</h3>
 
             {/* Course name + ID */}
-            <p className="text-sm text-gray-700 flex items-center gap-2 mt-1">
+            <p className="text-sm text-gray-700 flex items-center gap-2">
               <span className="font-medium">Course:</span>
               <span className="truncate">{courseName}</span>
               <code className="bg-gray-100 border px-1.5 py-0.5 rounded text-xs">
@@ -527,10 +478,6 @@ const SingleExam = () => {
             <h3 className="font-semibold text-gray-900 mb-2">Ownership</h3>
             <p className="text-sm text-gray-700">
               <span className="font-medium">Created By:</span> {createdByName}
-            </p>
-            <p className="text-sm text-gray-700">
-              <span className="font-medium">Attempt Count:</span>{" "}
-              {Number(data.attemptCount || 0)}
             </p>
             <p className="text-sm text-gray-700">
               <span className="font-medium">Attempts Allowed:</span>{" "}
@@ -553,7 +500,7 @@ const SingleExam = () => {
           </div>
         </div>
 
-        {/* Exam Settings */}
+        {/* Quiz Settings */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-lg border p-4">
             <h3 className="font-semibold text-gray-900 mb-2">Scoring</h3>
@@ -592,24 +539,24 @@ const SingleExam = () => {
             </p>
             <p className="text-sm text-gray-700">
               <span className="font-medium">Difficulty:</span>{" "}
-              {pretty(data.difficultyLevel)}
+              {pretty(difficulty)}
             </p>
             <p className="text-sm text-gray-700">
-              <span className="font-medium">Type:</span> {pretty(data.examType)}
+              <span className="font-medium">Type:</span> {pretty(type)}
             </p>
           </div>
         </div>
 
         {/* Schedule */}
-        {(data.examDate || data.startTime || data.endTime) && (
+        {(data.quizDate || data.startTime || data.endTime) && (
           <div className="mt-6 rounded-lg border p-4">
             <h3 className="font-semibold text-gray-900 mb-2">Schedule</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center gap-2 text-gray-800">
                 <FiCalendar className="shrink-0" />
                 <span className="truncate">
-                  <span className="font-medium">Exam Date:</span>{" "}
-                  {fmtDateTime(data.examDate)}
+                  <span className="font-medium">Quiz Date:</span>{" "}
+                  {fmtDateTime(data.quizDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-gray-800">
@@ -633,10 +580,10 @@ const SingleExam = () => {
         {/* Footer */}
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            to="/all-exams"
+            to="/all-quizes"
             className="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-gray-900 text-sm font-semibold border hover:bg-gray-50"
           >
-            Back to All Exams
+            Back to All Quizzes
           </Link>
           <Link
             to="/dashboard"
@@ -650,4 +597,4 @@ const SingleExam = () => {
   );
 };
 
-export default SingleExam;
+export default SingleQuiz;

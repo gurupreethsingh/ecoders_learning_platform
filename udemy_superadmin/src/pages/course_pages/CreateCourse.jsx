@@ -1,24 +1,6 @@
 // src/pages/CreateCourse.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
-/**
- * CreateCourse.jsx
- *
- * Flow:
- * 1) Pick Degree  -> GET  /api/list-degrees
- * 2) Pick Semister for that Degree -> GET /api/semisters?degree=<id>&degreeId=<id>
- * 3) Pick Category -> GET /api/all-categories
- * 4) (Optional) Pick SubCategory -> GET /api/get-subcategories-by-category?categoryId=<id>
- * 5) Fill course fields and POST /api/create-courses
- *
- * Notes:
- * - SubCategory is optional in this UI. If your backend still requires it,
- *   the server will return 400 and we'll show that error.
- * - Arrays (requirements, tags…) accept CSV or JSON; backend normalizer supports both.
- * - Topics support: explanation, code, codeExplanation, codeLanguage,
- *   plus videoUrl/pdfUrl/duration/isFreePreview
- */
-
 const API = import.meta?.env?.VITE_API_URL || "http://localhost:3011";
 
 // simple slug helper (client-side; server will also slugify if missing)

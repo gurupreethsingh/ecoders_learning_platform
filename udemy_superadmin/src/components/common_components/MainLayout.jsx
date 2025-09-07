@@ -72,6 +72,12 @@ import AllExams from "../../pages/exam_pages/AllExams";
 import SingleExam from "../../pages/exam_pages/SingleExam";
 import UpdateExam from "../../pages/exam_pages/UpdateExam";
 
+// quiz pages.
+import CreateQuiz from "../../pages/quiz_pages/CreateQuiz";
+import AllQuizzes from "../../pages/quiz_pages/AllQuizzes";
+import SingleQuiz from "../../pages/quiz_pages/SingleQuiz";
+import UpdateQuiz from "../../pages/quiz_pages/UpdateQuiz";
+
 // instructor pages
 import AllInstructorsApplications from "../../pages/instructor_pages/AllInstructorsApplications";
 import AllInstructors from "../../pages/instructor_pages/AllInstructors";
@@ -589,12 +595,58 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
+
           <Route
             path="/update-exam/:slug/:id"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="Update Exam">
                   <UpdateExam />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          {/* quiz routes.  */}
+          <Route
+            path="/create-quiz"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Create Quiz">
+                  <CreateQuiz />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-quizes"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Quizzes">
+                  <AllQuizzes />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-quiz/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Single Quiz Details">
+                  <SingleQuiz />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/update-quiz/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Update Quiz">
+                  <UpdateQuiz />
                 </PageTitle>
               </PrivateRoute>
             }

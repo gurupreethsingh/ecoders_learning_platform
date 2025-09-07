@@ -1,4 +1,4 @@
-// import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState, useMemo } from "react";
 // import { useNavigate } from "react-router-dom";
 // import axios from "axios";
 // import { jwtDecode } from "jwt-decode";
@@ -12,9 +12,10 @@
 //   FaUserCheck,
 //   FaUserClock,
 //   FaUserTimes,
+//   FaEnvelope, // ⬅️ NEW
 // } from "react-icons/fa";
 
-// import globalBackendRoute from "../../config/config";
+// import globalBackendRoute from "../../config/Config.js";
 // import SearchBar from "../../components/common_components/SearchBar";
 // import LeftSidebarNav from "../../components/common_components/LeftSidebarNav";
 // import DashboardCard from "../../components/common_components/DashboardCard";
@@ -45,6 +46,11 @@
 //   return colorPalette[sum];
 // };
 
+// const coerceNumber = (v, fallback = 0) => {
+//   const n = Number(v);
+//   return Number.isFinite(n) ? n : fallback;
+// };
+
 // const SuperadminDashboard = () => {
 //   const navigate = useNavigate();
 //   const [counts, setCounts] = useState({});
@@ -52,6 +58,10 @@
 //   const [search, setSearch] = useState("");
 //   const [userId, setUserId] = useState(null);
 //   const [view, setView] = useState("grid");
+
+//   // NEW: Contact message counts
+//   const [msgTotal, setMsgTotal] = useState(0);
+//   const [msgUnread, setMsgUnread] = useState(0);
 
 //   // Auth check
 //   useEffect(() => {
@@ -97,83 +107,181 @@
 //     fetchInstructorCounts();
 //   }, []);
 
+//   // NEW: Contact messages counts (total + unread)
+//   useEffect(() => {
+//     let timer;
+
+//     const fetchContactCounts = async () => {
+//       try {
+//         // Unread count
+//         const unreadRes = await axios.get(
+//           `${globalBackendRoute}/api/messages/unread-count`
+//         );
+//         const unread =
+//           coerceNumber(unreadRes.data?.unreadCount) ??
+//           coerceNumber(unreadRes.data?.count) ??
+//           coerceNumber(unreadRes.data?.data?.unread);
+
+//         setMsgUnread(unread);
+
+//         // Total (try dedicated endpoint first; fall back to /all-messages length)
+//         let total = 0;
+//         try {
+//           const totalRes = await axios.get(
+//             `${globalBackendRoute}/api/messages/get-messages-count`
+//           );
+//           // allow a few shapes: {total}, {count}, {data:{total}}, or a map we sum
+//           if (typeof totalRes.data === "object" && totalRes.data) {
+//             if (typeof totalRes.data.total !== "undefined") {
+//               total = coerceNumber(totalRes.data.total, 0);
+//             } else if (typeof totalRes.data.count !== "undefined") {
+//               total = coerceNumber(totalRes.data.count, 0);
+//             } else if (
+//               totalRes.data.data &&
+//               typeof totalRes.data.data.total !== "undefined"
+//             ) {
+//               total = coerceNumber(totalRes.data.data.total, 0);
+//             } else {
+//               // if it's a dict of {status: count}, sum it
+//               total = Object.values(totalRes.data).reduce(
+//                 (a, b) => a + coerceNumber(b, 0),
+//                 0
+//               );
+//             }
+//           }
+//         } catch {
+//           // last resort: fetch all messages and count length
+//           const allRes = await axios.get(
+//             `${globalBackendRoute}/api/all-messages`
+//           );
+//           const arr = Array.isArray(allRes.data)
+//             ? allRes.data
+//             : allRes.data?.data || [];
+//           total = arr.length;
+//         }
+//         setMsgTotal(total);
+//       } catch (err) {
+//         console.error("Failed to fetch contact message counts", err);
+//       }
+//     };
+
+//     fetchContactCounts();
+
+//     // poll every 30s
+//     timer = setInterval(fetchContactCounts, 30000);
+
+//     // refresh when tab regains focus
+//     const onVis = () => {
+//       if (document.visibilityState === "visible") fetchContactCounts();
+//     };
+//     document.addEventListener("visibilitychange", onVis);
+
+//     return () => {
+//       clearInterval(timer);
+//       document.removeEventListener("visibilitychange", onVis);
+//     };
+//   }, []);
+
 //   // Auto-generate cards from general counts (fixed colors)
-//   const baseCards = Object.entries(counts)
-//     .map(([key, value]) => {
-//       if (!value || value === 0) return null;
+//   const baseCards = useMemo(
+//     () =>
+//       Object.entries(counts)
+//         .map(([key, value]) => {
+//           if (!value || value === 0) return null;
 
-//       const title = key
-//         .replace(/_/g, " ")
-//         .replace(/\b\w/g, (c) => c.toUpperCase());
+//           const title = key
+//             .replace(/_/g, " ")
+//             .replace(/\b\w/g, (c) => c.toUpperCase());
 
-//       return {
-//         key,
-//         title,
-//         value,
-//         link: `/all-${key}`,
-//         icon: iconMap[key] || <FaBoxOpen className="text-indigo-600" />,
-//         bgColor: colorForKey(key),
-//       };
-//     })
-//     .filter(Boolean);
+//           return {
+//             key,
+//             title,
+//             value,
+//             link: `/all-${key}`,
+//             icon: iconMap[key] || <FaBoxOpen className="text-indigo-600" />,
+//             bgColor: colorForKey(key),
+//           };
+//         })
+//         .filter(Boolean),
+//     [counts]
+//   );
 
 //   // Instructor-specific cards (explicit colors)
-//   const instructorCards = instructorCounts
-//     ? [
-//         {
-//           key: "instructors_pending",
-//           title: "Instructor Applicants (Pending)",
-//           value: instructorCounts.pending || 0,
-//           link: `/all-instructors-applications?status=pending`,
-//           icon: iconMap["instructors_pending"] || (
-//             <FaUserClock className="text-yellow-600" />
-//           ),
-//           bgColor: "bg-yellow-50",
-//         },
-//         {
-//           key: "instructors_approved",
-//           title: "Instructors (Approved)",
-//           value: instructorCounts.approved || 0,
-//           link: `/all-instructors-applications?status=approved`,
-//           icon: iconMap["instructors_approved"] || (
-//             <FaUserCheck className="text-green-600" />
-//           ),
-//           bgColor: "bg-green-50",
-//         },
-//         {
-//           key: "instructors_rejected",
-//           title: "Instructors (Rejected)",
-//           value: instructorCounts.rejected || 0,
-//           link: `/all-instructors-applications?status=rejected`,
-//           icon: iconMap["instructors_rejected"] || (
-//             <FaUserTimes className="text-red-600" />
-//           ),
-//           bgColor: "bg-rose-50",
-//         },
-//         {
-//           key: "instructors_active",
-//           title: "Instructors (Active)",
-//           value: instructorCounts.active || 0,
-//           link: `/all-instructors-applications?active=true`,
-//           icon: iconMap["instructors_active"] || (
-//             <FaUserCheck className="text-indigo-600" />
-//           ),
-//           bgColor: "bg-indigo-50",
-//         },
-//         {
-//           key: "instructors_inactive",
-//           title: "Instructors (Inactive)",
-//           value: instructorCounts.inactive || 0,
-//           link: `/all-instructors-applications?active=false`,
-//           icon: iconMap["instructors_inactive"] || (
-//             <FaUserTimes className="text-gray-600" />
-//           ),
-//           bgColor: "bg-gray-100",
-//         },
-//       ].filter((c) => c.value > 0)
-//     : [];
+//   const instructorCards = useMemo(() => {
+//     if (!instructorCounts) return [];
+//     const arr = [
+//       {
+//         key: "instructors_pending",
+//         title: "Instructor Applicants (Pending)",
+//         value: instructorCounts.pending || 0,
+//         link: `/all-instructors-applications?status=pending`,
+//         icon: iconMap["instructors_pending"] || (
+//           <FaUserClock className="text-yellow-600" />
+//         ),
+//         bgColor: "bg-yellow-50",
+//       },
+//       {
+//         key: "instructors_approved",
+//         title: "Instructors (Approved)",
+//         value: instructorCounts.approved || 0,
+//         link: `/all-instructors-applications?status=approved`,
+//         icon: iconMap["instructors_approved"] || (
+//           <FaUserCheck className="text-green-600" />
+//         ),
+//         bgColor: "bg-green-50",
+//       },
+//       {
+//         key: "instructors_rejected",
+//         title: "Instructors (Rejected)",
+//         value: instructorCounts.rejected || 0,
+//         link: `/all-instructors-applications?status=rejected`,
+//         icon: iconMap["instructors_rejected"] || (
+//           <FaUserTimes className="text-red-600" />
+//         ),
+//         bgColor: "bg-rose-50",
+//       },
+//       {
+//         key: "instructors_active",
+//         title: "Instructors (Active)",
+//         value: instructorCounts.active || 0,
+//         link: `/all-instructors-applications?active=true`,
+//         icon: iconMap["instructors_active"] || (
+//           <FaUserCheck className="text-indigo-600" />
+//         ),
+//         bgColor: "bg-indigo-50",
+//       },
+//       {
+//         key: "instructors_inactive",
+//         title: "Instructors (Inactive)",
+//         value: instructorCounts.inactive || 0,
+//         link: `/all-instructors-applications?active=false`,
+//         icon: iconMap["instructors_inactive"] || (
+//           <FaUserTimes className="text-gray-600" />
+//         ),
+//         bgColor: "bg-gray-100",
+//       },
+//     ];
+//     return arr.filter((c) => c.value > 0);
+//   }, [instructorCounts]);
 
-//   const allCards = [...baseCards, ...instructorCards];
+//   // NEW: Contact Messages card (always show; even if zero)
+//   const contactCard = useMemo(
+//     () => ({
+//       key: "contact_messages",
+//       title: "Contact Messages",
+//       value: msgTotal,
+//       link: "/all-messages",
+//       icon: <FaEnvelope className="text-emerald-600" />,
+//       bgColor: "bg-emerald-50",
+//       unread: msgUnread, // for badge
+//     }),
+//     [msgTotal, msgUnread]
+//   );
+
+//   const allCards = useMemo(
+//     () => [contactCard, ...baseCards, ...instructorCards],
+//     [contactCard, baseCards, instructorCards]
+//   );
 
 //   // Search filtering
 //   const filteredCards =
@@ -275,6 +383,11 @@
 //                   icon: <FaPlus className="text-green-600" />,
 //                   path: "/student-register",
 //                 },
+//                 {
+//                   label: "Create Quiz",
+//                   icon: <FaPlus className="text-green-600" />,
+//                   path: "/create-quiz",
+//                 },
 //               ]}
 //             />
 //           }
@@ -288,15 +401,34 @@
 //                   : "space-y-4"
 //               }`}
 //             >
-//               {filteredCards.map((card) => (
-//                 <DashboardCard
-//                   key={card.key}
-//                   card={card}
-//                   view={view}
-//                   // ✅ no state passed
-//                   onClick={() => navigate(card.link)}
-//                 />
-//               ))}
+//               {filteredCards.map((card) => {
+//                 const cardEl = (
+//                   <DashboardCard
+//                     key={card.key}
+//                     card={card}
+//                     view={view}
+//                     onClick={() => navigate(card.link)}
+//                   />
+//                 );
+
+//                 // Wrap to add an unread badge for the Contact Messages card
+//                 if (card.key === "contact_messages" && card.unread > 0) {
+//                   return (
+//                     <div
+//                       key={card.key}
+//                       className="relative"
+//                       onClick={() => navigate(card.link)}
+//                     >
+//                       {cardEl}
+//                       <span
+//                         title={`${card.unread} unread`}
+//                         className="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 ring-2 ring-white"
+//                       />
+//                     </div>
+//                   );
+//                 }
+//                 return cardEl;
+//               })}
 //             </div>
 //           }
 //         />
@@ -323,10 +455,11 @@ import {
   FaUserCheck,
   FaUserClock,
   FaUserTimes,
-  FaEnvelope, // ⬅️ NEW
+  FaEnvelope,
+  FaBookOpen, // ✅ NEW (quiz icon)
 } from "react-icons/fa";
 
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config.js";
 import SearchBar from "../../components/common_components/SearchBar";
 import LeftSidebarNav from "../../components/common_components/LeftSidebarNav";
 import DashboardCard from "../../components/common_components/DashboardCard";
@@ -370,9 +503,12 @@ const SuperadminDashboard = () => {
   const [userId, setUserId] = useState(null);
   const [view, setView] = useState("grid");
 
-  // NEW: Contact message counts
+  // Contact message counts
   const [msgTotal, setMsgTotal] = useState(0);
   const [msgUnread, setMsgUnread] = useState(0);
+
+  // ✅ NEW: quizzes count (from /api/count-quizzes)
+  const [quizTotal, setQuizTotal] = useState(0);
 
   // Auth check
   useEffect(() => {
@@ -418,7 +554,7 @@ const SuperadminDashboard = () => {
     fetchInstructorCounts();
   }, []);
 
-  // NEW: Contact messages counts (total + unread)
+  // Contact messages counts (total + unread)
   useEffect(() => {
     let timer;
 
@@ -432,16 +568,14 @@ const SuperadminDashboard = () => {
           coerceNumber(unreadRes.data?.unreadCount) ??
           coerceNumber(unreadRes.data?.count) ??
           coerceNumber(unreadRes.data?.data?.unread);
-
         setMsgUnread(unread);
 
-        // Total (try dedicated endpoint first; fall back to /all-messages length)
+        // Total
         let total = 0;
         try {
           const totalRes = await axios.get(
             `${globalBackendRoute}/api/messages/get-messages-count`
           );
-          // allow a few shapes: {total}, {count}, {data:{total}}, or a map we sum
           if (typeof totalRes.data === "object" && totalRes.data) {
             if (typeof totalRes.data.total !== "undefined") {
               total = coerceNumber(totalRes.data.total, 0);
@@ -453,7 +587,6 @@ const SuperadminDashboard = () => {
             ) {
               total = coerceNumber(totalRes.data.data.total, 0);
             } else {
-              // if it's a dict of {status: count}, sum it
               total = Object.values(totalRes.data).reduce(
                 (a, b) => a + coerceNumber(b, 0),
                 0
@@ -461,7 +594,6 @@ const SuperadminDashboard = () => {
             }
           }
         } catch {
-          // last resort: fetch all messages and count length
           const allRes = await axios.get(
             `${globalBackendRoute}/api/all-messages`
           );
@@ -477,11 +609,8 @@ const SuperadminDashboard = () => {
     };
 
     fetchContactCounts();
-
-    // poll every 30s
     timer = setInterval(fetchContactCounts, 30000);
 
-    // refresh when tab regains focus
     const onVis = () => {
       if (document.visibilityState === "visible") fetchContactCounts();
     };
@@ -491,6 +620,25 @@ const SuperadminDashboard = () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVis);
     };
+  }, []);
+
+  // ✅ NEW: fetch quizzes count (robust to different response shapes)
+  useEffect(() => {
+    const fetchQuizCount = async () => {
+      try {
+        const res = await axios.get(`${globalBackendRoute}/api/count-quizzes`);
+        const total =
+          coerceNumber(res.data?.data?.total) ||
+          coerceNumber(res.data?.total) ||
+          coerceNumber(res.data?.count) ||
+          0;
+        setQuizTotal(total);
+      } catch (err) {
+        console.error("Failed to fetch quizzes count", err);
+        setQuizTotal(0);
+      }
+    };
+    fetchQuizCount();
   }, []);
 
   // Auto-generate cards from general counts (fixed colors)
@@ -575,7 +723,7 @@ const SuperadminDashboard = () => {
     return arr.filter((c) => c.value > 0);
   }, [instructorCounts]);
 
-  // NEW: Contact Messages card (always show; even if zero)
+  // Contact Messages card (always show; even if zero)
   const contactCard = useMemo(
     () => ({
       key: "contact_messages",
@@ -584,15 +732,38 @@ const SuperadminDashboard = () => {
       link: "/all-messages",
       icon: <FaEnvelope className="text-emerald-600" />,
       bgColor: "bg-emerald-50",
-      unread: msgUnread, // for badge
+      unread: msgUnread,
     }),
     [msgTotal, msgUnread]
   );
 
-  const allCards = useMemo(
-    () => [contactCard, ...baseCards, ...instructorCards],
-    [contactCard, baseCards, instructorCards]
+  // ✅ NEW: Quizzes card (always show; even if zero)
+  const quizzesCard = useMemo(
+    () => ({
+      key: "quizzes", // keep consistent; dedupe-safe with baseCards if it already exists
+      title: "Quizzes",
+      value: quizTotal,
+      link: "/all-quizes",
+      icon: <FaBookOpen className="text-sky-600" />,
+      bgColor: "bg-sky-50",
+    }),
+    [quizTotal]
   );
+
+  // Build final cards array and de-duplicate by key (prefer baseCards if present)
+  const allCards = useMemo(() => {
+    const ordered = [
+      contactCard,
+      ...baseCards, // if 'quizzes' already in dashboard-counts, keep that
+      quizzesCard, // otherwise our explicit card fills the gap
+      ...instructorCards,
+    ];
+    const byKey = {};
+    for (const c of ordered) {
+      if (!byKey[c.key]) byKey[c.key] = c; // first one wins
+    }
+    return Object.values(byKey);
+  }, [contactCard, baseCards, quizzesCard, instructorCards]);
 
   // Search filtering
   const filteredCards =
@@ -694,6 +865,11 @@ const SuperadminDashboard = () => {
                   icon: <FaPlus className="text-green-600" />,
                   path: "/student-register",
                 },
+                {
+                  label: "Create Quiz",
+                  icon: <FaPlus className="text-green-600" />,
+                  path: "/create-quiz",
+                },
               ]}
             />
           }
@@ -717,7 +893,7 @@ const SuperadminDashboard = () => {
                   />
                 );
 
-                // Wrap to add an unread badge for the Contact Messages card
+                // Unread badge for Contact Messages card
                 if (card.key === "contact_messages" && card.unread > 0) {
                   return (
                     <div
