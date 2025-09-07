@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FaUser, FaCalendarAlt, FaThLarge } from "react-icons/fa";
+import { FaUser, FaCalendarAlt, FaThLarge, FaIdBadge } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "../../config/config";
 import ModernTextInput from "../../components/common_components/MordernTextInput";
 
 export default function SingleSubCategory() {
@@ -83,6 +83,17 @@ export default function SingleSubCategory() {
           </motion.h3>
 
           <div className="border-t border-gray-200 divide-y divide-gray-100">
+            {/* ✅ Subcategory ID */}
+            <SubCategoryField
+              icon={<FaIdBadge className="text-purple-600" />}
+              label="Subcategory ID"
+              value={
+                <code className="bg-gray-100 border px-2 py-0.5 rounded text-xs">
+                  {subCategoryData._id}
+                </code>
+              }
+            />
+
             <SubCategoryField
               icon={<FaUser className="text-blue-600" />}
               label="Subcategory Name"

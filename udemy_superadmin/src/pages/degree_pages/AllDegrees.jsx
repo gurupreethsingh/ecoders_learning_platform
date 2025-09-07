@@ -14,10 +14,11 @@ import {
   FaGraduationCap,
   FaUniversity,
   FaTrashAlt,
+  FaRegCopy,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "../../config/config";
 
 export default function AllDegrees() {
   const [view, setView] = useState("grid"); // 'list' | 'grid' | 'card'
@@ -26,6 +27,7 @@ export default function AllDegrees() {
   // server-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [gotoPage, setGotoPage] = useState(""); // jump-to-page box
 
   // data + meta
   const [rows, setRows] = useState([]);
@@ -38,6 +40,9 @@ export default function AllDegrees() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0); // to re-fetch after delete
+
+  // copy feedback
+  const [copied, setCopied] = useState(""); // holds last-copied full ID
 
   const iconStyle = {
     list: view === "list" ? "text-blue-500" : "text-gray-500",
@@ -96,13 +101,26 @@ export default function AllDegrees() {
         const m = res.data?.meta || {};
         if (!alive) return;
 
-        setRows(Array.isArray(data) ? data : []);
-        setMeta({
+        const computedMeta = {
           page: Number(m.page || page),
           limit: Number(m.limit || pageSize),
-          total: Number(m.total || data.length),
-          totalPages: Number(m.totalPages || 1),
-        });
+          total: Number(m.total ?? data.length),
+          totalPages: Number(
+            m.totalPages ||
+              Math.max(
+                1,
+                Math.ceil((m.total ?? data.length) / (m.limit || pageSize))
+              )
+          ),
+        };
+
+        // Clamp current page if it accidentally went out of range (e.g., after pageSize change)
+        if (computedMeta.page > computedMeta.totalPages) {
+          setPage(computedMeta.totalPages);
+        }
+
+        setRows(Array.isArray(data) ? data : []);
+        setMeta(computedMeta);
       } catch (err) {
         if (!alive) return;
         console.error("Error fetching degrees:", err);
@@ -156,9 +174,28 @@ export default function AllDegrees() {
     return withDots;
   };
 
+  // improved copy helper (with fallback + feedback)
+  const copy = async (text) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(text);
+      setTimeout(() => setCopied(""), 1200);
+    } catch {
+      // ignore
+    }
+  };
+
   // --- delete one degree ---
   const deleteDegree = async (e, id, name) => {
-    // make sure clicking the delete button does not trigger the card link
     e.preventDefault();
     e.stopPropagation();
 
@@ -172,11 +209,7 @@ export default function AllDegrees() {
         `${globalBackendRoute}/api/delete-degree/${id}`
       );
       if (res.status >= 200 && res.status < 300) {
-        // Option 1: re-fetch the list
-        // if deleting last item on the page, try going to previous page
-        if (rows.length === 1 && page > 1) {
-          setPage((p) => Math.max(1, p - 1));
-        }
+        if (rows.length === 1 && page > 1) setPage((p) => Math.max(1, p - 1));
         setRefreshKey((k) => k + 1);
         alert("Degree deleted successfully.");
       } else {
@@ -194,7 +227,7 @@ export default function AllDegrees() {
 
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 border-b">
-      {/* Search + Count + View Switcher (same shape as Blogs) */}
+      {/* Search + Count + View Switcher */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="block-heading">
           <h2 className="font-bold text-xl">All Degrees</h2>
@@ -281,21 +314,23 @@ export default function AllDegrees() {
                   day: "numeric",
                 });
               const slug = makeSlug(d?.name, d?.slug);
-              const path = `/single-degree/${slug}/${d?._id || d?.id}`;
+              const id = d._id || d.id || "";
+              const shortId = id ? id.slice(-6) : "—";
+              const path = `/single-degree/${slug}/${id}`;
               const listLayout = view === "list";
 
               return (
-                <div key={d._id || d.id} className="relative">
-                  {/* Delete button (outside the card link, absolute on the container) */}
+                <div key={id} className="relative">
+                  {/* Delete button */}
                   <button
                     title="Delete degree"
                     className="absolute -top-2 -right-2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-red-50 text-red-600"
-                    onClick={(e) => deleteDegree(e, d._id || d.id, d?.name)}
+                    onClick={(e) => deleteDegree(e, id, d?.name)}
                   >
                     <FaTrashAlt className="h-4 w-4" />
                   </button>
 
-                  {/* Card link (whole card navigates) */}
+                  {/* Card link */}
                   <Link to={path}>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
@@ -304,7 +339,7 @@ export default function AllDegrees() {
                         listLayout ? "flex-row p-4 items-center" : "flex-col"
                       }`}
                     >
-                      {/* Icon badge (no images) */}
+                      {/* Icon badge */}
                       <div
                         className={`${
                           listLayout
@@ -325,6 +360,40 @@ export default function AllDegrees() {
                             : "p-4 flex flex-col flex-grow"
                         }`}
                       >
+                        {/* ID badge + copy */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="inline-flex items-center gap-2 text-[11px] leading-none px-2 py-1 rounded-full bg-gray-100 text-gray-700 border cursor-pointer"
+                            title={id || ""}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (id) copy(id);
+                            }}
+                          >
+                            ID:
+                            <span className="font-mono">{shortId}</span>
+                            {id ? (
+                              <FaRegCopy
+                                className={`h-3.5 w-3.5 ${
+                                  copied === id
+                                    ? "text-green-600"
+                                    : "text-indigo-600"
+                                }`}
+                                title={
+                                  copied === id ? "Copied!" : "Copy full ID"
+                                }
+                              />
+                            ) : null}
+                          </span>
+
+                          {copied === id && (
+                            <span className="text-xs text-green-600 select-none">
+                              Copied!
+                            </span>
+                          )}
+                        </div>
+
                         <div className="text-left space-y-1 flex-shrink-0">
                           <h3 className="text-lg font-bold text-gray-900">
                             {d?.name || "Untitled Degree"}
@@ -412,7 +481,8 @@ export default function AllDegrees() {
               <span className="font-medium">
                 {pageCountText.start}-{pageCountText.end}
               </span>{" "}
-              of <span className="font-medium">{meta.total}</span> results
+              of <span className="font-medium">{meta.total}</span> results •{" "}
+              {meta.limit}/page
             </div>
 
             <div className="flex items-center gap-2">
@@ -464,6 +534,30 @@ export default function AllDegrees() {
               >
                 <FaArrowRight />
               </button>
+
+              {/* Jump to page */}
+              <div className="flex items-center gap-1 ml-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={meta.totalPages || 1}
+                  value={gotoPage}
+                  onChange={(e) => setGotoPage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const num = Math.max(
+                        1,
+                        Math.min(Number(gotoPage || 1), meta.totalPages)
+                      );
+                      setPage(num);
+                      setGotoPage("");
+                    }
+                  }}
+                  placeholder="Go to…"
+                  className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                  title="Jump to page and press Enter"
+                />
+              </div>
             </div>
           </div>
         </>

@@ -142,6 +142,17 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/all-contacts"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All-messages">
+                  <AllMessages />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/messages"
             element={
@@ -266,6 +277,29 @@ const MainLayout = () => {
               <PrivateRoute>
                 <PageTitle title="Update Profile">
                   <UpdateProfile />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          {/* user pages. all-users, single-user  */}
+          <Route
+            path="/all-users"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Users">
+                  <AllUsers />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-user/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Single User">
+                  <SingleUser />
                 </PageTitle>
               </PrivateRoute>
             }

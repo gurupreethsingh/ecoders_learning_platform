@@ -4,22 +4,19 @@ import {
   FaThList,
   FaThLarge,
   FaTh,
-  FaArrowLeft,
-  FaArrowRight,
   FaCalendar,
   FaTags,
-  FaUser,
   FaSearch,
   FaGraduationCap,
-  FaUniversity,
   FaTrashAlt,
   FaClock,
   FaPercent,
   FaCheck,
+  FaIdBadge,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "../../config/config";
 
 export default function AllExams() {
   const [view, setView] = useState("grid");
@@ -133,7 +130,6 @@ export default function AllExams() {
               params: { page: 1, limit: 5000 },
             })
             .catch(() => ({ data: { data: [] } })),
-          // optional; if you don't have such route, this will just fallback
           axios
             .get(`${globalBackendRoute}/api/get-instructors`)
             .catch(() => ({ data: { data: [] } })),
@@ -213,7 +209,7 @@ export default function AllExams() {
           sortBy: "createdAt",
           sortDir: "desc",
         };
-        if (searchTerm.trim()) params.search = searchTerm.trim(); // server may support 'search' or ignore it
+        if (searchTerm.trim()) params.search = searchTerm.trim();
 
         const res = await axios.get(`${globalBackendRoute}/api/list-exams`, {
           params,
@@ -253,33 +249,24 @@ export default function AllExams() {
     return { start, end };
   }, [meta]);
 
-  const buildPageList = () => {
-    const total = meta.totalPages;
-    const current = meta.page;
-    if (total <= 7) {
-      return Array.from({ length: total }, (_, i) => i + 1);
+  const buildPages = () => {
+    const totalPages = meta.totalPages;
+    const currentPage = meta.page;
+    const list = [];
+    const maxBtns = 7;
+
+    if (totalPages <= maxBtns) {
+      for (let i = 1; i <= totalPages; i++) list.push(i);
+      return list;
     }
-    const pages = new Set([
-      1,
-      2,
-      total - 1,
-      total,
-      current,
-      current - 1,
-      current + 1,
-    ]);
-    [...pages].forEach((p) => {
-      if (p < 1 || p > total) pages.delete(p);
-    });
-    const sorted = [...pages].sort((a, b) => a - b);
-    const withDots = [];
-    for (let i = 0; i < sorted.length; i++) {
-      withDots.push(sorted[i]);
-      if (i < sorted.length - 1 && sorted[i + 1] - sorted[i] > 1) {
-        withDots.push("…");
-      }
-    }
-    return withDots;
+    list.push(1);
+    if (currentPage > 4) list.push("…");
+    const s = Math.max(2, currentPage - 1),
+      e = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = s; i <= e; i++) list.push(i);
+    if (currentPage < totalPages - 3) list.push("…");
+    list.push(totalPages);
+    return list;
   };
 
   const deleteExam = async (e, id, title) => {
@@ -379,6 +366,10 @@ export default function AllExams() {
     );
   };
 
+  // Pagination controls like AllCategories
+  const goTo = (p) =>
+    setPage(Math.min(Math.max(1, p), Math.max(1, meta.totalPages)));
+
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 border-b">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
@@ -463,6 +454,7 @@ export default function AllExams() {
               const slug = makeSlug(x?.examName, x?.examCode);
               const path = `/single-exam/${slug}/${x?._id || x?.id}`;
               const listLayout = view === "list";
+              const examId = x._id || x.id;
 
               // Degree
               const degreeId =
@@ -473,7 +465,7 @@ export default function AllExams() {
                 degreeMap[degreeId] ||
                 (typeof degreeId === "string" ? shortId(degreeId) : "—");
 
-              // Semister/Semester (support both just in case)
+              // Semister/Semester
               const semField = x?.semester ?? x?.semister;
               const semId =
                 typeof semField === "object" ? semField?._id : semField;
@@ -510,26 +502,26 @@ export default function AllExams() {
                 (typeof userId === "string" ? shortId(userId) : "—");
 
               return (
-                <div key={x._id || x.id} className="relative">
+                <div key={examId} className="relative">
                   <div className="absolute -top-2 -right-2 z-10 flex gap-2">
                     <button
                       title="Toggle Published"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-green-50 text-green-600"
-                      onClick={(e) => togglePublish(e, x._id || x.id)}
+                      onClick={(e) => togglePublish(e, examId)}
                     >
                       P
                     </button>
                     <button
                       title="Increment Attempt Count"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-blue-50 text-blue-600"
-                      onClick={(e) => bumpAttempt(e, x._id || x.id)}
+                      onClick={(e) => bumpAttempt(e, examId)}
                     >
                       <FaCheck className="h-4 w-4" />
                     </button>
                     <button
                       title="Delete exam"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-red-50 text-red-600"
-                      onClick={(e) => deleteExam(e, x._id || x.id, x?.examName)}
+                      onClick={(e) => deleteExam(e, examId, x?.examName)}
                     >
                       <FaTrashAlt className="h-4 w-4" />
                     </button>
@@ -566,6 +558,14 @@ export default function AllExams() {
                           <h3 className="text-lg font-bold text-gray-900">
                             {x?.examName || "Untitled Exam"}
                           </h3>
+
+                          {/* ✅ Exam ID display */}
+                          <div className="text-xs text-gray-600 flex items-center gap-2">
+                            <FaIdBadge className="text-purple-600" />
+                            <code className="bg-gray-100 border px-2 py-0.5 rounded">
+                              {examId}
+                            </code>
+                          </div>
 
                           <p className="text-sm text-gray-600 flex items-center">
                             <FaCalendar className="mr-1 text-yellow-500" />
@@ -644,10 +644,10 @@ export default function AllExams() {
                             <span className="font-medium">{createdByName}</span>
                           </p>
 
-                          {toTags(x.tags).length > 0 && (
+                          {tags.length > 0 && (
                             <p className="text-sm text-gray-600 flex items-center">
                               <FaTags className="mr-1 text-green-500" />
-                              {toTags(x.tags).join(", ")}
+                              {tags.join(", ")}
                             </p>
                           )}
 
@@ -673,65 +673,87 @@ export default function AllExams() {
             <p className="text-center text-gray-600 mt-6">No exams found.</p>
           )}
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-8 gap-3">
-            <div className="text-gray-700 text-sm">
-              Page {meta.page} of {meta.totalPages} • Showing{" "}
-              <span className="font-medium">
-                {pageCountText.start}-{pageCountText.end}
-              </span>{" "}
-              of <span className="font-medium">{meta.total}</span> results
-            </div>
-
-            <div className="flex items-center gap-2">
+          {/* ✅ Pagination styled like AllCategories */}
+          {meta.totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={meta.page <= 1}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
-                  meta.page <= 1
-                    ? "bg-gray-300"
-                    : "bg-indigo-600 hover:bg-indigo-500"
+                onClick={() => goTo(1)}
+                disabled={meta.page === 1}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  meta.page === 1
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-purple-600 border-purple-200 hover:bg-purple-50"
                 }`}
-                title="Previous page"
               >
-                <FaArrowLeft />
+                « First
+              </button>
+              <button
+                onClick={() => goTo(meta.page - 1)}
+                disabled={meta.page === 1}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  meta.page === 1
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                }`}
+              >
+                ‹ Prev
               </button>
 
-              <div className="flex items-center gap-1">
-                {buildPageList().map((p, idx) =>
-                  p === "…" ? (
-                    <span key={`dots-${idx}`} className="px-2 text-gray-500">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`px-3 py-1.5 rounded border text-sm ${
-                        p === meta.page
-                          ? "bg-gray-900 text-white border-gray-900"
-                          : "border-gray-300 hover:bg-gray-50"
-                      }`}
-                      title={`Go to page ${p}`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-              </div>
+              {buildPages().map((p, idx) =>
+                p === "…" ? (
+                  <span
+                    key={`dots-${idx}`}
+                    className="px-2 text-gray-400 select-none"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goTo(p)}
+                    className={`min-w-[36px] px-3 py-1 rounded-full border text-sm transition ${
+                      p === meta.page
+                        ? "bg-purple-600 text-white border-purple-600 shadow"
+                        : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
 
               <button
-                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                disabled={meta.page >= meta.totalPages}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
-                  meta.page >= meta.totalPages
-                    ? "bg-gray-300"
-                    : "bg-indigo-600 hover:bg-indigo-500"
+                onClick={() => goTo(meta.page + 1)}
+                disabled={meta.page === meta.totalPages}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  meta.page === meta.totalPages
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-purple-600 border-purple-200 hover:bg-purple-50"
                 }`}
-                title="Next page"
               >
-                <FaArrowRight />
+                Next ›
+              </button>
+              <button
+                onClick={() => goTo(meta.totalPages)}
+                disabled={meta.page === meta.totalPages}
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  meta.page === meta.totalPages
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                }`}
+              >
+                Last »
               </button>
             </div>
+          )}
+
+          {/* Page summary (kept, optional) */}
+          <div className="mt-3 text-center text-sm text-gray-600">
+            Showing{" "}
+            <span className="font-semibold">
+              {pageCountText.start}-{pageCountText.end}
+            </span>{" "}
+            of <span className="font-semibold">{meta.total}</span>
           </div>
         </>
       )}
