@@ -12,7 +12,8 @@
 //   FaUserCheck,
 //   FaUserClock,
 //   FaUserTimes,
-//   FaEnvelope, // ⬅️ NEW
+//   FaEnvelope,
+//   FaBookOpen, // ✅ NEW (quiz icon)
 // } from "react-icons/fa";
 
 // import globalBackendRoute from "../../config/Config.js";
@@ -59,9 +60,12 @@
 //   const [userId, setUserId] = useState(null);
 //   const [view, setView] = useState("grid");
 
-//   // NEW: Contact message counts
+//   // Contact message counts
 //   const [msgTotal, setMsgTotal] = useState(0);
 //   const [msgUnread, setMsgUnread] = useState(0);
+
+//   // ✅ NEW: quizzes count (from /api/count-quizzes)
+//   const [quizTotal, setQuizTotal] = useState(0);
 
 //   // Auth check
 //   useEffect(() => {
@@ -107,7 +111,7 @@
 //     fetchInstructorCounts();
 //   }, []);
 
-//   // NEW: Contact messages counts (total + unread)
+//   // Contact messages counts (total + unread)
 //   useEffect(() => {
 //     let timer;
 
@@ -121,16 +125,14 @@
 //           coerceNumber(unreadRes.data?.unreadCount) ??
 //           coerceNumber(unreadRes.data?.count) ??
 //           coerceNumber(unreadRes.data?.data?.unread);
-
 //         setMsgUnread(unread);
 
-//         // Total (try dedicated endpoint first; fall back to /all-messages length)
+//         // Total
 //         let total = 0;
 //         try {
 //           const totalRes = await axios.get(
 //             `${globalBackendRoute}/api/messages/get-messages-count`
 //           );
-//           // allow a few shapes: {total}, {count}, {data:{total}}, or a map we sum
 //           if (typeof totalRes.data === "object" && totalRes.data) {
 //             if (typeof totalRes.data.total !== "undefined") {
 //               total = coerceNumber(totalRes.data.total, 0);
@@ -142,7 +144,6 @@
 //             ) {
 //               total = coerceNumber(totalRes.data.data.total, 0);
 //             } else {
-//               // if it's a dict of {status: count}, sum it
 //               total = Object.values(totalRes.data).reduce(
 //                 (a, b) => a + coerceNumber(b, 0),
 //                 0
@@ -150,7 +151,6 @@
 //             }
 //           }
 //         } catch {
-//           // last resort: fetch all messages and count length
 //           const allRes = await axios.get(
 //             `${globalBackendRoute}/api/all-messages`
 //           );
@@ -166,11 +166,8 @@
 //     };
 
 //     fetchContactCounts();
-
-//     // poll every 30s
 //     timer = setInterval(fetchContactCounts, 30000);
 
-//     // refresh when tab regains focus
 //     const onVis = () => {
 //       if (document.visibilityState === "visible") fetchContactCounts();
 //     };
@@ -180,6 +177,25 @@
 //       clearInterval(timer);
 //       document.removeEventListener("visibilitychange", onVis);
 //     };
+//   }, []);
+
+//   // ✅ NEW: fetch quizzes count (robust to different response shapes)
+//   useEffect(() => {
+//     const fetchQuizCount = async () => {
+//       try {
+//         const res = await axios.get(`${globalBackendRoute}/api/count-quizzes`);
+//         const total =
+//           coerceNumber(res.data?.data?.total) ||
+//           coerceNumber(res.data?.total) ||
+//           coerceNumber(res.data?.count) ||
+//           0;
+//         setQuizTotal(total);
+//       } catch (err) {
+//         console.error("Failed to fetch quizzes count", err);
+//         setQuizTotal(0);
+//       }
+//     };
+//     fetchQuizCount();
 //   }, []);
 
 //   // Auto-generate cards from general counts (fixed colors)
@@ -264,7 +280,7 @@
 //     return arr.filter((c) => c.value > 0);
 //   }, [instructorCounts]);
 
-//   // NEW: Contact Messages card (always show; even if zero)
+//   // Contact Messages card (always show; even if zero)
 //   const contactCard = useMemo(
 //     () => ({
 //       key: "contact_messages",
@@ -273,15 +289,38 @@
 //       link: "/all-messages",
 //       icon: <FaEnvelope className="text-emerald-600" />,
 //       bgColor: "bg-emerald-50",
-//       unread: msgUnread, // for badge
+//       unread: msgUnread,
 //     }),
 //     [msgTotal, msgUnread]
 //   );
 
-//   const allCards = useMemo(
-//     () => [contactCard, ...baseCards, ...instructorCards],
-//     [contactCard, baseCards, instructorCards]
+//   // ✅ NEW: Quizzes card (always show; even if zero)
+//   const quizzesCard = useMemo(
+//     () => ({
+//       key: "quizzes", // keep consistent; dedupe-safe with baseCards if it already exists
+//       title: "Quizzes",
+//       value: quizTotal,
+//       link: "/all-quizes",
+//       icon: <FaBookOpen className="text-sky-600" />,
+//       bgColor: "bg-sky-50",
+//     }),
+//     [quizTotal]
 //   );
+
+//   // Build final cards array and de-duplicate by key (prefer baseCards if present)
+//   const allCards = useMemo(() => {
+//     const ordered = [
+//       contactCard,
+//       ...baseCards, // if 'quizzes' already in dashboard-counts, keep that
+//       quizzesCard, // otherwise our explicit card fills the gap
+//       ...instructorCards,
+//     ];
+//     const byKey = {};
+//     for (const c of ordered) {
+//       if (!byKey[c.key]) byKey[c.key] = c; // first one wins
+//     }
+//     return Object.values(byKey);
+//   }, [contactCard, baseCards, quizzesCard, instructorCards]);
 
 //   // Search filtering
 //   const filteredCards =
@@ -411,7 +450,7 @@
 //                   />
 //                 );
 
-//                 // Wrap to add an unread badge for the Contact Messages card
+//                 // Unread badge for Contact Messages card
 //                 if (card.key === "contact_messages" && card.unread > 0) {
 //                   return (
 //                     <div
@@ -456,7 +495,8 @@ import {
   FaUserClock,
   FaUserTimes,
   FaEnvelope,
-  FaBookOpen, // ✅ NEW (quiz icon)
+  FaBookOpen, // Quiz icon
+  FaQuestionCircle, // ✅ NEW (questions icon)
 } from "react-icons/fa";
 
 import globalBackendRoute from "../../config/Config.js";
@@ -507,8 +547,9 @@ const SuperadminDashboard = () => {
   const [msgTotal, setMsgTotal] = useState(0);
   const [msgUnread, setMsgUnread] = useState(0);
 
-  // ✅ NEW: quizzes count (from /api/count-quizzes)
+  // Quizzes & Questions total counts
   const [quizTotal, setQuizTotal] = useState(0);
+  const [questionsTotal, setQuestionsTotal] = useState(0); // ✅ NEW
 
   // Auth check
   useEffect(() => {
@@ -570,7 +611,7 @@ const SuperadminDashboard = () => {
           coerceNumber(unreadRes.data?.data?.unread);
         setMsgUnread(unread);
 
-        // Total
+        // Total count (robust fallbacks)
         let total = 0;
         try {
           const totalRes = await axios.get(
@@ -622,7 +663,7 @@ const SuperadminDashboard = () => {
     };
   }, []);
 
-  // ✅ NEW: fetch quizzes count (robust to different response shapes)
+  // Quizzes count
   useEffect(() => {
     const fetchQuizCount = async () => {
       try {
@@ -639,6 +680,27 @@ const SuperadminDashboard = () => {
       }
     };
     fetchQuizCount();
+  }, []);
+
+  // ✅ NEW: Questions count
+  useEffect(() => {
+    const fetchQuestionsCount = async () => {
+      try {
+        const res = await axios.get(
+          `${globalBackendRoute}/api/count-questions`
+        );
+        const total =
+          coerceNumber(res.data?.data?.total) ||
+          coerceNumber(res.data?.total) ||
+          coerceNumber(res.data?.count) ||
+          0;
+        setQuestionsTotal(total);
+      } catch (err) {
+        console.error("Failed to fetch questions count", err);
+        setQuestionsTotal(0);
+      }
+    };
+    fetchQuestionsCount();
   }, []);
 
   // Auto-generate cards from general counts (fixed colors)
@@ -665,7 +727,7 @@ const SuperadminDashboard = () => {
     [counts]
   );
 
-  // Instructor-specific cards (explicit colors)
+  // Instructor-specific cards
   const instructorCards = useMemo(() => {
     if (!instructorCounts) return [];
     const arr = [
@@ -723,7 +785,7 @@ const SuperadminDashboard = () => {
     return arr.filter((c) => c.value > 0);
   }, [instructorCounts]);
 
-  // Contact Messages card (always show; even if zero)
+  // Contact Messages card (always show)
   const contactCard = useMemo(
     () => ({
       key: "contact_messages",
@@ -737,10 +799,10 @@ const SuperadminDashboard = () => {
     [msgTotal, msgUnread]
   );
 
-  // ✅ NEW: Quizzes card (always show; even if zero)
+  // Quizzes card (always show)
   const quizzesCard = useMemo(
     () => ({
-      key: "quizzes", // keep consistent; dedupe-safe with baseCards if it already exists
+      key: "quizzes",
       title: "Quizzes",
       value: quizTotal,
       link: "/all-quizes",
@@ -750,12 +812,26 @@ const SuperadminDashboard = () => {
     [quizTotal]
   );
 
+  // ✅ NEW: Questions card (always show)
+  const questionsCard = useMemo(
+    () => ({
+      key: "questions",
+      title: "Questions",
+      value: questionsTotal,
+      link: "/all-questions",
+      icon: <FaQuestionCircle className="text-fuchsia-600" />,
+      bgColor: "bg-fuchsia-50",
+    }),
+    [questionsTotal]
+  );
+
   // Build final cards array and de-duplicate by key (prefer baseCards if present)
   const allCards = useMemo(() => {
     const ordered = [
       contactCard,
-      ...baseCards, // if 'quizzes' already in dashboard-counts, keep that
-      quizzesCard, // otherwise our explicit card fills the gap
+      ...baseCards,
+      quizzesCard,
+      questionsCard, // ✅ added after quizzes
       ...instructorCards,
     ];
     const byKey = {};
@@ -763,7 +839,7 @@ const SuperadminDashboard = () => {
       if (!byKey[c.key]) byKey[c.key] = c; // first one wins
     }
     return Object.values(byKey);
-  }, [contactCard, baseCards, quizzesCard, instructorCards]);
+  }, [contactCard, baseCards, quizzesCard, questionsCard, instructorCards]);
 
   // Search filtering
   const filteredCards =
@@ -869,6 +945,12 @@ const SuperadminDashboard = () => {
                   label: "Create Quiz",
                   icon: <FaPlus className="text-green-600" />,
                   path: "/create-quiz",
+                },
+                // ✅ NEW: Create Question quick link
+                {
+                  label: "Create Question",
+                  icon: <FaPlus className="text-fuchsia-600" />,
+                  path: "/create-question",
                 },
               ]}
             />

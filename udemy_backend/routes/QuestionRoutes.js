@@ -1,77 +1,61 @@
-// routes/questionRoutes.js
+// routes/QuestionRoutes.js
 const express = require("express");
-const ctrl = require("../controllers/QuestionController");
-// const { requireAuth, requireRole } = require("../middleware/auth");
-
+const Q = require("../controllers/QuestionController");
 const router = express.Router();
 
 /**
- * Create
+ * CRUD
  */
-router.post("/create-question", /*requireAuth,*/ ctrl.createQuestion);
-router.post(
-  "/bulk-create-questions",
-  /*requireAuth,*/ ctrl.bulkCreateQuestions
-);
+router.post("/create-question", Q.createQuestion);
+router.put("/replace-question/:id", Q.replaceQuestion);
+router.post("/bulk-create-questions", Q.bulkCreateQuestions);
+router.post("/bulk-update-questions", Q.bulkUpdateQuestions);
+router.post("/bulk-set-section", Q.bulkSetSection);
+router.post("/bulk-set-marks", Q.bulkSetMarks);
+
+router.get("/list-questions", Q.listQuestions);
+router.get("/count-questions", Q.countQuestions);
+router.get("/get-question/:id", Q.getQuestion);
+router.patch("/update-question/:id", Q.updateQuestion);
+router.delete("/delete-question/:id", Q.deleteQuestion);
+router.post("/bulk-delete-questions", Q.bulkDeleteQuestions);
 
 /**
- * Read
+ * Toggles / status / attachments / duplicate
  */
-router.get("/list-questions", ctrl.listQuestions);
-router.get("/count-questions", ctrl.countQuestions);
-router.get("/get-question/:id", ctrl.getQuestion);
+router.post("/toggle-active/:id", Q.toggleActive);
+router.post("/set-status/:id", Q.setStatus);
+router.post("/bulk-set-status", Q.bulkSetStatus);
+router.post("/set-attachments/:id", Q.setAttachments);
+router.post("/duplicate-question/:id", Q.duplicateQuestion);
 
 /**
- * Update
+ * Exam associations
  */
-router.patch("/update-question/:id", /*requireAuth,*/ ctrl.updateQuestion);
-router.post("/duplicate-question/:id", /*requireAuth,*/ ctrl.duplicateQuestion);
+router.post("/add-existing-to-exam/:examId", Q.addExistingToExam);
+router.post("/remove-from-exam-and-delete/:examId", Q.removeFromExamAndDelete);
+router.post("/detach-from-exam/:examId", Q.detachFromExam);
+router.post("/reorder-within-exam", Q.reorderWithinExam);
+router.post("/move-questions-to-exam", Q.moveQuestionsToExam);
+router.post("/move-up-in-exam", Q.moveUpInExam);
+router.post("/move-down-in-exam", Q.moveDownInExam);
+router.get("/exam-stats/:examId", Q.examStats);
 
 /**
- * Delete
+ * Quiz associations
  */
-router.delete("/delete-question/:id", /*requireAuth,*/ ctrl.deleteQuestion);
-router.post(
-  "/bulk-delete-questions",
-  /*requireAuth,*/ ctrl.bulkDeleteQuestions
-);
+router.post("/add-existing-to-quiz/:quizId", Q.addExistingToQuiz);
+router.post("/remove-from-quiz-and-delete/:quizId", Q.removeFromQuizAndDelete);
+router.post("/detach-from-quiz/:quizId", Q.detachFromQuiz);
+router.post("/reorder-within-quiz", Q.reorderWithinQuiz);
+router.post("/move-questions-to-quiz", Q.moveQuestionsToQuiz);
+router.post("/move-up-in-quiz", Q.moveUpInQuiz);
+router.post("/move-down-in-quiz", Q.moveDownInQuiz);
+router.get("/quiz-stats/:quizId", Q.quizStats);
 
 /**
- * Exam operations
+ * Utilities
  */
-router.post(
-  "/exams/:examId/add-existing-questions",
-  /*requireAuth,*/ ctrl.addExistingToExam
-);
-router.post(
-  "/exams/:examId/remove-questions",
-  /*requireAuth,*/ ctrl.removeFromExamAndDelete
-);
-router.post(
-  "/move-questions-to-exam",
-  /*requireAuth,*/ ctrl.moveQuestionsToExam
-);
-router.post("/reorder-questions", /*requireAuth,*/ ctrl.reorderWithinExam);
-
-/**
- * Flags / status
- */
-router.post("/toggle-question-active/:id", /*requireAuth,*/ ctrl.toggleActive);
-router.post("/set-question-status/:id", /*requireAuth,*/ ctrl.setStatus);
-router.post("/bulk-set-question-status", /*requireAuth,*/ ctrl.bulkSetStatus);
-
-/**
- * Stats / utility
- */
-router.get("/exams/:examId/question-stats", ctrl.examStats);
-router.get("/random-sample-questions", ctrl.randomSample);
-
-/**
- * Media helper
- */
-router.post(
-  "/set-question-attachments/:id",
-  /*requireAuth,*/ ctrl.setAttachments
-);
+router.get("/random-sample", Q.randomSample);
 
 module.exports = router;

@@ -1,12 +1,11 @@
 // models/QuestionModel.js
 const mongoose = require("mongoose");
-
 const { Schema } = mongoose;
 
 // -------------------------
 // Enums / constants
 // -------------------------
-const QUESTION_TYPES = ["mcq", "theory", "programming", "true_false"];
+const QUESTION_TYPES = ["mcq", "theory", "programming", "true_false", "direct"]; // + direct
 const ANSWER_STATUS = ["correct", "incorrect", "unanswered"];
 const DIFFICULTY = ["easy", "medium", "hard"];
 
@@ -87,7 +86,7 @@ const QuestionSchema = new Schema(
       default: undefined,
     },
 
-    // Theory-only fields
+    // Theory (essay)-only fields
     theory_answer: {
       type: String, // model answer / guidelines
       trim: true,
@@ -101,7 +100,7 @@ const QuestionSchema = new Schema(
       default: 0,
     },
 
-    // Programming-only fields
+    // Programming (coding)-only fields
     programming_language: {
       type: String, // e.g., "python", "javascript", "java"
       trim: true,
@@ -118,6 +117,12 @@ const QuestionSchema = new Schema(
         weight: { type: Number, default: 1 },
       },
     ],
+
+    // Direct Q&A-only field
+    direct_answer: {
+      type: String,
+      trim: true,
+    },
 
     // ---------- Scoring / evaluation ----------
     marks_alloted: {
@@ -137,8 +142,7 @@ const QuestionSchema = new Schema(
       min: 0,
     },
 
-    // NOTE: These two are typically stored per user attempt (submission).
-    // You asked for them here, so they’re optional and default to “unanswered”.
+    // NOTE: Typically attempt-level, but you had them here; keeping optional:
     marks_scored: {
       type: Number,
       min: 0,
@@ -150,30 +154,38 @@ const QuestionSchema = new Schema(
       default: "unanswered",
     },
 
-    // ---------- Relations (required before entering Questions) ----------
+    // ---------- Relations ----------
     degree: {
       type: Schema.Types.ObjectId,
       ref: "Degree",
-      required: true,
+      required: false,
       index: true,
     },
     // Your backend uses "semisters" in routes; we’ll stick to "Semister" model name to match that.
     semister: {
       type: Schema.Types.ObjectId,
       ref: "Semister",
-      required: true,
+      required: false,
       index: true,
     },
     course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
-      required: true,
+      required: false,
       index: true,
     },
+
+    // Make both Exam & Quiz OPTIONAL (can live in the bank unattached)
     exam: {
       type: Schema.Types.ObjectId,
       ref: "Exam",
-      required: true,
+      required: false,
+      index: true,
+    },
+    quiz: {
+      type: Schema.Types.ObjectId,
+      ref: "Quiz",
+      required: false,
       index: true,
     },
 
@@ -201,11 +213,11 @@ const QuestionSchema = new Schema(
     // ---------- Lifecycle / control ----------
     order: {
       type: Number,
-      default: 0, // placement within an exam/section
+      default: 0, // placement within an exam/quiz/section
       index: true,
     },
     section: {
-      type: String, // "Part A", "Short Answers", etc.
+      type: String, // "Section 1 - One Mark", etc.
       trim: true,
     },
     isActive: {
@@ -234,7 +246,6 @@ const QuestionSchema = new Schema(
     toJSON: {
       virtuals: true,
       transform(_doc, ret) {
-        // hide internal fields if needed
         return ret;
       },
     },
@@ -247,7 +258,7 @@ const QuestionSchema = new Schema(
 QuestionSchema.pre("validate", function (next) {
   const q = this;
 
-  // MCQ: force exactly 4 options and a valid correctOptionIndex
+  // MCQ: exactly 4 options + valid correctOptionIndex
   if (q.question_type === "mcq") {
     if (!Array.isArray(q.options) || q.options.length !== 4) {
       return next(
@@ -265,39 +276,76 @@ QuestionSchema.pre("validate", function (next) {
         )
       );
     }
-  } else {
-    // For non-MCQ, ignore options & index
-    q.options = undefined;
-    q.correctOptionIndex = undefined;
+    // Clean unrelated fields
+    q.correctBoolean = undefined;
+    q.theory_answer = undefined;
+    q.rubric = undefined;
+    q.maxWords = q.maxWords || 0;
+    q.programming_language = undefined;
+    q.starterCode = undefined;
+    q.testcases = undefined;
+    q.direct_answer = undefined;
   }
 
-  // True/False: require correctBoolean
+  // True/False
   if (q.question_type === "true_false") {
     if (typeof q.correctBoolean !== "boolean") {
       return next(new Error("True/False questions require a correctBoolean."));
     }
-  } else {
-    q.correctBoolean = undefined;
-  }
-
-  // Theory: should have a model answer (optional but recommended)
-  if (q.question_type === "theory") {
-    if (!q.theory_answer || !q.theory_answer.trim()) {
-      // not strictly required, but helpful:
-      // return next(new Error("Theory questions should include a model answer."));
-    }
-  } else {
+    // Clean unrelated
+    q.options = undefined;
+    q.correctOptionIndex = undefined;
     q.theory_answer = undefined;
     q.rubric = undefined;
     q.maxWords = q.maxWords || 0;
+    q.programming_language = undefined;
+    q.starterCode = undefined;
+    q.testcases = undefined;
+    q.direct_answer = undefined;
   }
 
-  // Programming: testcases recommended
+  // Theory (essay)
+  if (q.question_type === "theory") {
+    // Optional enforcement:
+    // if (!q.theory_answer || !q.theory_answer.trim()) {
+    //   return next(new Error("Theory questions should include a model answer."));
+    // }
+    q.options = undefined;
+    q.correctOptionIndex = undefined;
+    q.correctBoolean = undefined;
+    q.programming_language = undefined;
+    q.starterCode = undefined;
+    q.testcases = undefined;
+    q.direct_answer = undefined;
+  }
+
+  // Programming (coding)
   if (q.question_type === "programming") {
+    // Optional enforcement:
     // if (!Array.isArray(q.testcases) || q.testcases.length === 0) {
     //   return next(new Error("Programming question requires at least one testcase."));
     // }
-  } else {
+    q.options = undefined;
+    q.correctOptionIndex = undefined;
+    q.correctBoolean = undefined;
+    q.theory_answer = undefined;
+    q.rubric = undefined;
+    q.maxWords = q.maxWords || 0;
+    q.direct_answer = undefined;
+  }
+
+  // Direct Q&A
+  if (q.question_type === "direct") {
+    // Optional enforcement:
+    // if (!q.direct_answer || !q.direct_answer.trim()) {
+    //   return next(new Error("Direct questions should include a direct_answer."));
+    // }
+    q.options = undefined;
+    q.correctOptionIndex = undefined;
+    q.correctBoolean = undefined;
+    q.theory_answer = undefined;
+    q.rubric = undefined;
+    q.maxWords = q.maxWords || 0;
     q.programming_language = undefined;
     q.starterCode = undefined;
     q.testcases = undefined;
@@ -325,10 +373,10 @@ QuestionSchema.index({
   chapter: "text",
 });
 
-// Fast lookup within an exam slice
+// Fast lookup within an exam/quiz slice
 QuestionSchema.index(
-  { exam: 1, section: 1, order: 1, difficultyLevel: 1 },
-  { name: "exam_section_order_diff_idx" }
+  { exam: 1, quiz: 1, section: 1, order: 1, difficultyLevel: 1 },
+  { name: "exam_quiz_section_order_diff_idx" }
 );
 
 // For building banks by curriculum path
