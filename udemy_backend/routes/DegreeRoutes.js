@@ -23,3 +23,4 @@ router.get("/degrees/counts/by-department", DegreeController.countsByDepartment)
 router.get("/degrees/facets", DegreeController.getFacets);
 
 module.exports = router;
+
