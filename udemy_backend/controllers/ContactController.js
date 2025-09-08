@@ -88,43 +88,46 @@ exports.getMessageById = async (req, res) => {
   }
 };
 
-// Controller to add a reply to a message and send an email notification
+// controllers/ContactController.js
 exports.addReplyToMessage = async (req, res) => {
   try {
-    const message = await ContactModel.findById(req.params.id);
-    if (!message) return res.status(404).json({ error: "Message not found" });
+    const { id } = req.params;
+    const msgDoc = await ContactModel.findById(id);
+    if (!msgDoc) return res.status(404).json({ error: "Message not found" });
 
-    // Use the email from the original message if not provided in the request
-    const replyEmail = req.body.email || message.email;
+    const bodyMsg = (req.body.message || "").trim();
+    if (!bodyMsg) return res.status(400).json({ error: "Reply message is required" });
 
-    // Construct the new reply object
+    // Frontend doesn't send name/email — provide safe fallbacks:
+    const replyName  = (req.body.name  || "Support").trim();
+    const replyEmail = (req.body.email || msgDoc.email || "").trim();
+
     const newReply = {
-      name: req.body.name,
+      name: replyName,
       email: replyEmail,
-      message: req.body.message,
+      message: bodyMsg,
       timestamp: new Date(),
     };
 
-    // Add the new reply to the message's replies array and save it to the database
-    message.replies.push(newReply);
-    await message.save();
+    msgDoc.replies.push(newReply);
+    msgDoc.isRead = true;
+    await msgDoc.save();
 
-    // Send the reply notification email
-    sendReplyEmail(
-      message.email,
-      message.firstName,
-      message.message_text,
-      newReply.message
-    );
+    // fire-and-forget email (optional)
+    try {
+      sendReplyEmail(msgDoc.email, msgDoc.firstName || "there", msgDoc.message_text || "", newReply.message);
+    } catch (e) {
+      console.error("sendReplyEmail failed:", e?.message || e);
+    }
 
-    res.status(200).json({ message: "Reply added successfully", newReply });
+    // Return the updated message so your UI can refresh the thread
+    return res.status(200).json(msgDoc);
   } catch (error) {
     console.error("Error adding reply:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while adding the reply." });
+    return res.status(500).json({ error: "An error occurred while adding the reply." });
   }
 };
+
 
 // Controller to get the count of unread messages
 exports.getUnreadMessagesCount = async (req, res) => {

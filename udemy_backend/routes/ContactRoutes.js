@@ -12,10 +12,12 @@ router.get("/all-messages", ContactController.getAllMessages);
 router.get("/reply-message/:id", ContactController.getMessageById);
 
 // Route to add a reply to a specific message
-router.post(
-  "/give-message-reply/:id/reply",
-  ContactController.addReplyToMessage
-);
+// router.post(
+//   "/give-message-reply/:id/reply",
+//   ContactController.addReplyToMessage
+// );
+
+router.post("/messages/:id/reply", ContactController.addReplyToMessage);
 
 // Route to get the count of unread messages
 router.get("/messages/unread-count", ContactController.getUnreadMessagesCount);

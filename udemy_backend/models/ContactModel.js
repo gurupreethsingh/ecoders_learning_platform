@@ -6,10 +6,12 @@ const ReplySchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    default :"Support",
   },
   email: {
     type: String,
-    required: true,
+    required: false,
+    default : "",
   },
   message: {
     type: String,
