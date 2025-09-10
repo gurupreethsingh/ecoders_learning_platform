@@ -95,6 +95,12 @@ import InstructorApproval from "../../pages/instructor_pages/InstructorApproval"
 import CreateStudent from "../../pages/student_pages/CreateStudent";
 import AllStudents from "../../pages/student_pages/AllStudents";
 
+// notification routes.
+import CreateNotification from "../../pages/notification_pages/CreateNotification";
+import AllNotifications from "../../pages/notification_pages/AllNotifications";
+import SingleNotification from "../../pages/notification_pages/SingleNotification";
+import UpdateNotification from "../../pages/notification_pages/UpdateNotification";
+
 const MainLayout = () => {
   return (
     <div id="app-scroll" className="h-full overflow-y-auto">
@@ -239,6 +245,17 @@ const MainLayout = () => {
           />
           <Route
             path="/dashboard"
+            element={
+              <PrivateRoute allowedRoles={["user", "superadmin"]}>
+                <PageTitle title="User Dashboard">
+                  <Dashboard />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/user-dashboard"
             element={
               <PrivateRoute allowedRoles={["user", "superadmin"]}>
                 <PageTitle title="User Dashboard">
@@ -774,6 +791,51 @@ const MainLayout = () => {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="All Students">
                   <AllStudents />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          {/* notification routes */}
+          <Route
+            path="/create-notification"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Create Notification">
+                  <CreateNotification />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-notifications"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Notifications">
+                  <AllNotifications />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-notification/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Notification Details">
+                  <SingleNotification />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/update-notification/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Update Notification">
+                  <UpdateNotification />
                 </PageTitle>
               </PrivateRoute>
             }

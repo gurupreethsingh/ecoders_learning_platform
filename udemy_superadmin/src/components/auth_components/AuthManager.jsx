@@ -37,11 +37,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token) => {
-    localStorage.setItem("token", token);
-    const decoded = decodeToken(token);
+    // strip accidental 'Bearer ' prefix and quotes before saving
+    const clean = String(token)
+      .replace(/^Bearer\s+/i, "")
+      .replace(/^"(.+)"$/, "$1");
+    localStorage.setItem("token", clean);
+
+    const decoded = decodeToken(clean);
     if (decoded) {
       setUser(decoded);
       setIsLoggedIn(true);
+    } else {
+      // if somehow not decodable, clear it
+      localStorage.removeItem("token");
+      setUser(null);
+      setIsLoggedIn(false);
     }
   };
 

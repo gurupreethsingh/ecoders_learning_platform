@@ -1,124 +1,83 @@
-// const User = require("../models/UserModel");
-// const Product = require("../models/ProductModel");
-// const Category = require("../models/CategoryModel");
-// const SubCategory = require("../models/SubCategoryModel");
-// const Blog = require("../models/BlogModel");
-// const Course = require("../models/CourseModel");
-// const Order = require("../models/OrderModel");
-// const Contact = require("../models/ContactModel");
-// const Attendance = require("../models/AttendanceModel");
-// const Wishlist = require("../models/WishlistModel");
-// const Notification = require("../models/NotificationModel");
-// const Address = require("../models/AddressModel");
-// const Subscription = require("../models/SubscriptionModel");
-// const Cart = require("../models/CartModel");
-
-// // 🧠 Add your models here:
-// const collections = {
-//   users: User,
-//   products: Product,
-//   categories: Category,
-//   subcategories: SubCategory,
-//   blogs: Blog,
-//   courses: Course,
-//   orders: Order,
-//   contacts: Contact,
-//   attendances: Attendance,
-//   wishlists: Wishlist,
-//   notifications: Notification,
-//   addresses: Address,
-//   subscriptions: Subscription,
-//   carts: Cart,
-// };
-
-// exports.getDashboardCounts = async (req, res) => {
-//   try {
-//     const counts = {};
-
-//     // Loop through each model and count
-//     for (const [key, model] of Object.entries(collections)) {
-//       counts[key] = await model.countDocuments();
-//     }
-
-//     res.status(200).json(counts);
-//   } catch (error) {
-//     res.status(500).json({
-//       error: "Failed to fetch dashboard counts",
-//       details: error.message,
-//     });
-//   }
-// };
-//
-
-//
-
-//
-
 // controllers/DashboardController.js
 const User = require("../models/UserModel");
-const Product = require("../models/ProductModel");
 const Category = require("../models/CategoryModel");
 const SubCategory = require("../models/SubCategoryModel");
 const Blog = require("../models/BlogModel");
 const Course = require("../models/CourseModel");
-const Order = require("../models/OrderModel");
 const Contact = require("../models/ContactModel");
-const Attendance = require("../models/AttendanceModel");
-const Wishlist = require("../models/WishlistModel");
-const Notification = require("../models/NotificationModel");
-const Address = require("../models/AddressModel");
-const Subscription = require("../models/SubscriptionModel");
-const Cart = require("../models/CartModel");
-
-// ADD THESE
+// ⬇️ FIX: destructure the models you need from NotificationModel.js
+const {
+  Notification: NotificationModel /*, NotificationDelivery */,
+} = require("../models/NotificationModel");
 const Degree = require("../models/DegreeModel");
+// your file is SemisterModel; we’ll expose it as “semesters” key in the API
 const Semister = require("../models/SemisterModel");
 const Exam = require("../models/ExamModel");
 
-const collections = {
-  users: User,
-  products: Product,
-  categories: Category,
-  subcategories: SubCategory,
-  blogs: Blog,
-  exams: Exam,
-  courses: Course,
-  orders: Order,
-  contacts: Contact,
-  attendances: Attendance,
-  wishlists: Wishlist,
-  notifications: Notification,
-  addresses: Address,
-  subscriptions: Subscription,
-  carts: Cart,
+// Optional (guard if not present)
+let Quiz, Question;
+try {
+  Quiz = require("../models/QuizModel");
+} catch {}
+try {
+  Question = require("../models/QuestionModel");
+} catch {}
 
-  // ADD THESE TWO KEYS
-  degrees: Degree,
-  semisters: Semister,
+// Defaults so every key is present
+const DEFAULT_COUNTS = {
+  blogs: 0,
+  categories: 0,
+  contacts: 0,
+  courses: 0,
+  degrees: 0,
+  exams: 0,
+  instructors: 0,
+  notifications: 0,
+  questions: 0,
+  quizzes: 0,
+  semesters: 0,
+  subcategories: 0,
+  users: 0,
+  students: 0,
+};
+
+const safeCount = async (fn) => {
+  try {
+    const n = await fn();
+    return Number.isFinite(Number(n)) ? Number(n) : 0;
+  } catch (err) {
+    console.error("[dashboard-counts] count failed:", err?.message || err);
+    return 0;
+  }
 };
 
 exports.getDashboardCounts = async (req, res) => {
+  const tasks = {
+    users: () => User.countDocuments({}),
+    categories: () => Category.countDocuments({}),
+    subcategories: () => SubCategory.countDocuments({}),
+    blogs: () => Blog.countDocuments({}),
+    courses: () => Course.countDocuments({}),
+    contacts: () => Contact.countDocuments({}),
+    notifications: () => NotificationModel.countDocuments({}), // ⬅️ use the real model
+    degrees: () => Degree.countDocuments({}),
+    semesters: () => Semister.countDocuments({}), // from SemisterModel
+    exams: () => Exam.countDocuments({}),
+    quizzes: () => (Quiz ? Quiz.countDocuments({}) : 0),
+    questions: () => (Question ? Question.countDocuments({}) : 0),
+    students: () => User.countDocuments({ role: "student" }),
+    instructors: () => User.countDocuments({ role: "instructor" }),
+  };
+
   try {
-    const entries = Object.entries(collections);
-    const results = await Promise.all(
-      entries.map(([_, model]) => model.countDocuments())
+    const entries = await Promise.all(
+      Object.entries(tasks).map(async ([k, fn]) => [k, await safeCount(fn)])
     );
-
-    const counts = {};
-    entries.forEach(([key], i) => {
-      counts[key] = results[i];
-    });
-
-    // Optional: separate instructors count for your dashboard
-    counts.instructors = await User.countDocuments({ role: "instructor" });
-
-    counts.students = await User.countDocuments({ role: "student" });
-
-    res.status(200).json(counts);
-  } catch (error) {
-    res.status(500).json({
-      error: "Failed to fetch dashboard counts",
-      details: error.message,
-    });
+    const data = { ...DEFAULT_COUNTS };
+    for (const [k, v] of entries) data[k] = v;
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("[dashboard-counts] unexpected:", err);
+    res.status(200).json({ ...DEFAULT_COUNTS });
   }
 };

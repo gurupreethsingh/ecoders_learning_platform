@@ -5,6 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 // 2. Load environment variables
 dotenv.config();
@@ -82,6 +83,8 @@ app.use("/api", semisterRoutes);
 app.use("/api", questionRoutes);
 app.use("/api", QuizRoutes);
 app.use("/api/instructors", instructorRoutes);
+
+app.use(cookieParser());
 
 // 7. Connect to MongoDB using .env
 const DATABASE_URI = process.env.DATABASE;
