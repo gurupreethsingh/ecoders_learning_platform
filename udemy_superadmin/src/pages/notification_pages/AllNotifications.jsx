@@ -88,6 +88,18 @@ api.interceptors.request.use((config) => {
   if (t) config.headers.Authorization = `Bearer ${t}`;
   return config;
 });
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const status = err?.response?.status;
+    const msg = err?.response?.data?.message || "";
+    if (status === 401 && /token expired|jwt expired/i.test(msg)) {
+      localStorage.removeItem("token");
+      window.location.assign("/login");
+    }
+    return Promise.reject(err);
+  }
+);
 
 /** helpers */
 const shortId = (val) =>
@@ -137,22 +149,19 @@ export default function AllNotifications() {
   // bulk selection
   const [selected, setSelected] = useState(new Set());
 
-  // filters (map to controller’s buildNotificationFilter & list route)
+  // filters
   const [filters, setFilters] = useState({
     category: "",
     priority: "",
     status: "",
     audienceType: "",
     channel: "",
-    role: "", // for roles include
+    role: "",
     tag: "",
-    // textual query (q = title/message/tags)
     q: "",
-    // date filtering
-    dateField: "createdAt", // createdAt | scheduledAt | sentAt | expiresAt
+    dateField: "createdAt",
     since: "",
     until: "",
-    // contextual
     context_degree: "",
     context_semester: "",
     context_course: "",
@@ -449,7 +458,9 @@ export default function AllNotifications() {
     try {
       const res = await api.get(
         `/api/export-notification-deliveries-csv/${id}`,
-        { responseType: "blob" }
+        {
+          responseType: "blob",
+        }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement("a");
@@ -466,7 +477,6 @@ export default function AllNotifications() {
   };
 
   const openDeliveries = (id) => {
-    // Route to a details page if you have one
     window.open(`/notification/${id}/deliveries`, "_blank");
   };
 
@@ -794,7 +804,7 @@ export default function AllNotifications() {
         </div>
       </div>
 
-      {/* Filters (cascading + attributes) */}
+      {/* Filters */}
       <div className="mb-4 p-3 rounded-lg border bg-white shadow-sm">
         <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700">
           <FaFilter />
@@ -928,7 +938,7 @@ export default function AllNotifications() {
             </select>
           </label>
 
-          {/* Tag (single) */}
+          {/* Tag */}
           <label className="flex flex-col text-sm text-gray-700">
             <span className="mb-1">Tag</span>
             <input
@@ -1001,7 +1011,7 @@ export default function AllNotifications() {
             />
           </label>
 
-          {/* Contextual filters */}
+          {/* Context filters */}
           <FilterSelect
             label="Degree (context)"
             value={filters.context_degree}
@@ -1062,10 +1072,7 @@ export default function AllNotifications() {
               className="border border-gray-300 rounded px-2 py-1"
               value={filters.context_batchYear}
               onChange={(e) =>
-                setFilters((f) => ({
-                  ...f,
-                  context_batchYear: e.target.value,
-                }))
+                setFilters((f) => ({ ...f, context_batchYear: e.target.value }))
               }
               placeholder="e.g., 2025"
             />
@@ -1167,8 +1174,17 @@ export default function AllNotifications() {
                     shortId(n.context.course?._id))) ||
                 (n?.context?.course ? "Course" : "—");
 
+              // helpers
+              const makeSlug = (s) =>
+                String(s || "notification")
+                  .toLowerCase()
+                  .trim()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/(^-|-$)/g, "");
+
               const listLayout = view === "list";
-              const path = `/notification/${id}`; // if you have a detail page
+              const slug = n?.slug || makeSlug(n?.title) || "notification";
+              const path = `/single-notification/${slug}/${id}`;
 
               return (
                 <div key={id} className="relative">

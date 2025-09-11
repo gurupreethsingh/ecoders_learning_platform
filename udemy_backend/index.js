@@ -31,6 +31,7 @@ const semisterRoutes = require("./routes/SemisterRoutes");
 const QuizRoutes = require("./routes/QuizRoutes.js");
 const questionRoutes = require("./routes/QuestionRoutes");
 const instructorRoutes = require("./routes/InstructorRoutes");
+const activityRoutes = require("./routes/ActivityRoutes.js");
 
 // 4. Initialize Express
 const app = express();
@@ -83,6 +84,7 @@ app.use("/api", semisterRoutes);
 app.use("/api", questionRoutes);
 app.use("/api", QuizRoutes);
 app.use("/api/instructors", instructorRoutes);
+app.use("/api", activityRoutes);
 
 app.use(cookieParser());
 

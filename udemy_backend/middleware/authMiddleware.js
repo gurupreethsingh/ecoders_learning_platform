@@ -1,14 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-/** Extract the last non-empty token-looking chunk from Authorization header */
 function extractBearerToken(req) {
   const hdr = req.headers.authorization || req.headers.Authorization || "";
   if (typeof hdr !== "string") return null;
 
-  // Common bad cases handled:
-  // - "Bearer Bearer <token>"
-  // - '"<token>"' (quoted)
-  // - '<token>' (no Bearer prefix)
   const parts = hdr.trim().split(/\s+/);
   let raw = parts.length === 1 ? parts[0] : parts[parts.length - 1];
   if (!raw || raw.toLowerCase() === "bearer") return null;
@@ -31,7 +26,9 @@ exports.verifyToken = (req, res, next) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      clockTolerance: 30,
+    });
     const user = normalizeUser(decoded);
 
     if (!user._id) {
