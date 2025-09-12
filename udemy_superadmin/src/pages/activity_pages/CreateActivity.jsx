@@ -8,7 +8,6 @@ import {
   FiPlus,
   FiSave,
   FiUsers,
-  FiTag,
   FiCalendar,
 } from "react-icons/fi";
 import globalBackendRoute from "../../config/Config.js";
@@ -72,6 +71,31 @@ function toISO(value) {
   return isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
+/** --------- ID helpers for tolerant client-side filtering ---------- */
+const idOf = (val) => {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "object") return String(val._id || val.id || "");
+  return String(val);
+};
+
+const getCourseDegreeId = (c) =>
+  idOf(c.degree) ||
+  idOf(c.degreeId) ||
+  idOf(c.degree_id) ||
+  idOf(c.degreeRef) ||
+  "";
+
+const getCourseSemesterId = (c) =>
+  idOf(c.semester) ||
+  idOf(c.semesterId) ||
+  idOf(c.semister) ||
+  idOf(c.semisterId) ||
+  idOf(c.semester_ref) ||
+  "";
+
+/** ------------------------------------------------------------------ */
+
 export default function CreateActivity() {
   const navigate = useNavigate();
   const [msg, setMsg] = useState({ type: "", text: "" });
@@ -93,7 +117,6 @@ export default function CreateActivity() {
   const [form, setForm] = useState({
     title: "",
     instructions: "",
-    tags: "",
     audienceType: "all",
     roles: [],
     usersCSV: "",
@@ -103,7 +126,7 @@ export default function CreateActivity() {
     maxMarks: 100,
   });
 
-  /** load degrees once (✅ use /api) */
+  /** load degrees once */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -123,7 +146,7 @@ export default function CreateActivity() {
     };
   }, []);
 
-  /** when degrees change, load semesters for those degrees only (✅ scoped) */
+  /** when degrees change, load semesters for those degrees only (scoped) */
   useEffect(() => {
     let alive = true;
     if (!selDegreeIds.length) {
@@ -144,16 +167,17 @@ export default function CreateActivity() {
           all.push(...(Array.isArray(list) ? list : []));
         }
         if (!alive) return;
-        // de-dup by _id
+        // de-dup by string _id
         const seen = new Set();
         const merged = all.filter((s) => {
-          const id = s._id || s.id;
+          const id = String(s._id || s.id || "");
           if (!id || seen.has(id)) return false;
           seen.add(id);
           return true;
         });
         setSemesters(merged);
-        setSelSemesterIds((prev) => prev.filter((id) => seen.has(id)));
+        // keep only still-visible selections
+        setSelSemesterIds((prev) => prev.filter((id) => seen.has(String(id))));
       } catch (e) {
         if (alive) setSemesters([]);
       }
@@ -163,7 +187,9 @@ export default function CreateActivity() {
     };
   }, [selDegreeIds]);
 
-  /** when semesters change, load courses for selected degree+semester pairs (✅ scoped) */
+  /** when semesters change, load courses for selected degree+semester pairs
+   * We filter client-side to guarantee correctness even if backend ignores filters.
+   */
   useEffect(() => {
     let alive = true;
     if (!selDegreeIds.length || !selSemesterIds.length) {
@@ -173,31 +199,70 @@ export default function CreateActivity() {
     }
     (async () => {
       try {
-        const all = [];
+        // Try to fetch with server filters (if supported)
+        const fetched = [];
         for (const degId of selDegreeIds) {
           for (const semId of selSemesterIds) {
             const r = await api.get("/api/list-courses", {
               params: {
                 page: 1,
-                limit: 1000,
+                limit: 2000,
                 degreeId: degId,
                 semisterId: semId,
               },
             });
             const list = r?.data?.data || r?.data || [];
-            all.push(...(Array.isArray(list) ? list : []));
+            fetched.push(...(Array.isArray(list) ? list : []));
           }
         }
-        if (!alive) return;
+
+        // If server didn't filter, we may have duplicates + unrelated entries.
+        // Apply strict client-side filter + de-dup.
+        const allowedDegrees = new Set(selDegreeIds.map(String));
+        const allowedSemesters = new Set(selSemesterIds.map(String));
+
         const seen = new Set();
-        const merged = all.filter((c) => {
-          const id = c._id || c.id;
-          if (!id || seen.has(id)) return false;
-          seen.add(id);
-          return true;
-        });
-        setCourses(merged);
-        setSelCourseIds((prev) => prev.filter((id) => seen.has(id)));
+        const filtered = [];
+        for (const c of fetched) {
+          const cid = String(c._id || c.id || "");
+          if (!cid || seen.has(cid)) continue;
+
+          const degId = String(getCourseDegreeId(c));
+          const semId = String(getCourseSemesterId(c));
+
+          // Keep only courses that match BOTH a selected degree and semester
+          if (allowedDegrees.has(degId) && allowedSemesters.has(semId)) {
+            seen.add(cid);
+            filtered.push(c);
+          }
+        }
+
+        // Fallback: if server returned empty or nothing matched (maybe API ignores params);
+        // fetch all courses once and filter locally.
+        let finalList = filtered;
+        if (!filtered.length) {
+          const rAll = await api.get("/api/list-courses", {
+            params: { page: 1, limit: 10000 },
+          });
+          const all = (rAll?.data?.data || rAll?.data || []).filter(Boolean);
+          const seen2 = new Set();
+          finalList = all.filter((c) => {
+            const cid = String(c._id || c.id || "");
+            if (!cid || seen2.has(cid)) return false;
+            const degId = String(getCourseDegreeId(c));
+            const semId = String(getCourseSemesterId(c));
+            const ok =
+              allowedDegrees.has(degId) && allowedSemesters.has(semId);
+            if (ok) seen2.add(cid);
+            return ok;
+          });
+        }
+
+        if (!alive) return;
+        setCourses(finalList);
+        // keep only still-visible selections
+        const available = new Set(finalList.map((c) => String(c._id || c.id)));
+        setSelCourseIds((prev) => prev.filter((id) => available.has(String(id))));
       } catch (e) {
         if (alive) setCourses([]);
       }
@@ -214,7 +279,7 @@ export default function CreateActivity() {
       case "roles":
         return "Only the selected roles will receive this activity.";
       case "users":
-        return "Only the specific users (comma-separated IDs/emails) will receive this.";
+        return "Only the specific users (comma-separated ObjectIds) will receive this.";
       case "contextual":
         return "Target users linked to the optional context below (degrees/semesters/courses).";
       default:
@@ -248,31 +313,26 @@ export default function CreateActivity() {
       setSaving(true);
       setAlert("", "");
 
+      // Backend expects ObjectIds in `users`.
       const users = String(form.usersCSV || "")
         .split(",")
         .map((t) => t.trim())
-        .filter(Boolean);
+        .filter((v) => /^[0-9a-fA-F]{24}$/.test(v));
 
       const payload = {
         title: form.title,
         instructions: form.instructions || "",
-        tags: String(form.tags || "")
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
 
         audienceType: form.audienceType,
         ...(form.audienceType === "roles" ? { roles: form.roles || [] } : {}),
         ...(form.audienceType === "users" ? { users } : {}),
-        ...(form.audienceType === "contextual"
-          ? {
-              context: {
-                degrees: selDegreeIds,
-                semesters: selSemesterIds,
-                courses: selCourseIds,
-              },
-            }
-          : {}),
+
+        // Always include context so it's persisted on the Activity
+        context: {
+          degrees: selDegreeIds,
+          semesters: selSemesterIds,
+          courses: selCourseIds,
+        },
 
         startAt: toISO(form.startAt),
         endAt: toISO(form.endAt),
@@ -343,19 +403,6 @@ export default function CreateActivity() {
               />
             </label>
 
-            <label className="text-sm text-gray-700">
-              <div className="mb-1 flex items-center gap-2">
-                <FiTag /> Tags (comma-separated)
-              </div>
-              <input
-                className="w-full border rounded px-3 py-2"
-                name="tags"
-                value={form.tags}
-                onChange={handleChange}
-                placeholder="e.g., project, semester-1"
-              />
-            </label>
-
             <label className="text-sm text-gray-700 md:col-span-2">
               <div className="mb-1">Instructions</div>
               <textarea
@@ -393,13 +440,13 @@ export default function CreateActivity() {
 
             {form.audienceType === "users" && (
               <label className="text-sm text-gray-700">
-                <div className="mb-1">Users (IDs/emails, comma-separated)</div>
+                <div className="mb-1">Users (ObjectIds, comma-separated)</div>
                 <input
                   className="w-full border rounded px-3 py-2"
                   name="usersCSV"
                   value={form.usersCSV}
                   onChange={handleChange}
-                  placeholder="e.g., 65ab...f1, student@example.com"
+                  placeholder="e.g., 65ab...f1, 64cd...9a"
                 />
               </label>
             )}
@@ -424,7 +471,7 @@ export default function CreateActivity() {
           </div>
         </Section>
 
-        {/* Context (OPTIONAL, used only if audienceType=contextual) */}
+        {/* Context (OPTIONAL) */}
         <Section title="Context (optional)">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="text-sm text-gray-700">

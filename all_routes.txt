@@ -32,8 +32,6 @@ router.get("/count-active-subcategories", controller.countActiveSubCategories);
 router.get("/count-subcategories-by-category", controller.countSubCategoriesPerCategory);
 router.get("/get-subcategories-by-category", controller.getSubCategoriesByCategory);
 
-
-
 // routes/SemisterRoutes.js
 const SemisterController = require("../controllers/SemisterController");
 router.post("/semisters", SemisterController.createSemister); // Create
