@@ -1,6 +1,6 @@
 // src/pages/activities/AllActivities.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   FaThList,
   FaThLarge,
@@ -85,9 +85,181 @@ const fmtDate = (v) =>
       })
     : "—";
 
-export default function AllActivities() {
-  const navigate = useNavigate();
+const slugify = (s) =>
+  String(s || "activity")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 120);
 
+/** ---- Flexible Date Parsing ---- */
+const MONTHS = {
+  jan: 1,
+  january: 1,
+  feb: 2,
+  february: 2,
+  mar: 3,
+  march: 3,
+  apr: 4,
+  april: 4,
+  may: 5,
+  jun: 6,
+  june: 6,
+  jul: 7,
+  july: 7,
+  aug: 8,
+  august: 8,
+  sep: 9,
+  sept: 9,
+  september: 9,
+  oct: 10,
+  october: 10,
+  nov: 11,
+  november: 11,
+  dec: 12,
+  december: 12,
+};
+
+const stripOrdinals = (s) => s.replace(/\b(\d+)(st|nd|rd|th)\b/gi, "$1");
+
+const lastDayOfMonth = (y, m) => new Date(y, m, 0).getDate();
+
+const parseFlexibleDate = (raw, { endOfRange = false } = {}) => {
+  if (!raw) return "";
+  let s = String(raw).trim().toLowerCase();
+  if (!s) return "";
+
+  s = stripOrdinals(s).replace(/[,]/g, " ").replace(/\s+/g, " ").trim();
+
+  // Cases like "september 2025"
+  const mYear = s.match(
+    /\b(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t|tember)?|oct(ober)?|nov(ember)?|dec(ember)?)\s+(\d{4})\b/
+  );
+  if (mYear) {
+    const m = MONTHS[mYear[1].slice(0, 3)];
+    const y = parseInt(mYear[5], 10);
+    const d = endOfRange ? lastDayOfMonth(y, m) : 1;
+    return new Date(
+      Date.UTC(y, m - 1, d, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+    ).toISOString();
+  }
+
+  // Month Day Year  e.g. "sep 9 2025"
+  const mdy = s.match(
+    /\b(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t|tember)?|oct(ober)?|nov(ember)?|dec(ember)?)\s+(\d{1,2})\s+(\d{4})\b/
+  );
+  if (mdy) {
+    const m = MONTHS[mdy[1].slice(0, 3)];
+    const d = parseInt(mdy[11], 10);
+    const y = parseInt(mdy[12], 10);
+    return new Date(
+      Date.UTC(y, m - 1, d, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+    ).toISOString();
+    // groups shift depending on engine; safe fallback below if needed
+  }
+
+  // Day Month Year  e.g. "9 sep 2025"
+  const dmy = s.match(
+    /\b(\d{1,2})\s+(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(t|tember)?|oct(ober)?|nov(ember)?|dec(ember)?)\s+(\d{4})\b/
+  );
+  if (dmy) {
+    const d = parseInt(dmy[1], 10);
+    const m = MONTHS[dmy[2].slice(0, 3)];
+    const y = parseInt(dmy[12], 10);
+    return new Date(
+      Date.UTC(y, m - 1, d, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+    ).toISOString();
+  }
+
+  // Numeric with separators: try yyyy-mm-dd, dd-mm-yyyy, mm-dd-yyyy (also with "/" or ".")
+  const parts = s.split(/[-/.\s]/).filter(Boolean);
+  if (parts.length >= 3) {
+    const [a, b, c] = parts.map((x) => parseInt(x, 10));
+    // yyyy-mm-dd
+    if (a > 1900 && b >= 1 && b <= 12 && c >= 1 && c <= 31) {
+      return new Date(
+        Date.UTC(a, b - 1, c, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+      ).toISOString();
+    }
+    // dd-mm-yyyy  (unambiguous if first > 12)
+    if (
+      a >= 1 &&
+      a <= 31 &&
+      b >= 1 &&
+      b <= 12 &&
+      c > 1900 &&
+      (a > 12 || b <= 12)
+    ) {
+      return new Date(
+        Date.UTC(c, b - 1, a, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+      ).toISOString();
+    }
+    // mm-dd-yyyy
+    if (a >= 1 && a <= 12 && b >= 1 && b <= 31 && c > 1900) {
+      return new Date(
+        Date.UTC(c, a - 1, b, endOfRange ? 23 : 0, endOfRange ? 59 : 0)
+      ).toISOString();
+    }
+  }
+
+  // Plain Date.parse fallback
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    return new Date(
+      Date.UTC(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate(),
+        endOfRange ? 23 : 0,
+        endOfRange ? 59 : 0
+      )
+    ).toISOString();
+  }
+
+  return ""; // unparseable
+};
+
+/** Robust ID extraction: strings, objects, arrays */
+const normArr = (x) => (Array.isArray(x) ? x : x != null ? [x] : []);
+const extractIds = (value) =>
+  normArr(value)
+    .map((v) => {
+      if (v == null) return null;
+      if (typeof v === "string" || typeof v === "number") return String(v);
+      if (typeof v === "object")
+        return String(v._id || v.id || v.value || v.key || "");
+      return null;
+    })
+    .filter(Boolean);
+
+/** Normalize any context shape into arrays of STRING ids */
+const normalizeContextIds = (a) => {
+  const c = a?.context || {};
+  const degreeIds = [
+    ...extractIds(c.degrees),
+    ...extractIds(c.degreeIds),
+    ...extractIds(c.degree),
+    ...extractIds(a?.degreeId),
+    ...extractIds(a?.degree),
+  ];
+  const semesterIds = [
+    ...extractIds(c.semesters),
+    ...extractIds(c.semisterIds),
+    ...extractIds(c.semester),
+    ...extractIds(c.semister),
+    ...extractIds(a?.semesterId),
+    ...extractIds(a?.semisterId),
+  ];
+  const courseIds = [
+    ...extractIds(c.courses),
+    ...extractIds(c.courseIds),
+    ...extractIds(c.course),
+    ...extractIds(a?.courseId),
+  ];
+  return { degreeIds, semesterIds, courseIds };
+};
+
+export default function AllActivities() {
   // view + search
   const [view, setView] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,20 +285,24 @@ export default function AllActivities() {
   const [semisterList, setSemisterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
 
-  // lookup maps for quick render
+  // lookup maps
   const [degreeMap, setDegreeMap] = useState({});
   const [semisterMap, setSemisterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
 
-  // filters -> match backend buildActivityFilter keys
+  // roles (for audienceType=roles)
+  const [roleOptions, setRoleOptions] = useState([]);
+
+  // filters (match backend)
   const [filters, setFilters] = useState({
     audienceType: "",
+    roles: [], // new
     status: "",
-    tag: "", // single tag text
+    tag: "",
     degreeId: "",
     semisterId: "",
     courseId: "",
-    since: "", // ISO date range (optional)
+    since: "",
     until: "",
   });
 
@@ -147,11 +323,43 @@ export default function AllActivities() {
         setDegreeList(arr);
         const map = {};
         arr.forEach((d) => {
-          map[d._id || d.id] = d.name || d.title || "Degree";
+          const key = String(d._id || d.id);
+          map[key] = d.name || d.title || "Degree";
         });
         setDegreeMap(map);
       } catch {
         /* silent */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  /** Load roles for audienceType=roles */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await api.get("/api/getUserCountsByRole");
+        // expect { data: { admin: N, student: M, ... } } or just an object
+        const obj = r?.data?.data || r?.data || {};
+        const roles = Object.keys(obj).filter(Boolean);
+        if (alive)
+          setRoleOptions(
+            roles.length
+              ? roles
+              : ["student", "instructor", "author", "admin", "superadmin"]
+          );
+      } catch {
+        if (alive)
+          setRoleOptions([
+            "student",
+            "instructor",
+            "author",
+            "admin",
+            "superadmin",
+          ]);
       }
     })();
     return () => {
@@ -190,12 +398,13 @@ export default function AllActivities() {
 
         const map = {};
         sl.forEach((s) => {
+          const key = String(s._id || s.id);
           const label =
             s.title ||
             s.semister_name ||
             (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
             "Semester";
-          map[s._id || s.id] = label;
+          map[key] = label;
         });
         setSemisterMap(map);
       } catch {
@@ -237,7 +446,8 @@ export default function AllActivities() {
         setCourseList(cl);
         const map = {};
         cl.forEach((c) => {
-          map[c._id || c.id] = c.title || c.name || "Course";
+          const key = String(c._id || c.id);
+          map[key] = c.title || c.name || "Course";
         });
         setCourseMap(map);
       } catch {
@@ -260,13 +470,19 @@ export default function AllActivities() {
       setLoading(true);
       setFetchError("");
       try {
+        // parse dates just-in-time
+        const parsedSince = parseFlexibleDate(filters.since || "");
+        const parsedUntil = parseFlexibleDate(filters.until || "", {
+          endOfRange: true,
+        });
+
         const params = {
           page,
           limit: pageSize,
           sort: "-createdAt",
         };
 
-        // search -> use $text via ?q= (backend supports)
+        // text search (send to server too if supported)
         if (searchTerm.trim()) params.q = searchTerm.trim();
 
         // simple filters
@@ -274,36 +490,148 @@ export default function AllActivities() {
         if (filters.status) params.status = filters.status;
         if (filters.tag) params.tag = filters.tag;
 
-        // contextual filters
-        if (filters.degreeId) params.context_degree = filters.degreeId;
-        if (filters.semisterId) params.context_semester = filters.semisterId;
-        if (filters.courseId) params.context_course = filters.courseId;
+        // roles (when audienceType=roles)
+        if (filters.audienceType === "roles" && filters.roles?.length) {
+          params.roles = filters.roles.join(",");
+        }
 
-        // date range (by createdAt by default)
-        if (filters.since) params.since = filters.since;
-        if (filters.until) params.until = filters.until;
+        // send many common variants (backend differences)
+        if (filters.degreeId) {
+          params.degreeId = filters.degreeId;
+          params.degree = filters.degreeId;
+          params.context_degree = filters.degreeId;
+        }
+        if (filters.semisterId) {
+          params.semisterId = filters.semisterId;
+          params.semesterId = filters.semisterId;
+          params.context_semester = filters.semisterId;
+        }
+        if (filters.courseId) {
+          params.courseId = filters.courseId;
+          params.context_course = filters.courseId;
+        }
+
+        // date range
+        if (parsedSince) params.since = parsedSince;
+        if (parsedUntil) params.until = parsedUntil;
 
         const res = await api.get("/api/list-activities", {
           params,
           signal: ctrl.signal,
         });
 
-        const data = res.data?.data || [];
+        let data = Array.isArray(res.data?.data) ? res.data.data : [];
         const m = res.data?.meta || {};
         if (!alive) return;
 
-        const totalPages =
-          m.pages ||
-          m.totalPages ||
-          Math.ceil((m.total || 0) / (m.limit || pageSize)) ||
-          1;
+        // -------- Client-side robust filtering --------
+        // 1) Context filters: only ENFORCE when the activity actually has those IDs.
+        const dId = String(filters.degreeId || "");
+        const sId = String(filters.semisterId || "");
+        const cId = String(filters.courseId || "");
 
-        setRows(Array.isArray(data) ? data : []);
+        if (
+          dId ||
+          sId ||
+          cId ||
+          (filters.audienceType === "roles" && filters.roles?.length)
+        ) {
+          data = data.filter((a) => {
+            const { degreeIds, semesterIds, courseIds } =
+              normalizeContextIds(a);
+
+            // Degree
+            if (dId && degreeIds.length && !degreeIds.includes(dId))
+              return false;
+            // Semester
+            if (sId && semesterIds.length && !semesterIds.includes(sId))
+              return false;
+            // Course
+            if (cId && courseIds.length && !courseIds.includes(cId))
+              return false;
+
+            // Roles (only if activity is a role-targeted one AND filter has roles)
+            if (
+              filters.audienceType === "roles" &&
+              filters.roles?.length &&
+              (a?.audienceType === "roles" || a?.roles?.length)
+            ) {
+              const actRoles = (a?.roles || []).map((r) =>
+                String(r).toLowerCase()
+              );
+              const need = filters.roles.map((r) => String(r).toLowerCase());
+              if (!need.some((r) => actRoles.includes(r))) return false;
+            }
+            return true;
+          });
+        }
+
+        // 2) Smarter search (tokenized fuzzy includes) over many fields
+        if (searchTerm.trim()) {
+          const tokens = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+
+          data = data.filter((a) => {
+            const id = String(a?._id || a?.id || "");
+            const title = String(a?.title || "").toLowerCase();
+            const instr = String(a?.instructions || "").toLowerCase();
+            const tags = toTags(a?.tags).join(" ").toLowerCase();
+            const status = String(a?.status || "").toLowerCase();
+            const author =
+              typeof a?.createdBy === "object"
+                ? (a.createdBy?.name ||
+                    a.createdBy?.fullName ||
+                    a.createdBy?.email ||
+                    "") + ""
+                : String(a?.createdBy || "");
+
+            const { degreeIds, semesterIds, courseIds } =
+              normalizeContextIds(a);
+            const degNames = degreeIds
+              .map((d) => degreeMap[d] || d)
+              .join(" ")
+              .toLowerCase();
+            const semNames = semesterIds
+              .map((s) => semisterMap[s] || s)
+              .join(" ")
+              .toLowerCase();
+            const crsNames = courseIds
+              .map((c) => courseMap[c] || c)
+              .join(" ")
+              .toLowerCase();
+            const dates = [fmtDate(a?.startAt), fmtDate(a?.endAt)]
+              .join(" ")
+              .toLowerCase();
+
+            const hay = [
+              id,
+              title,
+              instr,
+              tags,
+              status,
+              String(author).toLowerCase(),
+              degNames,
+              semNames,
+              crsNames,
+              dates,
+            ].join(" ");
+
+            return tokens.every((t) => hay.includes(t));
+          });
+        }
+        // ---------------------------------------------
+
+        // meta
+        const total = data.length;
+        const limit = Number(m.limit || pageSize);
+        const totalPages =
+          m.pages || m.totalPages || Math.max(1, Math.ceil(total / limit));
+
+        setRows(data);
         setMeta({
           page: Number(m.page || page),
-          limit: Number(m.limit || pageSize),
-          total: Number(m.total || data.length),
-          totalPages: Number(totalPages || 1),
+          limit,
+          total: Number(m.total || total),
+          totalPages: Number(totalPages),
         });
       } catch (err) {
         if (!alive) return;
@@ -321,7 +649,16 @@ export default function AllActivities() {
       alive = false;
       ctrl.abort();
     };
-  }, [page, pageSize, searchTerm, filters, refreshKey]);
+  }, [
+    page,
+    pageSize,
+    searchTerm,
+    filters,
+    refreshKey,
+    degreeMap,
+    semisterMap,
+    courseMap,
+  ]);
 
   const iconStyle = {
     list: view === "list" ? "text-blue-500" : "text-gray-500",
@@ -423,7 +760,7 @@ export default function AllActivities() {
     options,
     getOption,
     disabled = false,
-    nameKeyPrefix, // ensure unique React keys
+    nameKeyPrefix,
   }) => (
     <label className="flex flex-col text-sm text-gray-700">
       <span className="mb-1">{label}</span>
@@ -438,9 +775,10 @@ export default function AllActivities() {
         </option>
         {options.map((o, idx) => {
           const { id, name } = getOption(o);
+          const key = `${nameKeyPrefix}-${idx}-${String(id || "unknown")}`;
           return (
-            <option key={`${nameKeyPrefix}-${idx}-${id || "id"}`} value={id}>
-              {name} {id ? `(${shortId(id)})` : ""}
+            <option key={key} value={id}>
+              {name} {id ? `(${shortId(String(id))})` : ""}
             </option>
           );
         })}
@@ -451,6 +789,7 @@ export default function AllActivities() {
   const resetFilters = () =>
     setFilters({
       audienceType: "",
+      roles: [],
       status: "",
       tag: "",
       degreeId: "",
@@ -458,6 +797,16 @@ export default function AllActivities() {
       courseId: "",
       since: "",
       until: "",
+    });
+
+  // roles multiselect UI
+  const toggleRole = (r) =>
+    setFilters((f) => {
+      const has = f.roles.includes(r);
+      return {
+        ...f,
+        roles: has ? f.roles.filter((x) => x !== r) : [...f.roles, r],
+      };
     });
 
   return (
@@ -472,7 +821,7 @@ export default function AllActivities() {
         <div className="relative w-full sm:w-1/2">
           <input
             type="text"
-            placeholder="Search (title, instructions, tags)…"
+            placeholder="Search title, tags, degree/semester/course, author…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -506,8 +855,8 @@ export default function AllActivities() {
             onChange={(e) => setPageSize(Number(e.target.value))}
             title="Items per page"
           >
-            {[3, 6, 12, 24, 48].map((n) => (
-              <option key={`pg-${n}`} value={n}>
+            {[3, 6, 12, 24, 48].map((n, i) => (
+              <option key={`pg-${i}-${n}`} value={n}>
                 {n}/page
               </option>
             ))}
@@ -534,11 +883,41 @@ export default function AllActivities() {
               }
             >
               {AUDIENCE_TYPES.map((a, idx) => (
-                <option key={`aud-${idx}-${a.value || "any"}`} value={a.value}>
+                <option
+                  key={`aud-${idx}-${a.value || "any"}-${a.label}`}
+                  value={a.value}
+                >
                   {a.label}
                 </option>
               ))}
             </select>
+
+            {/* Roles selector appears when 'roles' */}
+            {filters.audienceType === "roles" && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {roleOptions.map((r) => {
+                  const checked = filters.roles.includes(r);
+                  return (
+                    <label
+                      key={`role-${r}`}
+                      className={`px-2 py-1 rounded border cursor-pointer ${
+                        checked
+                          ? "bg-indigo-50 border-indigo-300"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="mr-1 align-middle"
+                        checked={checked}
+                        onChange={() => toggleRole(r)}
+                      />
+                      {r}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </label>
 
           {/* Status */}
@@ -552,7 +931,10 @@ export default function AllActivities() {
               }
             >
               {STATUSES.map((s, idx) => (
-                <option key={`st-${idx}-${s.value || "any"}`} value={s.value}>
+                <option
+                  key={`st-${idx}-${s.value || "any"}-${s.label}`}
+                  value={s.value}
+                >
                   {s.label}
                 </option>
               ))}
@@ -576,25 +958,27 @@ export default function AllActivities() {
           <FilterSelect
             label="Degree"
             value={filters.degreeId}
-            onChange={(v) => setFilters((f) => ({ ...f, degreeId: v }))}
+            onChange={(v) => setFilters((f) => ({ ...f, degreeId: String(v) }))}
             options={degreeList}
             nameKeyPrefix="deg"
             getOption={(d) => ({
-              id: d._id || d.id,
+              id: String(d._id || d.id),
               name: d.name || d.title || "Degree",
             })}
           />
 
-          {/* Semister */}
+          {/* Semester */}
           <FilterSelect
             label="Semester"
             value={filters.semisterId}
-            onChange={(v) => setFilters((f) => ({ ...f, semisterId: v }))}
+            onChange={(v) =>
+              setFilters((f) => ({ ...f, semisterId: String(v) }))
+            }
             options={semisterList}
             disabled={!filters.degreeId}
             nameKeyPrefix="sem"
             getOption={(s) => ({
-              id: s._id || s.id,
+              id: String(s._id || s.id),
               name:
                 s.title ||
                 s.semister_name ||
@@ -607,37 +991,47 @@ export default function AllActivities() {
           <FilterSelect
             label="Course"
             value={filters.courseId}
-            onChange={(v) => setFilters((f) => ({ ...f, courseId: v }))}
+            onChange={(v) => setFilters((f) => ({ ...f, courseId: String(v) }))}
             options={courseList}
             disabled={!filters.degreeId || !filters.semisterId}
             nameKeyPrefix="course"
             getOption={(c) => ({
-              id: c._id || c.id,
+              id: String(c._id || c.id),
               name: c.title || c.name || "Course",
             })}
           />
 
-          {/* Date Range (createdAt by default on backend) */}
+          {/* Date Range */}
           <label className="flex flex-col text-sm text-gray-700">
-            <span className="mb-1">Since (ISO or yyyy-mm-dd)</span>
+            <span className="mb-1">Since (any format)</span>
             <input
               className="border border-gray-300 rounded px-2 py-1"
-              placeholder="2025-01-01"
+              placeholder="e.g., Sep 9th 2025 / 2025-09-09 / September 2025"
               value={filters.since}
               onChange={(e) =>
                 setFilters((f) => ({ ...f, since: e.target.value }))
               }
+              onBlur={(e) => {
+                const parsed = parseFlexibleDate(e.target.value);
+                if (parsed) setFilters((f) => ({ ...f, since: parsed }));
+              }}
             />
           </label>
           <label className="flex flex-col text-sm text-gray-700">
-            <span className="mb-1">Until (ISO or yyyy-mm-dd)</span>
+            <span className="mb-1">Until (any format)</span>
             <input
               className="border border-gray-300 rounded px-2 py-1"
-              placeholder="2025-12-31"
+              placeholder="e.g., 09-12-2025 / 12-09-2025 / September 2025"
               value={filters.until}
               onChange={(e) =>
                 setFilters((f) => ({ ...f, until: e.target.value }))
               }
+              onBlur={(e) => {
+                const parsed = parseFlexibleDate(e.target.value, {
+                  endOfRange: true,
+                });
+                if (parsed) setFilters((f) => ({ ...f, until: parsed }));
+              }}
             />
           </label>
         </div>
@@ -678,23 +1072,26 @@ export default function AllActivities() {
             transition={{ duration: 0.4 }}
           >
             {rows.map((a) => {
-              const id = a?._id || a?.id;
+              const id = String(a?._id || a?.id);
               const createdAt = fmtDate(a?.createdAt);
               const startAt = fmtDate(a?.startAt);
               const endAt = fmtDate(a?.endAt);
               const listLayout = view === "list";
 
-              const degreeNames = (a?.context?.degrees || []).map(
+              const { degreeIds, semesterIds, courseIds } =
+                normalizeContextIds(a);
+
+              const degreeNames = degreeIds.map(
                 (d) =>
                   degreeMap[d] ||
                   (typeof d === "string" ? shortId(d) : "Degree")
               );
-              const semisterNames = (a?.context?.semesters || []).map(
+              const semisterNames = semesterIds.map(
                 (s) =>
                   semisterMap[s] ||
                   (typeof s === "string" ? shortId(s) : "Semester")
               );
-              const courseNames = (a?.context?.courses || []).map(
+              const courseNames = courseIds.map(
                 (c) =>
                   courseMap[c] ||
                   (typeof c === "string" ? shortId(c) : "Course")
@@ -706,6 +1103,10 @@ export default function AllActivities() {
                 typeof a?.maxMarks === "number" ? a.maxMarks : "—";
               const audience = a?.audienceType || "all";
 
+              // /single-activity/:slug/:id
+              const slug = a?.slug || slugify(a?.title);
+              const detailsPath = `/single-activity/${slug}/${id}`;
+
               return (
                 <div key={id} className="relative">
                   {/* Row actions */}
@@ -713,14 +1114,22 @@ export default function AllActivities() {
                     <button
                       title="Publish"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-green-50 text-green-600"
-                      onClick={(e) => publish(e, id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        publish(e, id);
+                      }}
                     >
                       P
                     </button>
                     <button
                       title="Archive"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-amber-50 text-amber-600"
-                      onClick={(e) => archive(e, id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        archive(e, id);
+                      }}
                     >
                       A
                     </button>
@@ -733,7 +1142,7 @@ export default function AllActivities() {
                     </button>
                   </div>
 
-                  <Link to={`/single-activity/${id}`}>
+                  <Link to={detailsPath}>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -782,7 +1191,7 @@ export default function AllActivities() {
                             </p>
                           )}
 
-                          {/* Author (fallback to ID) */}
+                          {/* Author */}
                           <p className="text-sm text-gray-600 flex items-center">
                             <FaUser className="mr-1 text-red-500" />
                             <span className="truncate">
