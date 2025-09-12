@@ -24,26 +24,108 @@ const DEMO_DEGREE = {
 };
 
 const DEMO_COURSES = [
-  { id: "c-101", title: "Programming Fundamentals", semesterId: "sem-1", completion: 100 },
-  { id: "c-102", title: "Discrete Mathematics", semesterId: "sem-1", completion: 45 },
-  { id: "c-103", title: "Computer Organization", semesterId: "sem-1", completion: 0 },
-  { id: "c-201", title: "Data Structures", semesterId: "sem-2", completion: 75 },
-  { id: "c-202", title: "Operating Systems", semesterId: "sem-2", completion: 20 },
-  { id: "c-301", title: "Database Systems", semesterId: "sem-3", completion: 10 },
-  { id: "c-302", title: "Computer Networks", semesterId: "sem-3", completion: 0 },
+  {
+    id: "c-101",
+    title: "Programming Fundamentals",
+    semesterId: "sem-1",
+    completion: 100,
+  },
+  {
+    id: "c-102",
+    title: "Discrete Mathematics",
+    semesterId: "sem-1",
+    completion: 45,
+  },
+  {
+    id: "c-103",
+    title: "Computer Organization",
+    semesterId: "sem-1",
+    completion: 0,
+  },
+  {
+    id: "c-201",
+    title: "Data Structures",
+    semesterId: "sem-2",
+    completion: 75,
+  },
+  {
+    id: "c-202",
+    title: "Operating Systems",
+    semesterId: "sem-2",
+    completion: 20,
+  },
+  {
+    id: "c-301",
+    title: "Database Systems",
+    semesterId: "sem-3",
+    completion: 10,
+  },
+  {
+    id: "c-302",
+    title: "Computer Networks",
+    semesterId: "sem-3",
+    completion: 0,
+  },
   { id: "c-401", title: "Algorithms", semesterId: "sem-4", completion: 65 },
-  { id: "c-501", title: "Software Engineering", semesterId: "sem-5", completion: 30 },
+  {
+    id: "c-501",
+    title: "Software Engineering",
+    semesterId: "sem-5",
+    completion: 30,
+  },
   { id: "c-601", title: "AI & ML", semesterId: "sem-6", completion: 5 },
 ];
 
 const DEMO_ACTIVITIES = [
-  { id: "a-1", title: "DSA Coding Challenge", status: "ongoing", courseId: "c-201", due: "2025-09-20" },
-  { id: "a-2", title: "OS Lab Report", status: "pending", courseId: "c-202", due: "2025-09-12" },
-  { id: "a-3", title: "DBMS Project Milestone 1", status: "completed", courseId: "c-301", due: "2025-08-28" },
-  { id: "a-4", title: "Networks Quiz", status: "pending", courseId: "c-302", due: "2025-09-15" },
-  { id: "a-5", title: "Algo Assignment", status: "ongoing", courseId: "c-401", due: "2025-09-18" },
-  { id: "a-6", title: "SE Case Study", status: "completed", courseId: "c-501", due: "2025-08-25" },
-  { id: "a-7", title: "AI Research Summary", status: "pending", courseId: "c-601", due: "2025-09-30" },
+  {
+    id: "a-1",
+    title: "DSA Coding Challenge",
+    status: "ongoing",
+    courseId: "c-201",
+    due: "2025-09-20",
+  },
+  {
+    id: "a-2",
+    title: "OS Lab Report",
+    status: "pending",
+    courseId: "c-202",
+    due: "2025-09-12",
+  },
+  {
+    id: "a-3",
+    title: "DBMS Project Milestone 1",
+    status: "completed",
+    courseId: "c-301",
+    due: "2025-08-28",
+  },
+  {
+    id: "a-4",
+    title: "Networks Quiz",
+    status: "pending",
+    courseId: "c-302",
+    due: "2025-09-15",
+  },
+  {
+    id: "a-5",
+    title: "Algo Assignment",
+    status: "ongoing",
+    courseId: "c-401",
+    due: "2025-09-18",
+  },
+  {
+    id: "a-6",
+    title: "SE Case Study",
+    status: "completed",
+    courseId: "c-501",
+    due: "2025-08-25",
+  },
+  {
+    id: "a-7",
+    title: "AI Research Summary",
+    status: "pending",
+    courseId: "c-601",
+    due: "2025-09-30",
+  },
 ];
 
 /* ---------------- Small UI Bits ---------------- */
@@ -51,7 +133,9 @@ const TabButton = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
     className={`px-4 py-2 rounded-full text-sm transition ${
-      active ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+      active
+        ? "bg-indigo-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
     }`}
   >
     {children}
@@ -95,7 +179,9 @@ const CompletionPill = ({ pct }) => (
 /* ---------------- Main Component ---------------- */
 export default function StudentDashboard() {
   const [selectedDegree] = useState(DEMO_DEGREE);
-  const [selectedSemesterId, setSelectedSemesterId] = useState(DEMO_DEGREE.semesters[0].id);
+  const [selectedSemesterId, setSelectedSemesterId] = useState(
+    DEMO_DEGREE.semesters[0].id
+  );
 
   const [activeMainTab, setActiveMainTab] = useState("overview"); // overview | activities | courses
   const [activitiesTab, setActivitiesTab] = useState("ongoing"); // ongoing | completed | pending | all
@@ -113,13 +199,17 @@ export default function StudentDashboard() {
   const filteredCourses = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) return semesterCourses;
-    return semesterCourses.filter((c) => c.title.toLowerCase().includes(needle));
+    return semesterCourses.filter((c) =>
+      c.title.toLowerCase().includes(needle)
+    );
   }, [semesterCourses, search]);
 
   const searchActivities = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) return DEMO_ACTIVITIES;
-    return DEMO_ACTIVITIES.filter((a) => a.title.toLowerCase().includes(needle));
+    return DEMO_ACTIVITIES.filter((a) =>
+      a.title.toLowerCase().includes(needle)
+    );
   }, [search]);
 
   const tabbedActivities = useMemo(() => {
@@ -163,8 +253,12 @@ export default function StudentDashboard() {
 
   const ActivityRow = ({ item }) => (
     <div className="grid grid-cols-12 gap-3 border-b py-3 items-center">
-      <div className="col-span-6 md:col-span-7 text-gray-900 font-medium">{item.title}</div>
-      <div className="col-span-3 md:col-span-2 text-xs text-gray-600">{item.due || "—"}</div>
+      <div className="col-span-6 md:col-span-7 text-gray-900 font-medium">
+        {item.title}
+      </div>
+      <div className="col-span-3 md:col-span-2 text-xs text-gray-600">
+        {item.due || "—"}
+      </div>
       <div className="col-span-3 md:col-span-3 flex justify-end md:justify-start">
         <StatusBadge status={item.status} />
       </div>
@@ -179,7 +273,9 @@ export default function StudentDashboard() {
       </div>
       <div className="mt-2 w-full bg-gray-100 h-2 rounded">
         <div
-          className={`h-2 rounded ${c.completion === 100 ? "bg-green-500" : "bg-indigo-500"}`}
+          className={`h-2 rounded ${
+            c.completion === 100 ? "bg-green-500" : "bg-indigo-500"
+          }`}
           style={{ width: `${c.completion}%` }}
         />
       </div>
@@ -188,96 +284,111 @@ export default function StudentDashboard() {
 
   /* ---------- Header (Global) ---------- */
   return (
-    <div className="max-w-9xl mx-auto w-full px-5 md:px-8 py-6">
+    <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6">
       {/* Top App Header */}
-<header className="border rounded-xl bg-white p-4 md:p-5 mb-5 shadow-sm">
-  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-    {/* Left: Title + Degree + Semester */}
-    <div className="flex flex-col md:flex-row md:items-center gap-4">
-      {/* Dashboard Title */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Student Dashboard</h1>
-      </div>
-
-      {/* Divider (only on desktop for spacing) */}
-      <div className="hidden md:block w-px bg-gray-300 mx-4"></div>
-
-      {/* Degree + Semester */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-lg font-semibold text-gray-900">{selectedDegree.name}</span>
-
-        {/* Semester Dropdown */}
-        <div className="relative">
-          <select
-            value={selectedSemesterId}
-            onChange={(e) => setSelectedSemesterId(e.target.value)}
-            className="appearance-none pr-8 pl-3 py-2 rounded border text-sm bg-white hover:border-gray-400 cursor-pointer"
-            title="Select semester"
-          >
-            {semesters.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <FiChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />
-        </div>
-      </div>
+      <header className="border rounded-xl bg-white p-4 md:p-5 mb-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Left: Title + Degree + Semester */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Dashboard Title */}
             <div>
-        <ul className="flex flex-wrap items-center ">
-          <li><a href="/grade-book" className="btn btn-sm bg-gray-100 rounded-pill px-3 m-2">Grade Book</a></li>
-          <li><a href="/grade-book" className="btn btn-sm bg-gray-100 rounded-pill px-3 m-2">Attendence</a></li>
-        </ul>
-      </div>
-    </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Student Dashboard
+              </h1>
+            </div>
 
-    {/* Right: Search + Tabs */}
-    <div className="flex items-center gap-3 w-full md:w-auto">
-      {/* Search */}
-      <div className="relative flex-1 md:w-[320px]">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search courses or activities…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-full border border-gray-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 px-10 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm"
-        />
-      </div>
+            {/* Divider (only on desktop for spacing) */}
+            <div className="hidden md:block w-px bg-gray-300 mx-4"></div>
 
+            {/* Degree + Semester */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-lg font-semibold text-gray-900">
+                {selectedDegree.name}
+              </span>
 
+              {/* Semester Dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedSemesterId}
+                  onChange={(e) => setSelectedSemesterId(e.target.value)}
+                  className="appearance-none pr-8 pl-3 py-2 rounded border text-sm bg-white hover:border-gray-400 cursor-pointer"
+                  title="Select semester"
+                >
+                  {semesters.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <FiChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />
+              </div>
+            </div>
+            <div>
+              <ul className="flex flex-wrap items-center ">
+                <li>
+                  <a
+                    href="/grade-book"
+                    className="btn btn-sm bg-gray-100 rounded-pill px-3 m-2"
+                  >
+                    Grade Book
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/grade-book"
+                    className="btn btn-sm bg-gray-100 rounded-pill px-3 m-2"
+                  >
+                    Attendence
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2">
-        <TabButton
-          active={activeMainTab === "overview"}
-          onClick={() => {
-            setActiveMainTab("overview");
-            setShowAllActivities(false);
-          }}
-        >
-          Overview
-        </TabButton>
-        <TabButton
-          active={activeMainTab === "activities"}
-          onClick={() => setActiveMainTab("activities")}
-        >
-          Activities
-        </TabButton>
-        <TabButton
-          active={activeMainTab === "courses"}
-          onClick={() => {
-            setActiveMainTab("courses");
-            setShowAllActivities(false);
-          }}
-        >
-          Courses
-        </TabButton>
-      </div>
-    </div>
-  </div>
-</header>
+          {/* Right: Search + Tabs */}
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 md:w-[320px]">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search courses or activities…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-full border border-gray-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 px-10 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm"
+              />
+            </div>
 
+            {/* Tabs */}
+            <div className="flex items-center gap-2">
+              <TabButton
+                active={activeMainTab === "overview"}
+                onClick={() => {
+                  setActiveMainTab("overview");
+                  setShowAllActivities(false);
+                }}
+              >
+                Overview
+              </TabButton>
+              <TabButton
+                active={activeMainTab === "activities"}
+                onClick={() => setActiveMainTab("activities")}
+              >
+                Activities
+              </TabButton>
+              <TabButton
+                active={activeMainTab === "courses"}
+                onClick={() => {
+                  setActiveMainTab("courses");
+                  setShowAllActivities(false);
+                }}
+              >
+                Courses
+              </TabButton>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* ---------------- CONTENT ---------------- */}
       {activeMainTab === "overview" && (
@@ -285,10 +396,16 @@ export default function StudentDashboard() {
           {/* Activities quick view */}
           <div className="border rounded-xl bg-white p-4 md:p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Activities</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Activities
+              </h2>
               <div className="flex items-center gap-2">
                 {["ongoing", "completed", "pending", "all"].map((k) => (
-                  <TabButton key={k} active={activitiesTab === k} onClick={() => setActivitiesTab(k)}>
+                  <TabButton
+                    key={k}
+                    active={activitiesTab === k}
+                    onClick={() => setActivitiesTab(k)}
+                  >
                     {k[0].toUpperCase() + k.slice(1)}
                   </TabButton>
                 ))}
@@ -300,7 +417,9 @@ export default function StudentDashboard() {
                 <ActivityCard key={a.id} item={a} />
               ))}
               {tabbedActivities.length === 0 && (
-                <div className="text-sm text-gray-500">No activities found.</div>
+                <div className="text-sm text-gray-500">
+                  No activities found.
+                </div>
               )}
             </div>
 
@@ -321,7 +440,8 @@ export default function StudentDashboard() {
           <div className="border rounded-xl bg-white p-4 md:p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
-                {semesters.find((s) => s.id === selectedSemesterId)?.name} • Courses
+                {semesters.find((s) => s.id === selectedSemesterId)?.name} •
+                Courses
               </h2>
             </div>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -341,10 +461,16 @@ export default function StudentDashboard() {
           {!showAllActivities ? (
             <section className="border rounded-xl bg-white p-4 md:p-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Activities</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Activities
+                </h2>
                 <div className="flex items-center gap-2">
                   {["ongoing", "completed", "pending", "all"].map((k) => (
-                    <TabButton key={k} active={activitiesTab === k} onClick={() => setActivitiesTab(k)}>
+                    <TabButton
+                      key={k}
+                      active={activitiesTab === k}
+                      onClick={() => setActivitiesTab(k)}
+                    >
                       {k[0].toUpperCase() + k.slice(1)}
                     </TabButton>
                   ))}
@@ -356,7 +482,9 @@ export default function StudentDashboard() {
                   <ActivityCard key={a.id} item={a} />
                 ))}
                 {tabbedActivities.length === 0 && (
-                  <div className="text-sm text-gray-500">No activities found.</div>
+                  <div className="text-sm text-gray-500">
+                    No activities found.
+                  </div>
                 )}
               </div>
 
@@ -384,7 +512,10 @@ export default function StudentDashboard() {
                       { id: "completed", label: "Completed" },
                       { id: "pending", label: "Pending" },
                     ].map((f) => (
-                      <label key={f.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <label
+                        key={f.id}
+                        className="flex items-center gap-2 text-sm cursor-pointer"
+                      >
                         <input
                           type="checkbox"
                           checked={statusFilter.has(f.id)}
@@ -405,7 +536,9 @@ export default function StudentDashboard() {
                     <div className="flex items-center gap-2">
                       <button
                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded border ${
-                          activityView === "cards" ? "bg-gray-100" : "hover:bg-gray-50"
+                          activityView === "cards"
+                            ? "bg-gray-100"
+                            : "hover:bg-gray-50"
                         }`}
                         onClick={() => setActivityView("cards")}
                         title="Cards view"
@@ -414,7 +547,9 @@ export default function StudentDashboard() {
                       </button>
                       <button
                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded border ${
-                          activityView === "list" ? "bg-gray-100" : "hover:bg-gray-50"
+                          activityView === "list"
+                            ? "bg-gray-100"
+                            : "hover:bg-gray-50"
                         }`}
                         onClick={() => setActivityView("list")}
                         title="List view"
@@ -431,7 +566,9 @@ export default function StudentDashboard() {
                           <ActivityCard key={a.id} item={a} />
                         ))}
                         {allActivitiesFiltered.length === 0 && (
-                          <div className="text-sm text-gray-500">No activities found.</div>
+                          <div className="text-sm text-gray-500">
+                            No activities found.
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -446,7 +583,9 @@ export default function StudentDashboard() {
                             <ActivityRow key={a.id} item={a} />
                           ))}
                           {allActivitiesFiltered.length === 0 && (
-                            <div className="text-sm text-gray-500 p-3">No activities found.</div>
+                            <div className="text-sm text-gray-500 p-3">
+                              No activities found.
+                            </div>
                           )}
                         </div>
                       </div>

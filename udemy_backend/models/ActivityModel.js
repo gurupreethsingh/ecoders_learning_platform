@@ -2,41 +2,32 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-/** -------------------------------------------
- * Reusable attachment schema (for activity docs & submissions)
- * ------------------------------------------*/
+/** Attachments shared schema */
 const AttachmentSchema = new Schema(
   {
-    url: { type: String, required: true }, // where the file is stored (S3, local, etc.)
-    name: { type: String }, // display name
-    type: { type: String }, // mime type (e.g. application/pdf)
-    size: { type: Number }, // bytes
+    url: { type: String, required: true },
+    name: { type: String },
+    type: { type: String },
+    size: { type: Number },
+    path: { type: String },
   },
   { _id: false }
 );
 
-/** -------------------------------------------
- * Activity (the assignment/task itself)
- * - Can target all users, specific roles, or specific users
- * - Can optionally link to many degrees/semesters/courses
- * - Has start/end dates and grading settings
- * ------------------------------------------*/
 const AudienceTypeEnum = ["all", "roles", "users", "contextual"];
 const ActivityStatusEnum = ["draft", "published", "archived"];
 
 const ActivitySchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
-    instructions: { type: String, default: "" }, // rich text / markdown allowed
-    attachments: [AttachmentSchema], // reference files for the activity (briefs/templates/etc.)
+    instructions: { type: String, default: "" },
+    attachments: [AttachmentSchema],
     tags: [{ type: String, trim: true }],
 
-    // Targeting
     audienceType: { type: String, enum: AudienceTypeEnum, default: "all" },
-    roles: [{ type: String, trim: true }], // used if audienceType=roles
-    users: [{ type: Schema.Types.ObjectId, ref: "User" }], // used if audienceType=users
+    roles: [{ type: String, trim: true }],
+    users: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
-    // Contextual links (OPTIONAL, any/all can be empty)
     context: {
       degrees: [{ type: Schema.Types.ObjectId, ref: "Degree" }],
       semesters: [{ type: Schema.Types.ObjectId, ref: "Semister" }],
@@ -45,176 +36,117 @@ const ActivitySchema = new Schema(
       batchYear: { type: String, trim: true },
     },
 
-    // Timing
-    startAt: { type: Date }, // optional start
-    endAt: { type: Date }, // due date / deadline (can be updated)
+    startAt: { type: Date },
+    endAt: { type: Date },
     allowLate: { type: Boolean, default: false },
 
-    // Grading
     maxMarks: { type: Number, default: 100, min: 0 },
 
-    // Lifecycle
     status: { type: String, enum: ActivityStatusEnum, default: "draft" },
 
-    // Audit
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
 
-ActivitySchema.index({ title: "text", instructions: "text", tags: 1 });
+/* ---------------- Indexes ---------------- */
+
+// single text index (do NOT include array fields like tags)
+ActivitySchema.index({ title: "text", instructions: "text" });
+
+// normal index for tags array
+ActivitySchema.index({ tags: 1 });
+
+// ❗ split the context array indexes so we don't index parallel arrays
+ActivitySchema.index({ "context.degrees": 1 });
+ActivitySchema.index({ "context.semesters": 1 });
+ActivitySchema.index({ "context.courses": 1 });
+
+// optional: also keep status/audienceType
 ActivitySchema.index({ status: 1, audienceType: 1 });
-ActivitySchema.index({
-  "context.degrees": 1,
-  "context.semesters": 1,
-  "context.courses": 1,
-});
 
-/** -------------------------------------------
- * ActivityAssignment (per-user progress tracker)
- * - Exactly one doc per (activity, user)
- * - Holds lightweight status: new/inprogress/completed
- * - Links to latest submission (if any)
- * ------------------------------------------*/
+/* -------------- Assignment & Submission schemas (unchanged) -------------- */
 const AssignmentStatusEnum = ["new", "inprogress", "completed"];
-
 const ActivityAssignmentSchema = new Schema(
   {
     activity: { type: Schema.Types.ObjectId, ref: "Activity", required: true },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-
     status: { type: String, enum: AssignmentStatusEnum, default: "new" },
     lastStatusAt: { type: Date, default: Date.now },
-
-    submission: { type: Schema.Types.ObjectId, ref: "ActivitySubmission" }, // most recent / final
+    submission: { type: Schema.Types.ObjectId, ref: "ActivitySubmission" },
   },
   { timestamps: true }
 );
-
 ActivityAssignmentSchema.index({ activity: 1, user: 1 }, { unique: true });
 ActivityAssignmentSchema.index({ status: 1 });
 
-ActivityAssignmentSchema.methods.markInProgress = async function () {
-  if (this.status !== "inprogress") {
-    this.status = "inprogress";
-    this.lastStatusAt = new Date();
-    await this.save();
-  }
-};
-
-ActivityAssignmentSchema.methods.markCompleted = async function () {
-  if (this.status !== "completed") {
-    this.status = "completed";
-    this.lastStatusAt = new Date();
-    await this.save();
-  }
-};
-
-/** -------------------------------------------
- * ActivitySubmission (what a user uploads)
- * - Files uploaded by the student/teacher/etc.
- * - Review (notes + reviewer + timestamp)
- * - Grade (marks + grader + timestamp)
- * - On save: auto-updates/creates the related ActivityAssignment
- * ------------------------------------------*/
 const ReviewSchema = new Schema(
   {
-    notes: { type: String, default: "" },
+    notes: String,
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
-    reviewedAt: { type: Date },
+    reviewedAt: Date,
   },
   { _id: false }
 );
-
 const GradeSchema = new Schema(
   {
-    marks: { type: Number, min: 0 }, // <= activity.maxMarks (validated in controller/service)
-    maxMarks: { type: Number, min: 0 }, // snapshot at grading time (defaults to activity.maxMarks)
+    marks: { type: Number, min: 0 },
+    maxMarks: { type: Number, min: 0 },
     gradedBy: { type: Schema.Types.ObjectId, ref: "User" },
-    gradedAt: { type: Date },
+    gradedAt: Date,
   },
   { _id: false }
 );
-
 const SubmissionStatusEnum = ["pending", "under_review", "graded"];
-
 const ActivitySubmissionSchema = new Schema(
   {
     activity: { type: Schema.Types.ObjectId, ref: "Activity", required: true },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-
-    // Optionally link the assignment doc; we also upsert if missing
     assignment: { type: Schema.Types.ObjectId, ref: "ActivityAssignment" },
-
-    files: [AttachmentSchema], // uploaded files (doc/docx/xls/xlsx/pdf/etc.)
+    files: [AttachmentSchema],
     submittedAt: { type: Date, default: Date.now },
-
-    review: ReviewSchema, // reviewer notes/metadata
-    grade: GradeSchema, // grading metadata
+    review: ReviewSchema,
+    grade: GradeSchema,
     status: { type: String, enum: SubmissionStatusEnum, default: "pending" },
-
-    isFinal: { type: Boolean, default: true }, // support multiple attempts if needed
-    attemptNo: { type: Number, default: 1 }, // attempt counter (for future use)
+    isFinal: { type: Boolean, default: true },
+    attemptNo: { type: Number, default: 1 },
   },
   { timestamps: true }
 );
-
 ActivitySubmissionSchema.index({ activity: 1, user: 1, createdAt: -1 });
 ActivitySubmissionSchema.index({ status: 1 });
 
-/**
- * After saving a submission:
- * - Ensure there is an ActivityAssignment(activity,user)
- * - Link assignment.submission -> this submission
- * - Drive assignment.status:
- *     files uploaded -> at least 'inprogress'
- *     graded (marks present) -> 'completed'
- */
-ActivitySubmissionSchema.post(
-  "save",
-  async function submissionPostSave(doc, next) {
-    try {
-      const Assignment = mongoose.model("ActivityAssignment");
+ActivitySubmissionSchema.post("save", async function (doc, next) {
+  try {
+    const Assignment = mongoose.model("ActivityAssignment");
+    const hasFiles = Array.isArray(doc.files) && doc.files.length > 0;
+    const isGraded = doc.grade && typeof doc.grade.marks === "number";
 
-      const hasFiles = Array.isArray(doc.files) && doc.files.length > 0;
-      const isGraded = doc.grade && typeof doc.grade.marks === "number";
+    const assignment = await Assignment.findOneAndUpdate(
+      { activity: doc.activity, user: doc.user },
+      {
+        $setOnInsert: { activity: doc.activity, user: doc.user, status: "new" },
+        $set: { submission: doc._id, lastStatusAt: new Date() },
+      },
+      { new: true, upsert: true }
+    );
 
-      // Upsert assignment
-      const assignment = await Assignment.findOneAndUpdate(
-        { activity: doc.activity, user: doc.user },
-        {
-          $setOnInsert: {
-            activity: doc.activity,
-            user: doc.user,
-            status: "new",
-          },
-          $set: { submission: doc._id, lastStatusAt: new Date() },
-        },
-        { new: true, upsert: true }
-      );
-
-      // Drive status
-      if (isGraded && assignment.status !== "completed") {
-        assignment.status = "completed";
-        assignment.lastStatusAt = new Date();
-        await assignment.save();
-      } else if (hasFiles && assignment.status === "new") {
-        assignment.status = "inprogress";
-        assignment.lastStatusAt = new Date();
-        await assignment.save();
-      }
-
-      next();
-    } catch (err) {
-      next(err);
+    if (isGraded && assignment.status !== "completed") {
+      assignment.status = "completed";
+      assignment.lastStatusAt = new Date();
+      await assignment.save();
+    } else if (hasFiles && assignment.status === "new") {
+      assignment.status = "inprogress";
+      assignment.lastStatusAt = new Date();
+      await assignment.save();
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-);
+});
 
-/** -------------------------------------------
- * Model exports
- * ------------------------------------------*/
 const Activity = mongoose.model("Activity", ActivitySchema);
 const ActivityAssignment = mongoose.model(
   "ActivityAssignment",
@@ -225,8 +157,4 @@ const ActivitySubmission = mongoose.model(
   ActivitySubmissionSchema
 );
 
-module.exports = {
-  Activity,
-  ActivityAssignment,
-  ActivitySubmission,
-};
+module.exports = { Activity, ActivityAssignment, ActivitySubmission };

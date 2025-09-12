@@ -1,7 +1,581 @@
-import React from "react";
+// src/pages/activities/CreateActivity.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  FiChevronDown,
+  FiChevronUp,
+  FiPlus,
+  FiSave,
+  FiUsers,
+  FiTag,
+  FiCalendar,
+} from "react-icons/fi";
+import globalBackendRoute from "../../config/Config.js";
 
-const CreateActivity = () => {
-  return <div>CreateActivity</div>;
+const API = globalBackendRoute;
+
+/** axios instance with auth + token-expiry handling */
+const api = axios.create({ baseURL: API });
+api.interceptors.request.use((config) => {
+  const t = localStorage.getItem("token");
+  if (t) config.headers.Authorization = `Bearer ${t}`;
+  return config;
+});
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const status = err?.response?.status;
+    const msg = err?.response?.data?.message || "";
+    if (status === 401 && /token expired|jwt expired/i.test(msg)) {
+      localStorage.removeItem("token");
+      window.location.assign("/login");
+    }
+    return Promise.reject(err);
+  }
+);
+
+/** small collapsible section */
+const Section = ({ title, children, defaultOpen = false }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border">
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="w-full flex items-center justify-between px-4 py-3"
+        title={open ? "Collapse" : "Expand"}
+      >
+        <span className="font-semibold text-gray-900">{title}</span>
+        {open ? <FiChevronUp /> : <FiChevronDown />}
+      </button>
+      {open ? <div className="px-4 pb-4">{children}</div> : null}
+    </div>
+  );
 };
 
-export default CreateActivity;
+/** enums */
+const AUDIENCE_TYPES = ["all", "roles", "users", "contextual"];
+const ROLES = [
+  "superadmin",
+  "admin",
+  "instructor",
+  "teacher",
+  "student",
+  "author",
+];
+
+function toISO(value) {
+  const v = String(value || "").trim();
+  if (!v) return undefined;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+export default function CreateActivity() {
+  const navigate = useNavigate();
+  const [msg, setMsg] = useState({ type: "", text: "" });
+  const setAlert = (type, text) => setMsg({ type, text });
+
+  const [saving, setSaving] = useState(false);
+
+  // lists
+  const [degrees, setDegrees] = useState([]);
+  const [semesters, setSemesters] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  // selections (arrays; all optional)
+  const [selDegreeIds, setSelDegreeIds] = useState([]);
+  const [selSemesterIds, setSelSemesterIds] = useState([]);
+  const [selCourseIds, setSelCourseIds] = useState([]);
+
+  // form
+  const [form, setForm] = useState({
+    title: "",
+    instructions: "",
+    tags: "",
+    audienceType: "all",
+    roles: [],
+    usersCSV: "",
+    startAt: "",
+    endAt: "",
+    allowLate: false,
+    maxMarks: 100,
+  });
+
+  /** load degrees once (✅ use /api) */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await api.get("/api/list-degrees", {
+          params: { page: 1, limit: 1000 },
+        });
+        if (!alive) return;
+        const list = r?.data?.data || r?.data || [];
+        setDegrees(Array.isArray(list) ? list : []);
+      } catch (e) {
+        setAlert("error", "Failed to load degrees.");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  /** when degrees change, load semesters for those degrees only (✅ scoped) */
+  useEffect(() => {
+    let alive = true;
+    if (!selDegreeIds.length) {
+      setSemesters([]);
+      setSelSemesterIds([]);
+      setCourses([]);
+      setSelCourseIds([]);
+      return;
+    }
+    (async () => {
+      try {
+        const all = [];
+        for (const degId of selDegreeIds) {
+          const r = await api.get("/api/semisters", {
+            params: { page: 1, limit: 1000, degreeId: degId, degree: degId },
+          });
+          const list = r?.data?.data || r?.data || [];
+          all.push(...(Array.isArray(list) ? list : []));
+        }
+        if (!alive) return;
+        // de-dup by _id
+        const seen = new Set();
+        const merged = all.filter((s) => {
+          const id = s._id || s.id;
+          if (!id || seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+        setSemesters(merged);
+        setSelSemesterIds((prev) => prev.filter((id) => seen.has(id)));
+      } catch (e) {
+        if (alive) setSemesters([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [selDegreeIds]);
+
+  /** when semesters change, load courses for selected degree+semester pairs (✅ scoped) */
+  useEffect(() => {
+    let alive = true;
+    if (!selDegreeIds.length || !selSemesterIds.length) {
+      setCourses([]);
+      setSelCourseIds([]);
+      return;
+    }
+    (async () => {
+      try {
+        const all = [];
+        for (const degId of selDegreeIds) {
+          for (const semId of selSemesterIds) {
+            const r = await api.get("/api/list-courses", {
+              params: {
+                page: 1,
+                limit: 1000,
+                degreeId: degId,
+                semisterId: semId,
+              },
+            });
+            const list = r?.data?.data || r?.data || [];
+            all.push(...(Array.isArray(list) ? list : []));
+          }
+        }
+        if (!alive) return;
+        const seen = new Set();
+        const merged = all.filter((c) => {
+          const id = c._id || c.id;
+          if (!id || seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+        setCourses(merged);
+        setSelCourseIds((prev) => prev.filter((id) => seen.has(id)));
+      } catch (e) {
+        if (alive) setCourses([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [selDegreeIds, selSemesterIds]);
+
+  const audienceHelp = useMemo(() => {
+    switch (form.audienceType) {
+      case "all":
+        return "All users will receive this activity.";
+      case "roles":
+        return "Only the selected roles will receive this activity.";
+      case "users":
+        return "Only the specific users (comma-separated IDs/emails) will receive this.";
+      case "contextual":
+        return "Target users linked to the optional context below (degrees/semesters/courses).";
+      default:
+        return "";
+    }
+  }, [form.audienceType]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleMultiSelect = (setter) => (e) => {
+    const opts = Array.from(e.target.selectedOptions).map((o) => o.value);
+    setter(opts);
+  };
+
+  const toggleRole = (role) => {
+    setForm((f) => {
+      const set = new Set(f.roles || []);
+      if (set.has(role)) set.delete(role);
+      else set.add(role);
+      return { ...f, roles: Array.from(set) };
+    });
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (saving) return;
+    try {
+      setSaving(true);
+      setAlert("", "");
+
+      const users = String(form.usersCSV || "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const payload = {
+        title: form.title,
+        instructions: form.instructions || "",
+        tags: String(form.tags || "")
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+
+        audienceType: form.audienceType,
+        ...(form.audienceType === "roles" ? { roles: form.roles || [] } : {}),
+        ...(form.audienceType === "users" ? { users } : {}),
+        ...(form.audienceType === "contextual"
+          ? {
+              context: {
+                degrees: selDegreeIds,
+                semesters: selSemesterIds,
+                courses: selCourseIds,
+              },
+            }
+          : {}),
+
+        startAt: toISO(form.startAt),
+        endAt: toISO(form.endAt),
+        allowLate: !!form.allowLate,
+        maxMarks:
+          typeof form.maxMarks === "number"
+            ? form.maxMarks
+            : Number(form.maxMarks) || 100,
+
+        status: "draft",
+      };
+
+      await api.post("/api/create-activity", payload);
+      setAlert("success", "Activity created.");
+      navigate("/all-activities");
+    } catch (e2) {
+      setAlert(
+        "error",
+        e2?.response?.data?.error ||
+          e2?.response?.data?.message ||
+          "Failed to create activity."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-6">
+      <form onSubmit={submit} className="bg-white p-4 md:p-6 rounded-lg border">
+        <div className="mb-4">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+            Create Activity
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Nothing here is mandatory except the title — context is optional.
+          </p>
+        </div>
+
+        {msg.text ? (
+          <div
+            className={`mb-4 rounded-lg px-4 py-3 text-sm ${
+              msg.type === "success"
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : msg.type === "error"
+                ? "bg-red-50 text-red-800 border border-red-200"
+                : "bg-yellow-50 text-yellow-800 border border-yellow-200"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ) : null}
+
+        {/* Basic */}
+        <Section title="Basic" defaultOpen>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="text-sm text-gray-700">
+              <div className="mb-1 flex items-center gap-2">
+                <FiPlus /> Title
+              </div>
+              <input
+                className="w-full border rounded px-3 py-2"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="e.g., Term Project Proposal"
+                required
+              />
+            </label>
+
+            <label className="text-sm text-gray-700">
+              <div className="mb-1 flex items-center gap-2">
+                <FiTag /> Tags (comma-separated)
+              </div>
+              <input
+                className="w-full border rounded px-3 py-2"
+                name="tags"
+                value={form.tags}
+                onChange={handleChange}
+                placeholder="e.g., project, semester-1"
+              />
+            </label>
+
+            <label className="text-sm text-gray-700 md:col-span-2">
+              <div className="mb-1">Instructions</div>
+              <textarea
+                className="w-full border rounded px-3 py-2 h-36"
+                name="instructions"
+                value={form.instructions}
+                onChange={handleChange}
+                placeholder="Describe the activity, requirements, submission format, etc."
+              />
+            </label>
+          </div>
+        </Section>
+
+        {/* Audience */}
+        <Section title="Audience" defaultOpen>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="text-sm text-gray-700">
+              <div className="mb-1 flex items-center gap-2">
+                <FiUsers /> Audience Type
+              </div>
+              <select
+                className="w-full border rounded px-3 py-2"
+                name="audienceType"
+                value={form.audienceType}
+                onChange={handleChange}
+              >
+                {AUDIENCE_TYPES.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">{audienceHelp}</div>
+            </label>
+
+            {form.audienceType === "users" && (
+              <label className="text-sm text-gray-700">
+                <div className="mb-1">Users (IDs/emails, comma-separated)</div>
+                <input
+                  className="w-full border rounded px-3 py-2"
+                  name="usersCSV"
+                  value={form.usersCSV}
+                  onChange={handleChange}
+                  placeholder="e.g., 65ab...f1, student@example.com"
+                />
+              </label>
+            )}
+
+            {form.audienceType === "roles" && (
+              <div className="text-sm text-gray-700 md:col-span-2">
+                <div className="mb-1">Roles</div>
+                <div className="flex flex-wrap gap-3">
+                  {ROLES.map((r) => (
+                    <label key={r} className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={(form.roles || []).includes(r)}
+                        onChange={() => toggleRole(r)}
+                      />
+                      <span>{r}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+
+        {/* Context (OPTIONAL, used only if audienceType=contextual) */}
+        <Section title="Context (optional)">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="text-sm text-gray-700">
+              <div className="mb-1">Degrees (multi-select)</div>
+              <select
+                multiple
+                className="w-full border rounded px-3 py-2 h-40"
+                value={selDegreeIds}
+                onChange={handleMultiSelect(setSelDegreeIds)}
+              >
+                {degrees.map((d) => (
+                  <option key={d._id || d.id} value={d._id || d.id}>
+                    {d.name || d.title || "Degree"}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">
+                Leave empty if you don’t want to scope by degree.
+              </div>
+            </label>
+
+            <label className="text-sm text-gray-700">
+              <div className="mb-1">Semesters (multi-select)</div>
+              <select
+                multiple
+                className="w-full border rounded px-3 py-2 h-40"
+                value={selSemesterIds}
+                onChange={handleMultiSelect(setSelSemesterIds)}
+                disabled={!selDegreeIds.length}
+                title={!selDegreeIds.length ? "Select degree(s) first" : ""}
+              >
+                {semesters.map((s) => {
+                  const label =
+                    s.title ||
+                    s.semister_name ||
+                    (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                    "Semester";
+                  return (
+                    <option key={s._id || s.id} value={s._id || s.id}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">
+                Optional. Shown after you pick at least one degree.
+              </div>
+            </label>
+
+            <label className="text-sm text-gray-700 md:col-span-2">
+              <div className="mb-1">Courses (multi-select)</div>
+              <select
+                multiple
+                className="w-full border rounded px-3 py-2 h-40"
+                value={selCourseIds}
+                onChange={handleMultiSelect(setSelCourseIds)}
+                disabled={!selDegreeIds.length || !selSemesterIds.length}
+                title={
+                  !selDegreeIds.length || !selSemesterIds.length
+                    ? "Pick degree(s) and semester(s) first"
+                    : ""
+                }
+              >
+                {courses.map((c) => (
+                  <option key={c._id || c.id} value={c._id || c.id}>
+                    {c.title || c.name || "Course"}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">
+                Optional. Requires degree(s) and semester(s).
+              </div>
+            </label>
+          </div>
+
+          <div className="text-xs text-gray-600 mt-2">
+            These are optional. If you set{" "}
+            <span className="font-medium">Audience Type</span> to{" "}
+            <span className="font-medium">contextual</span>, only users matching
+            the selected degree/semester/course will be targeted.
+          </div>
+        </Section>
+
+        {/* Timing & grading */}
+        <Section title="Timing & Grading" defaultOpen>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="text-sm text-gray-700">
+              <div className="mb-1 flex items-center gap-2">
+                <FiCalendar /> Start At
+              </div>
+              <input
+                type="datetime-local"
+                className="w-full border rounded px-3 py-2"
+                name="startAt"
+                value={form.startAt}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="text-sm text-gray-700">
+              <div className="mb-1 flex items-center gap-2">
+                <FiCalendar /> End At (deadline)
+              </div>
+              <input
+                type="datetime-local"
+                className="w-full border rounded px-3 py-2"
+                name="endAt"
+                value={form.endAt}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="text-sm text-gray-700 flex items-center gap-2 mt-7">
+              <input
+                type="checkbox"
+                name="allowLate"
+                checked={form.allowLate}
+                onChange={handleChange}
+              />
+              <span>Allow late submissions</span>
+            </label>
+
+            <label className="text-sm text-gray-700">
+              <div className="mb-1">Max Marks</div>
+              <input
+                type="number"
+                min="0"
+                className="w-full border rounded px-3 py-2"
+                name="maxMarks"
+                value={form.maxMarks}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+        </Section>
+
+        {/* Footer */}
+        <div className="mt-6">
+          <button
+            type="submit"
+            disabled={saving}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-white text-sm font-semibold ${
+              saving ? "bg-gray-400" : "bg-gray-900 hover:bg-gray-800"
+            }`}
+            title="Create activity"
+          >
+            <FiSave />
+            {saving ? "Saving…" : "Create Activity"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

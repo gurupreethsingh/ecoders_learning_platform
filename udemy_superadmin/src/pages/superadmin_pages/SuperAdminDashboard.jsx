@@ -417,8 +417,13 @@ const SuperadminDashboard = () => {
                 },
                 {
                   label: "Create Notification",
-                  icon: <FaPlus className="text-purple-600" />,
+                  icon: <FaPlus className="text-purple-500" />,
                   path: "/create-notification",
+                },
+                {
+                  label: "Create Activity",
+                  icon: <FaPlus className="text-purple-800" />,
+                  path: "/create-activity",
                 },
               ]}
             />

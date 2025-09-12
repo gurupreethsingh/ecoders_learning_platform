@@ -1,60 +1,6 @@
 user routes
 
-
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const router = express.Router();
-const User = require("../models/UserModel.js");
-const {
-  register,
-  registerStudent,
-  login,
-  getUserById,
-  updateUser,
-  deleteUser,
-  getUserCounts,
-  getAllUsers,
-  updateUserRoleAndPrivileges,
-  forgotPassword,
-  verifyOTP,
-  resetPassword,
-  getUserCountsByRole,
-  getUsersByRole,
-  getInstructors,
-  getAuthors,
-  getStudents,
-} = require("../controllers/UserController");
-
-// Set up multer storage for handling file uploads
-const storage = multer.diskStorage({
-  destination: async function (req, file, cb) {
-    try {
-      const user = await User.findById(req.params.id);
-      const role = user?.role || "others";
-
-      const uploadFolder = path.join("uploads", role);
-
-      if (!fs.existsSync(uploadFolder)) {
-        fs.mkdirSync(uploadFolder, { recursive: true });
-      }
-
-      cb(null, uploadFolder);
-    } catch (err) {
-      cb(err);
-    }
-  },
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
-});
-
 const upload = multer({ storage });
-
 router.post("/register", register);
 router.post("/register-student", registerStudent);
 router.post("/login", login);
@@ -75,12 +21,7 @@ router.get("/instructors", getInstructors);
 router.get("/get-authors", getAuthors);
 router.get("/get-students", getStudents);
 
-module.exports = router;
-
-const express = require("express");
-const router = express.Router();
 const controller = require("../controllers/SubCategoryController");
-
 router.post("/add-sub-category", controller.addSubCategory);
 router.get("/all-subcategories", controller.getAllSubCategories);
 router.get("/get-subcategory-by-id/:id", controller.getSubCategoryById);
@@ -91,354 +32,153 @@ router.get("/count-active-subcategories", controller.countActiveSubCategories);
 router.get("/count-subcategories-by-category", controller.countSubCategoriesPerCategory);
 router.get("/get-subcategories-by-category", controller.getSubCategoriesByCategory);
 
-module.exports = router;
+
 
 // routes/SemisterRoutes.js
-const express = require("express");
-const router = express.Router();
 const SemisterController = require("../controllers/SemisterController");
-
-// CRUD
 router.post("/semisters", SemisterController.createSemister); // Create
 router.get("/semisters", SemisterController.listSemisters); // List (search/filter)
 router.get("/semisters/:id", SemisterController.getSemisterById); // Read by id
-router.get(
-  "/semisters/by-slug/:degreeId/:slug",
-  SemisterController.getSemisterBySlug
-);
+router.get(  "/semisters/by-slug/:degreeId/:slug",  SemisterController.getSemisterBySlug);
 router.patch("/semisters/:id", SemisterController.updateSemister);
 router.delete("/semisters/:id", SemisterController.deleteSemister);
-
-// Status toggle & bulk status
 router.post("/semisters/:id/toggle-active", SemisterController.toggleActive);
-router.post(
-  "/semisters/bulk/toggle-active",
-  SemisterController.bulkToggleActive
-);
-
-// Counts & facets
+router.post(  "/semisters/bulk/toggle-active",  SemisterController.bulkToggleActive);
 router.get("/semisters/counts/summary", SemisterController.countsSummary);
 router.get("/semisters/counts/by-degree", SemisterController.countsByDegree);
-router.get(
-  "/semisters/counts/by-academic-year",
-  SemisterController.countsByAcademicYear
-);
+router.get(  "/semisters/counts/by-academic-year",  SemisterController.countsByAcademicYear);
 router.get("/semisters/facets", SemisterController.getFacets);
-
-// Advanced ops
 router.patch("/semisters/:id/move-degree", SemisterController.moveToDegree);
 router.patch("/semisters/:id/renumber", SemisterController.renumber);
 router.patch("/semisters/reorder", SemisterController.reorderWithinDegree);
-router.post(
-  "/semisters/bulk/clone-to-degrees",
-  SemisterController.cloneToDegrees
-);
+router.post(  "/semisters/bulk/clone-to-degrees",  SemisterController.cloneToDegrees);
 
-module.exports = router;
-
-
-
-
-// udemy_backend/routes/NotificationRoutes.js
-const express = require("express");
-const ctrl = require("../controllers/NotificationController");
-const { verifyToken } = require("../middleware/authMiddleware");
-
-const router = express.Router();
-
-/** ---------- Authenticated user endpoints ---------- */
 router.get("/my-notification-feed", verifyToken, ctrl.myFeed);
 router.get("/my-unseen-notification-count", verifyToken, ctrl.unseenCountForMe);
 router.post("/mark-delivery-seen/:id", verifyToken, ctrl.markSeenForMe);
 router.post("/dismiss-delivery/:id", verifyToken, ctrl.dismissForMe);
 
-/** ---------- Admin endpoints (controller enforces role=superadmin) ---------- */
-// CRUD
 router.post("/create-notification", verifyToken, ctrl.create);
 router.get("/list-notifications", verifyToken, ctrl.list);
 router.get("/count-notifications", verifyToken, ctrl.countAll);
 router.get("/count-notifications-by-status", verifyToken, ctrl.countByStatus);
-router.get(
-  "/count-notifications-by-category",
-  verifyToken,
-  ctrl.countByCategory
-);
+router.get(  "/count-notifications-by-category",  verifyToken,  ctrl.countByCategory);
 router.post("/filter-notifications", verifyToken, ctrl.filter);
-
 router.get("/get-notification/:id", verifyToken, ctrl.getById);
 router.patch("/update-notification/:id", verifyToken, ctrl.update);
 router.delete("/delete-notification/:id", verifyToken, ctrl.remove);
-
-// Send / Schedule / Cancel / Duplicate
 router.post("/schedule-notification/:id", verifyToken, ctrl.schedule);
 router.post("/send-notification/:id", verifyToken, ctrl.sendNow);
 router.post("/cancel-notification/:id", verifyToken, ctrl.cancel);
 router.post("/duplicate-notification/:id", verifyToken, ctrl.duplicate);
-
-// Deliveries
-router.get(
-  "/list-notification-deliveries/:id",
-  verifyToken,
-  ctrl.listDeliveries
-);
-router.get(
-  "/export-notification-deliveries-csv/:id",
-  verifyToken,
-  ctrl.exportDeliveriesCsv
-);
+router.get(  "/list-notification-deliveries/:id",  verifyToken,  ctrl.listDeliveries);
+router.get(  "/export-notification-deliveries-csv/:id",  verifyToken,  ctrl.exportDeliveriesCsv);
 router.get("/get-notification-seen-stats/:id", verifyToken, ctrl.seenStats);
 
-// Resend
-router.post(
-  "/resend-notification-to-user/:id/:userId",
-  verifyToken,
-  ctrl.resendToUser
-);
+router.post(  "/resend-notification-to-user/:id/:userId",  verifyToken,  ctrl.resendToUser);
 router.post("/resend-notification-to-role/:id", verifyToken, ctrl.resendToRole);
-router.post(
-  "/resend-notification-to-users/:id",
-  verifyToken,
-  ctrl.resendToUsers
-);
-
-// Bulk
+router.post(  "/resend-notification-to-users/:id",  verifyToken,  ctrl.resendToUsers);
 router.post("/bulk-delete-notifications", verifyToken, ctrl.bulkDelete);
 router.post("/bulk-update-notification-status", verifyToken, ctrl.bulkStatus);
 router.post("/bulk-duplicate-notifications", verifyToken, ctrl.bulkDuplicate);
 
-module.exports = router;
-
-
-// routes/instructorRoutes.js
-const express = require("express");
-const ctrl = require("../controllers/InstructorController");
-const router = express.Router();
-
-// Create / Apply
 router.post("/apply", ctrl.apply);
-
-// Reads / Queries
 router.get("/list", ctrl.list);
 router.get("/counts", ctrl.counts);
 router.get("/get-by-email", ctrl.getByEmail);
 router.get("/quick-search", ctrl.quickSearch);
 router.get("/get-by-id/:id", ctrl.getById);
-
-// Updates
 router.patch("/update/:id", ctrl.update);
 router.patch("/set-profile/:id", ctrl.setProfile);
 router.patch("/set-address/:id", ctrl.setAddress);
-
-// Verifications
 router.post("/verify-email/:id", ctrl.verifyEmail);
 router.post("/verify-kyc/:id", ctrl.verifyKyc);
-
-// Status / Moderation
 router.post("/approve/:id", ctrl.approve);
 router.post("/reject/:id", ctrl.reject);
 router.post("/toggle-active/:id", ctrl.toggleActive);
 router.post("/set-status/:id", ctrl.setStatus);
-
-// Assignments
 router.post("/update-assignments/:id", ctrl.updateAssignments);
 router.post("/assign-add/:id", ctrl.assignAdd);
 router.post("/assign-remove/:id", ctrl.assignRemove);
-
-// Bulk
 router.post("/bulk-action", ctrl.bulkAction);
-
-// Deletes
 router.delete("/remove/:id", ctrl.remove);
 router.delete("/hard-delete/:id", ctrl.hardDelete);
-
-module.exports = router;
-
 
 // routes/ExamRoutes.js
 const router = require("express").Router();
 const C = require("../controllers/ExamController");
-
-// ---------- CRUD ----------
 router.post("/create-exam", C.createExam);
 router.get("/list-exams", C.listExams);
 router.get("/get-exam/:id", C.getExamById);
 router.patch("/update-exam/:id", C.updateExamById);
 router.delete("/delete-exam/:id", C.deleteExamById);
-
-// ---------- Counts ----------
 router.get("/count-all", C.countAll);
 router.get("/count-by", C.countBy);
-
-// ---------- Search & Filter ----------
 router.get("/search-exams", C.searchExams);
-// examples
-router.get(
-  "/get-by-degree-semester-course/:degreeId/:semesterId/:courseId",
-  C.getByDegreeSemesterCourse
-);
+router.get(  "/get-by-degree-semester-course/:degreeId/:semesterId/:courseId",  C.getByDegreeSemesterCourse);
 
-router.get(
-  "/get-published-by-dsc/:degreeId/:semesterId/:courseId",
-  C.getPublishedByDegreeSemesterCourse
-);
-
-// ---------- Status ----------
+router.get(  "/get-published-by-dsc/:degreeId/:semesterId/:courseId",  C.getPublishedByDegreeSemesterCourse);
 router.get("/upcoming-exams", C.upcomingExams);
 router.get("/past-exams", C.pastExams);
 router.get("/exam-stats", C.stats);
-
-// ---------- Actions ----------
 router.post("/toggle-publish/:id", C.togglePublish);
 router.post("/increment-attempt/:id", C.incrementAttemptCount);
 
-module.exports = router;
-
-
-
 // routes/DegreeRoutes.js
-const express = require("express");
-const router = express.Router();
-
-// ✅ import the correct file
-const DegreeController = require("../controllers/DegreeController");
-
-// CRUD
 router.post("/create-degree", DegreeController.createDegree);
 router.get("/list-degrees", DegreeController.listDegrees);
 router.get("/get-degree-by-id/slug/:id", DegreeController.getDegreeById);
 router.get("/get-degree-by-slug/slug/:slug", DegreeController.getDegreeBySlug);
 router.patch("/update-degree/slug/:id", DegreeController.updateDegree);
 router.delete("/delete-degree/:id", DegreeController.deleteDegree);
-
-// Status toggle
 router.post("/degrees/:id/toggle-active", DegreeController.toggleActive);
-
-// Counts & facets
 router.get("/degrees/counts/summary", DegreeController.countsSummary);
 router.get("/degrees/counts/by-level", DegreeController.countsByLevel);
 router.get("/degrees/counts/by-department", DegreeController.countsByDepartment);
 router.get("/degrees/facets", DegreeController.getFacets);
 
-module.exports = router;
-
-
-
 // routes/CourseRoutes.js
-const express = require("express");
-const router = express.Router();
-const CourseController = require("../controllers/CourseController");
-
-// CRUD
 router.post("/create-courses", CourseController.createCourse);
 router.get("/list-courses", CourseController.listCourses);
 router.get("/get-course-by-id/:id", CourseController.getCourseById);
 router.get("/get-course-by-slug/slug/:slug", CourseController.getCourseBySlug);
 router.patch("/update-course/:id", CourseController.updateCourse);
 router.delete("/delete-course/:id", CourseController.deleteCourse);
-
-// toggles & bulk
 router.post("/courses/:id/toggle-published", CourseController.togglePublished);
 router.post("/courses/:id/toggle-archived", CourseController.toggleArchived);
 router.post("/courses/:id/toggle-featured", CourseController.toggleFeatured);
 router.post("/courses/bulk/visibility", CourseController.bulkSetVisibility);
-
-// counts & facets
 router.get("/courses/counts/summary", CourseController.countsSummary);
 router.get("/courses/counts/by-category", CourseController.countsByCategory);
 router.get("/courses/counts/by-level", CourseController.countsByLevel);
 router.get("/courses/counts/by-access", CourseController.countsByAccessType);
 router.get("/courses/facets", CourseController.facets);
-
-// modules & topics
 router.post("/courses/:id/modules", CourseController.addModule);
 router.patch("/courses/:id/modules/:mIndex", CourseController.updateModule);
 router.delete("/courses/:id/modules/:mIndex", CourseController.deleteModule);
 router.post("/courses/:id/modules/:mIndex/topics", CourseController.addTopic);
-router.patch(
-  "/courses/:id/modules/:mIndex/topics/:tIndex",
-  CourseController.updateTopic
-);
-router.delete(
-  "/courses/:id/modules/:mIndex/topics/:tIndex",
-  CourseController.deleteTopic
-);
+router.patch(  "/courses/:id/modules/:mIndex/topics/:tIndex",  CourseController.updateTopic);
+router.delete(  "/courses/:id/modules/:mIndex/topics/:tIndex",  CourseController.deleteTopic);
 router.patch("/courses/:id/modules/reorder", CourseController.reorderModules);
-router.patch(
-  "/courses/:id/modules/:mIndex/topics/reorder",
-  CourseController.reorderTopics
-);
-
-// enrollment
+router.patch(  "/courses/:id/modules/:mIndex/topics/reorder",  CourseController.reorderTopics);
 router.post("/courses/:id/enroll", CourseController.enrollStudent);
 router.patch("/courses/:id/enrollment", CourseController.updateEnrollment);
-router.delete(
-  "/courses/:id/enrollment/:studentId",
-  CourseController.unenrollStudent
-);
-
-// ratings
+router.delete(  "/courses/:id/enrollment/:studentId",  CourseController.unenrollStudent);
 router.post("/courses/:id/ratings", CourseController.addOrUpdateRating);
-
-// threads
 router.post("/courses/:id/threads", CourseController.addThread);
 router.post("/courses/:id/threads/:tIndex/replies", CourseController.addReply);
 
-module.exports = router;
+// category routes. 
 
-
-const express = require("express");
-const router = express.Router();
-const {
-  categoryUpload,
-  addCategory,
-  getAllCategories,
-  getCategoryById,
-  updateCategory,
-  deleteCategory,
-  getCategoryCount,
-  getCategoryCourseCounts,
-} = require("../controllers/CategoryController");
-
-// -----------------------------------
-// ROUTES
-// -----------------------------------
-
-// @route   POST /api/categories
-// @desc    Add a new category with image
-router.post(
-  "/add-category",
-  categoryUpload.single("category_image"),
-  addCategory
-);
-
-// @route   GET /api/categories
-// @desc    Get all categories
+router.post(  "/add-category",  categoryUpload.single("category_image"),  addCategory);
 router.get("/all-categories", getAllCategories);
-
-// @route   GET /api/categories/count
-// @desc    Get total number of categories
 router.get("/category-count", getCategoryCount);
-
-// @route   GET /api/categories/product-counts
-// @desc    Get product count per category
 router.get("/category-product-counts", getCategoryCourseCounts);
-
-// @route   GET /api/categories/:id
-// @desc    Get category by ID
-// Get a category by ID
 router.get("/single-category/:id", getCategoryById);
 
-// @route   PUT /api/categories/:id
-// @desc    Update category (with optional image)
-router.put(
-  "/update-category/:id",
-  categoryUpload.single("category_image"),
-  updateCategory
+router.put(  "/update-category/:id",  categoryUpload.single("category_image"),  updateCategory
 );
-
-// @route   DELETE /api/categories/:id
-// @desc    Delete category and its image
 router.delete("/delete-category/:id", deleteCategory);
 
-module.exports = router;
+
 

@@ -78,7 +78,7 @@ import AllQuizzes from "../../pages/quiz_pages/AllQuizzes";
 import SingleQuiz from "../../pages/quiz_pages/SingleQuiz";
 import UpdateQuiz from "../../pages/quiz_pages/UpdateQuiz";
 
-// quiz pages.
+// questions pages.
 import CreateQuestion from "../../pages/question_pages/CreateQuestion";
 import AllQuestions from "../../pages/question_pages/AllQuestions";
 import SingleQuestion from "../../pages/question_pages/SingleQuestion";
@@ -100,6 +100,12 @@ import CreateNotification from "../../pages/notification_pages/CreateNotificatio
 import AllNotifications from "../../pages/notification_pages/AllNotifications";
 import SingleNotification from "../../pages/notification_pages/SingleNotification";
 import UpdateNotification from "../../pages/notification_pages/UpdateNotification";
+
+// activity routes.
+import CreateActivity from "../../pages/activity_pages/CreateActivity";
+import AllActivities from "../../pages/activity_pages/AllActivities";
+import SingleActivity from "../../pages/activity_pages/SingleActivity";
+import UpdateActivity from "../../pages/activity_pages/UpdateActivity";
 
 const MainLayout = () => {
   return (
@@ -836,6 +842,51 @@ const MainLayout = () => {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="Update Notification">
                   <UpdateNotification />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          {/* activity routes */}
+          <Route
+            path="/create-activity"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Create Activity">
+                  <CreateActivity />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/all-activities"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="All Activities">
+                  <AllActivities />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/single-activity/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Activity Details">
+                  <SingleActivity />
+                </PageTitle>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/update-activity/:slug/:id"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PageTitle title="Update Activity">
+                  <UpdateActivity />
                 </PageTitle>
               </PrivateRoute>
             }
