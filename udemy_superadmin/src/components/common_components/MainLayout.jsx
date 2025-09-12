@@ -882,7 +882,7 @@ const MainLayout = () => {
           />
 
           <Route
-            path="/update-activity/:slug/:id"
+            path="/update-activity/:id"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="Update Activity">
