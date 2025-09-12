@@ -5,10 +5,12 @@ const SubCategory = require("../models/SubCategoryModel");
 const Blog = require("../models/BlogModel");
 const Course = require("../models/CourseModel");
 const Contact = require("../models/ContactModel");
-const Activity = require("../models/ActivityModel");
+const { Activity } = require("../models/ActivityModel");
 
 // Notification model may export a named "Notification"
-const { Notification: NotificationModel } = require("../models/NotificationModel");
+const {
+  Notification: NotificationModel,
+} = require("../models/NotificationModel");
 const Degree = require("../models/DegreeModel");
 const Semister = require("../models/SemisterModel");
 const Exam = require("../models/ExamModel");
@@ -52,7 +54,10 @@ const safeCount = async (fn) => {
 };
 
 exports.getDashboardCounts = async (req, res) => {
-  // Keep keys aligned with your frontend (pluralized)
+  const activityCounter =
+    Activity && typeof Activity.countDocuments === "function"
+      ? () => Activity.countDocuments({})
+      : async () => 0;
   const tasks = {
     activities: () => Activity.countDocuments({}),
     users: () => User.countDocuments({}),

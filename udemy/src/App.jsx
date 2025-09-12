@@ -40,6 +40,10 @@ import InstructorDashBoard from "./pages/instructor_pages/InstructorDashboard";
 // student pages.
 import StudentDashboard from "./pages/student_pages/StudentDashboard";
 
+// notification pages
+import AllUserNotifications from "./pages/notification_pages/AllUserNotifications";
+import SingleUserNotification from "./pages/notification_pages/SingleUserNotification";
+
 const PageTitle = ({ title, children }) => {
   useEffect(() => {
     document.title = title ? `${title} | ECODERS` : "ECODERS";
@@ -228,6 +232,47 @@ function App() {
                 <PrivateRoute>
                   <PageTitle title="Student Dashboard">
                     <StudentDashboard />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+
+            {/* notification pages.  */}
+            <Route
+              path="/my-notifications"
+              element={
+                <PrivateRoute
+                  allowedRoles={[
+                    "superadmin",
+                    "student",
+                    "instructor",
+                    "teacher",
+                    "admin",
+                    "user",
+                  ]}
+                >
+                  <PageTitle title="My Notifications">
+                    <AllUserNotifications />
+                  </PageTitle>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/my-notification/:slug/:notificationId/:deliveryId"
+              element={
+                <PrivateRoute
+                  allowedRoles={[
+                    "superadmin",
+                    "student",
+                    "instructor",
+                    "teacher",
+                    "admin",
+                    "user",
+                  ]}
+                >
+                  <PageTitle title="Notification">
+                    <SingleUserNotification />
                   </PageTitle>
                 </PrivateRoute>
               }
