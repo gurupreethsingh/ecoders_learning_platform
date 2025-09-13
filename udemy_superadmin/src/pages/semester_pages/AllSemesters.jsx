@@ -1,4 +1,3 @@
-// src/pages/degree_pages/AllDegrees.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -14,20 +13,18 @@ import {
   FaGraduationCap,
   FaUniversity,
   FaTrashAlt,
-  FaRegCopy,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
 import globalBackendRoute from "@/config/Config.js";
 
-export default function AllDegrees() {
+export default function Allsemesters() {
   const [view, setView] = useState("grid"); // 'list' | 'grid' | 'card'
   const [searchTerm, setSearchTerm] = useState("");
 
   // server-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
-  const [gotoPage, setGotoPage] = useState(""); // jump-to-page box
 
   // data + meta
   const [rows, setRows] = useState([]);
@@ -39,10 +36,7 @@ export default function AllDegrees() {
   });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0); // to re-fetch after delete
-
-  // copy feedback
-  const [copied, setCopied] = useState(""); // holds last-copied full ID
+  const [refreshKey, setRefreshKey] = useState(0); // re-fetch after delete
 
   const iconStyle = {
     list: view === "list" ? "text-blue-500" : "text-gray-500",
@@ -50,11 +44,11 @@ export default function AllDegrees() {
     card: view === "card" ? "text-purple-500" : "text-gray-500",
   };
 
-  const makeSlug = (name, serverSlug) => {
+  const makeSlug = (name, serverSlug, semNumber) => {
     if (serverSlug && typeof serverSlug === "string" && serverSlug.length > 0)
       return serverSlug;
-    if (!name) return "degree";
-    return String(name)
+    const base = name || (semNumber ? `semester ${semNumber}` : "semester");
+    return String(base)
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, "")
@@ -62,14 +56,14 @@ export default function AllDegrees() {
       .replace(/-+/g, "-");
   };
 
-  const toTags = (accreditation) => {
-    if (!accreditation) return [];
-    return Array.isArray(accreditation)
-      ? accreditation
-      : String(accreditation)
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean);
+  // For semesters, show academicYear as a "tag" (so the UI matches)
+  const toTags = (academicYear) => {
+    if (!academicYear) return [];
+    if (Array.isArray(academicYear)) return academicYear.filter(Boolean);
+    return String(academicYear)
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
   };
 
   // reset to first page when search/pageSize change
@@ -92,7 +86,8 @@ export default function AllDegrees() {
         };
         if (searchTerm.trim()) params.search = searchTerm.trim();
 
-        const res = await axios.get(`${globalBackendRoute}/api/list-degrees`, {
+        // semester listing endpoint
+        const res = await axios.get(`${globalBackendRoute}/api/semesters`, {
           params,
           signal: ctrl.signal,
         });
@@ -101,30 +96,17 @@ export default function AllDegrees() {
         const m = res.data?.meta || {};
         if (!alive) return;
 
-        const computedMeta = {
+        setRows(Array.isArray(data) ? data : []);
+        setMeta({
           page: Number(m.page || page),
           limit: Number(m.limit || pageSize),
-          total: Number(m.total ?? data.length),
-          totalPages: Number(
-            m.totalPages ||
-              Math.max(
-                1,
-                Math.ceil((m.total ?? data.length) / (m.limit || pageSize))
-              )
-          ),
-        };
-
-        // Clamp current page if it accidentally went out of range (e.g., after pageSize change)
-        if (computedMeta.page > computedMeta.totalPages) {
-          setPage(computedMeta.totalPages);
-        }
-
-        setRows(Array.isArray(data) ? data : []);
-        setMeta(computedMeta);
+          total: Number(m.total || data.length),
+          totalPages: Number(m.totalPages || 1),
+        });
       } catch (err) {
         if (!alive) return;
-        console.error("Error fetching degrees:", err);
-        setFetchError("Failed to load degrees. Please try again.");
+        console.error("Error fetching semesters:", err);
+        setFetchError("Failed to load semesters. Please try again.");
       } finally {
         if (!alive) return;
         setLoading(false);
@@ -144,100 +126,76 @@ export default function AllDegrees() {
     return { start, end };
   }, [meta]);
 
-  // better numeric pagination (compact with ellipses)
-  const buildPageList = () => {
-    const total = meta.totalPages;
-    const current = meta.page;
-    if (total <= 7) {
-      return Array.from({ length: total }, (_, i) => i + 1);
+  // ---- New pagination builder (styled like AllCategories) ----
+  const currentPage = meta.page || 1;
+  const totalPages = Math.max(1, meta.totalPages || 1);
+  const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
+  const buildPages = () => {
+    const pages = [];
+    const maxBtns = 7;
+    if (totalPages <= maxBtns) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
     }
-    const pages = new Set([
-      1,
-      2,
-      total - 1,
-      total,
-      current,
-      current - 1,
-      current + 1,
-    ]);
-    [...pages].forEach((p) => {
-      if (p < 1 || p > total) pages.delete(p);
-    });
-    const sorted = [...pages].sort((a, b) => a - b);
-    const withDots = [];
-    for (let i = 0; i < sorted.length; i++) {
-      withDots.push(sorted[i]);
-      if (i < sorted.length - 1 && sorted[i + 1] - sorted[i] > 1) {
-        withDots.push("…");
-      }
-    }
-    return withDots;
+    pages.push(1);
+    if (currentPage > 4) pages.push("…");
+    const s = Math.max(2, currentPage - 1);
+    const e = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = s; i <= e; i++) pages.push(i);
+    if (currentPage < totalPages - 3) pages.push("…");
+    pages.push(totalPages);
+    return pages;
   };
 
-  // improved copy helper (with fallback + feedback)
-  const copy = async (text) => {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-      }
-      setCopied(text);
-      setTimeout(() => setCopied(""), 1200);
-    } catch {
-      // ignore
-    }
-  };
-
-  // --- delete one degree ---
-  const deleteDegree = async (e, id, name) => {
+  // --- delete one semester ---
+  const deletesemester = async (e, id, name) => {
+    // ensure clicking delete does not trigger the card link
     e.preventDefault();
     e.stopPropagation();
 
     const ok = window.confirm(
-      `Delete degree "${name || "Untitled"}"? This action cannot be undone.`
+      `Delete semester "${name || "Untitled"}"? This action cannot be undone.`
     );
     if (!ok) return;
 
     try {
+      // semester delete endpoint
       const res = await axios.delete(
-        `${globalBackendRoute}/api/delete-degree/${id}`
+        `${globalBackendRoute}/api/semesters/${id}`
       );
       if (res.status >= 200 && res.status < 300) {
-        if (rows.length === 1 && page > 1) setPage((p) => Math.max(1, p - 1));
+        // if deleting last item on the page, step back a page
+        if (rows.length === 1 && page > 1) {
+          setPage((p) => Math.max(1, p - 1));
+        }
         setRefreshKey((k) => k + 1);
-        alert("Degree deleted successfully.");
+        alert("semester deleted successfully.");
       } else {
-        throw new Error("Failed to delete degree.");
+        throw new Error("Failed to delete semester.");
       }
     } catch (err) {
       console.error("Delete failed:", err);
       alert(
         err?.response?.data?.message ||
           err?.message ||
-          "Failed to delete degree."
+          "Failed to delete semester."
       );
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 border-b">
-      {/* Search + Count + View Switcher */}
+      {/* Search + Count + View Switcher (same shape as Degrees) */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div className="block-heading">
-          <h2 className="font-bold text-xl">All Degrees</h2>
+          <h2 className="font-bold text-xl">All semesters</h2>
         </div>
 
         {/* Search (server-side) */}
         <div className="relative w-full sm:w-1/2">
           <input
             type="text"
-            placeholder="Search degrees by name, code, slug, department, awarding body, accreditation…"
+            placeholder="Search semesters by name, code, slug, academic year, description…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-4 py-2 pr-10 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -248,7 +206,7 @@ export default function AllDegrees() {
         {/* Count + Views + Page size */}
         <div className="flex items-center space-x-4">
           <p className="text-sm text-gray-600">
-            Showing {rows.length} of {meta.total} degrees
+            Showing {rows.length} of {meta.total} semesters
           </p>
           <FaThList
             className={`cursor-pointer ${iconStyle.list}`}
@@ -283,13 +241,13 @@ export default function AllDegrees() {
 
       {/* Loading / Error */}
       {loading && (
-        <p className="text-center text-gray-600 mt-6">Loading degrees…</p>
+        <p className="text-center text-gray-600 mt-6">Loading semesters…</p>
       )}
       {fetchError && !loading && (
         <p className="text-center text-red-600 mt-6">{fetchError}</p>
       )}
 
-      {/* Degree Cards/List */}
+      {/* semester Cards/List */}
       {!loading && !fetchError && (
         <>
           <motion.div
@@ -305,7 +263,7 @@ export default function AllDegrees() {
             transition={{ duration: 0.4 }}
           >
             {rows.map((d) => {
-              const tags = toTags(d.accreditation);
+              const tags = toTags(d?.academicYear);
               const created =
                 d?.createdAt &&
                 new Date(d.createdAt).toLocaleDateString("en-US", {
@@ -313,24 +271,47 @@ export default function AllDegrees() {
                   month: "long",
                   day: "numeric",
                 });
-              const slug = makeSlug(d?.name, d?.slug);
-              const id = d._id || d.id || "";
-              const shortId = id ? id.slice(-6) : "—";
-              const path = `/single-degree/${slug}/${id}`;
+
+              const title =
+                d?.semester_name ||
+                (d?.semNumber
+                  ? `Semester ${d.semNumber}`
+                  : "Untitled semester");
+
+              const slug = makeSlug(d?.semester_name, d?.slug, d?.semNumber);
+              const path = `/single-semester/${slug}/${d?._id || d?.id}`;
+
               const listLayout = view === "list";
 
+              // derive a small “summary” line like durations in degrees:
+              const dateRange =
+                d?.startDate || d?.endDate
+                  ? `${
+                      d?.startDate
+                        ? new Date(d.startDate).toLocaleDateString()
+                        : "—"
+                    } → ${
+                      d?.endDate
+                        ? new Date(d.endDate).toLocaleDateString()
+                        : "—"
+                    }`
+                  : null;
+
+              // ✅ Pull ID once
+              const semId = d?._id || d?.id || "—";
+
               return (
-                <div key={id} className="relative">
-                  {/* Delete button */}
+                <div key={semId} className="relative">
+                  {/* Delete button (outside the card link, absolute on container) */}
                   <button
-                    title="Delete degree"
+                    title="Delete semester"
                     className="absolute -top-2 -right-2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white border shadow hover:bg-red-50 text-red-600"
-                    onClick={(e) => deleteDegree(e, id, d?.name)}
+                    onClick={(e) => deletesemester(e, semId, title)}
                   >
                     <FaTrashAlt className="h-4 w-4" />
                   </button>
 
-                  {/* Card link */}
+                  {/* Card link (whole card navigates) */}
                   <Link to={path}>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
@@ -339,7 +320,7 @@ export default function AllDegrees() {
                         listLayout ? "flex-row p-4 items-center" : "flex-col"
                       }`}
                     >
-                      {/* Icon badge */}
+                      {/* Icon badge (no images) */}
                       <div
                         className={`${
                           listLayout
@@ -360,44 +341,20 @@ export default function AllDegrees() {
                             : "p-4 flex flex-col flex-grow"
                         }`}
                       >
-                        {/* ID badge + copy */}
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className="inline-flex items-center gap-2 text-[11px] leading-none px-2 py-1 rounded-full bg-gray-100 text-gray-700 border cursor-pointer"
-                            title={id || ""}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (id) copy(id);
-                            }}
-                          >
-                            ID:
-                            <span className="font-mono">{shortId}</span>
-                            {id ? (
-                              <FaRegCopy
-                                className={`h-3.5 w-3.5 ${
-                                  copied === id
-                                    ? "text-green-600"
-                                    : "text-indigo-600"
-                                }`}
-                                title={
-                                  copied === id ? "Copied!" : "Copy full ID"
-                                }
-                              />
-                            ) : null}
-                          </span>
-
-                          {copied === id && (
-                            <span className="text-xs text-green-600 select-none">
-                              Copied!
-                            </span>
-                          )}
-                        </div>
-
                         <div className="text-left space-y-1 flex-shrink-0">
                           <h3 className="text-lg font-bold text-gray-900">
-                            {d?.name || "Untitled Degree"}
+                            {title}
                           </h3>
+
+                          {/* ✅ semester ID (visible on card) */}
+                          <div className="text-xs text-gray-700">
+                            <span className="font-medium mr-1">
+                              semester ID:
+                            </span>
+                            <code className="bg-gray-100 border px-1.5 py-0.5 rounded">
+                              {semId}
+                            </code>
+                          </div>
 
                           {created && (
                             <p className="text-sm text-gray-600 flex items-center">
@@ -406,27 +363,31 @@ export default function AllDegrees() {
                             </p>
                           )}
 
+                          {/* Code + Sem # (mirrors Code + Level) */}
                           <p className="text-sm text-gray-600 flex items-center">
                             <FaUser className="mr-1 text-red-500" />
                             <span className="truncate">
                               <span className="font-medium">Code:</span>{" "}
-                              {d?.code || "—"}{" "}
-                              <span className="ml-2 font-medium">Level:</span>{" "}
-                              {d?.level || "—"}
+                              {d?.semester_code || "—"}{" "}
+                              <span className="ml-2 font-medium">Sem #:</span>{" "}
+                              {d?.semNumber ?? "—"}
                             </span>
                           </p>
 
+                          {/* Academic Year + Credits (mirrors Department + Awarding Body) */}
                           <p className="text-sm text-gray-600 flex items-center">
                             <FaUniversity className="mr-1 text-indigo-500" />
                             <span className="truncate">
-                              <span className="font-medium">Department:</span>{" "}
-                              {d?.department || "—"}{" "}
-                              {d?.awardingBody ? (
+                              <span className="font-medium">
+                                Academic Year:
+                              </span>{" "}
+                              {d?.academicYear || "—"}{" "}
+                              {d?.totalCredits != null ? (
                                 <>
                                   <span className="ml-2 font-medium">
-                                    Awarding Body:
+                                    Credits:
                                   </span>{" "}
-                                  {d.awardingBody}
+                                  {d.totalCredits}
                                 </>
                               ) : null}
                             </span>
@@ -440,22 +401,22 @@ export default function AllDegrees() {
                           )}
                         </div>
 
+                        {/* Optional summary-like block */}
                         {view !== "list" &&
-                          (d?.durationYears || d?.totalSemesters) && (
+                          (dateRange || d?.totalCoursesPlanned != null) && (
                             <p className="text-gray-700 mt-2 flex-shrink-0">
-                              {d?.durationYears ? (
+                              {dateRange ? (
                                 <span className="mr-3">
-                                  <span className="font-medium">Duration:</span>{" "}
-                                  {d.durationYears} year
-                                  {d.durationYears > 1 ? "s" : ""}
+                                  <span className="font-medium">Dates:</span>{" "}
+                                  {dateRange}
                                 </span>
                               ) : null}
-                              {d?.totalSemesters ? (
+                              {d?.totalCoursesPlanned != null ? (
                                 <span>
                                   <span className="font-medium">
-                                    Semesters:
+                                    Courses Planned:
                                   </span>{" "}
-                                  {d.totalSemesters}
+                                  {d.totalCoursesPlanned}
                                 </span>
                               ) : null}
                             </p>
@@ -471,95 +432,94 @@ export default function AllDegrees() {
           </motion.div>
 
           {meta.total === 0 && (
-            <p className="text-center text-gray-600 mt-6">No degrees found.</p>
+            <p className="text-center text-gray-600 mt-6">
+              No semesters found.
+            </p>
           )}
 
-          {/* Improved Pagination */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-8 gap-3">
-            <div className="text-gray-700 text-sm">
-              Page {meta.page} of {meta.totalPages} • Showing{" "}
-              <span className="font-medium">
-                {pageCountText.start}-{pageCountText.end}
-              </span>{" "}
-              of <span className="font-medium">{meta.total}</span> results •{" "}
-              {meta.limit}/page
-            </div>
+          {/* ---- Updated Pagination (styled like AllCategories) ---- */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-gray-700 text-sm">
+                Page {currentPage} of {totalPages} • Showing{" "}
+                <span className="font-medium">
+                  {pageCountText.start}-{pageCountText.end}
+                </span>{" "}
+                of <span className="font-medium">{meta.total}</span> results
+              </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={meta.page <= 1}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
-                  meta.page <= 1
-                    ? "bg-gray-300"
-                    : "bg-indigo-600 hover:bg-indigo-500"
-                }`}
-                title="Previous page"
-              >
-                <FaArrowLeft />
-              </button>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => goTo(1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-full border text-sm ${
+                    currentPage === 1
+                      ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                  }`}
+                >
+                  « First
+                </button>
+                <button
+                  onClick={() => goTo(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-full border text-sm ${
+                    currentPage === 1
+                      ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                  }`}
+                >
+                  ‹ Prev
+                </button>
 
-              <div className="flex items-center gap-1">
-                {buildPageList().map((p, idx) =>
+                {buildPages().map((p, idx) =>
                   p === "…" ? (
-                    <span key={`dots-${idx}`} className="px-2 text-gray-500">
+                    <span
+                      key={`dots-${idx}`}
+                      className="px-2 text-gray-400 select-none"
+                    >
                       …
                     </span>
                   ) : (
                     <button
                       key={p}
-                      onClick={() => setPage(p)}
-                      className={`px-3 py-1.5 rounded border text-sm ${
-                        p === meta.page
-                          ? "bg-gray-900 text-white border-gray-900"
-                          : "border-gray-300 hover:bg-gray-50"
+                      onClick={() => goTo(p)}
+                      className={`min-w-[36px] px-3 py-1 rounded-full border text-sm transition ${
+                        p === currentPage
+                          ? "bg-purple-600 text-white border-purple-600 shadow"
+                          : "text-purple-600 border-purple-200 hover:bg-purple-50"
                       }`}
-                      title={`Go to page ${p}`}
                     >
                       {p}
                     </button>
                   )
                 )}
-              </div>
 
-              <button
-                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                disabled={meta.page >= meta.totalPages}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${
-                  meta.page >= meta.totalPages
-                    ? "bg-gray-300"
-                    : "bg-indigo-600 hover:bg-indigo-500"
-                }`}
-                title="Next page"
-              >
-                <FaArrowRight />
-              </button>
-
-              {/* Jump to page */}
-              <div className="flex items-center gap-1 ml-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={meta.totalPages || 1}
-                  value={gotoPage}
-                  onChange={(e) => setGotoPage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const num = Math.max(
-                        1,
-                        Math.min(Number(gotoPage || 1), meta.totalPages)
-                      );
-                      setPage(num);
-                      setGotoPage("");
-                    }
-                  }}
-                  placeholder="Go to…"
-                  className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
-                  title="Jump to page and press Enter"
-                />
+                <button
+                  onClick={() => goTo(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-full border text-sm ${
+                    currentPage === totalPages
+                      ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                  }`}
+                >
+                  Next ›
+                </button>
+                <button
+                  onClick={() => goTo(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-full border text-sm ${
+                    currentPage === totalPages
+                      ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                  }`}
+                >
+                  Last »
+                </button>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

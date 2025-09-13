@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import globalBackendRoute from "../../config/Config";
-
+import globalBackendRoute from "@/config/Config.js";
 const DEGREES_PATH = "list-degrees";
 const SEMESTERS_PATH = "semisters";
 const LIST_COURSES_PATH = "list-courses"; // <- only list endpoint your server provides
@@ -92,14 +91,14 @@ function arrayHasId(arr, id) {
   return arr.some((v) => normalizeId(v) === target);
 }
 
-/** Course belongs to selected semester (covers "semester" + "semister" spellings) */
+/** Course belongs to selected semester (covers "semester" + "semester" spellings) */
 function matchesSemester(course, semId, semesterObject) {
   if (!semId) return true;
   const s = String(semId);
 
   const directFields = [
     course.semester,
-    course.semister,
+    course.semester,
     course.semesterId,
     course.semester_id,
     course.semId,
@@ -113,7 +112,7 @@ function matchesSemester(course, semId, semesterObject) {
 
   if (directFields.includes(s)) return true;
   if (normalizeId(course.semester?._id) === s) return true;
-  if (normalizeId(course.semister?._id) === s) return true;
+  if (normalizeId(course.semester?._id) === s) return true;
 
   if (arrayHasId(course.semesters, s)) return true;
   if (arrayHasId(course.semisters, s)) return true;
@@ -194,18 +193,18 @@ function filterCoursesForSelection(
 /* --------- Fetch courses (only real route + soft variants) ---------- */
 async function fetchCoursesFor({ degreeId, semesterId, limit = 200, token }) {
   // Your backend lists at /list-courses. It may ignore filters; we filter client-side.
-  // Try both "semester" and "semister" query keys in case the controller supports one.
+  // Try both "semester" and "semester" query keys in case the controller supports one.
   const candidates = [
     `${LIST_COURSES_PATH}?degree=${encodeURIComponent(
       degreeId
     )}&semester=${encodeURIComponent(semesterId)}&limit=${limit}`,
     `${LIST_COURSES_PATH}?degree=${encodeURIComponent(
       degreeId
-    )}&semister=${encodeURIComponent(semesterId)}&limit=${limit}`,
+    )}&semester=${encodeURIComponent(semesterId)}&limit=${limit}`,
     `${LIST_COURSES_PATH}?semester=${encodeURIComponent(
       semesterId
     )}&limit=${limit}`,
-    `${LIST_COURSES_PATH}?semister=${encodeURIComponent(
+    `${LIST_COURSES_PATH}?semester=${encodeURIComponent(
       semesterId
     )}&limit=${limit}`,
     `${LIST_COURSES_PATH}?limit=${limit}`,

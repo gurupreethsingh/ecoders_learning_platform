@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiSave,
   FiX,
@@ -67,7 +67,7 @@ const courseMatchesSemester = (course, semesterId) => {
   const s = String(semesterId);
   const direct = [
     course.semester,
-    course.semister,
+    course.semester,
     course.semesterId,
     course.semisterId,
     course.semId,
@@ -78,9 +78,9 @@ const courseMatchesSemester = (course, semesterId) => {
 
   const objMatch =
     normId(course.semester) === s ||
-    normId(course.semister) === s ||
+    normId(course.semester) === s ||
     normId(course.semester?._id) === s ||
-    normId(course.semister?._id) === s;
+    normId(course.semester?._id) === s;
 
   const arrMatch = [course.semesters, course.semisters]
     .filter(Array.isArray)
@@ -196,7 +196,7 @@ const UpdateExam = () => {
         }
 
         const degreeId = normId(x.degree);
-        const semesterId = normId(x.semester ?? x.semister);
+        const semesterId = normId(x.semester ?? x.semester);
         const courseId = normId(x.course);
 
         setForm({

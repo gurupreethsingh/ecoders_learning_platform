@@ -14,7 +14,7 @@ const MAX_LIMIT = 200;
 // -------------------------
 const defaultPopulate = [
   { path: "degree", select: "name title shortName code" },
-  { path: "semister", select: "title semister_name semNumber code" },
+  { path: "semester", select: "title semister_name semNumber code" },
   { path: "course", select: "title name code slug" },
   { path: "exam", select: "title examName examCode sectionRules" },
   { path: "quiz", select: "title quizCode visibility" },
@@ -46,8 +46,8 @@ function buildFilters(q = {}) {
   if (q.degree && toObjectId(q.degree)) filter.degree = toObjectId(q.degree);
   const semId =
     (q.semester && toObjectId(q.semester)) ||
-    (q.semister && toObjectId(q.semister));
-  if (semId) filter.semister = semId;
+    (q.semester && toObjectId(q.semester));
+  if (semId) filter.semester = semId;
   if (q.course && toObjectId(q.course)) filter.course = toObjectId(q.course);
   if (q.exam && toObjectId(q.exam)) filter.exam = toObjectId(q.exam);
   if (q.quiz && toObjectId(q.quiz)) filter.quiz = toObjectId(q.quiz);

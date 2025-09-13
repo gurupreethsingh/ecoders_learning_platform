@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { MdSave } from "react-icons/md";
 import { useParams, useNavigate } from "react-router-dom";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 
 export default function UpdateProfile() {
   const { id } = useParams();

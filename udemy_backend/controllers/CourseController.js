@@ -15,6 +15,8 @@ const toObjectId = (v) => {
   }
 };
 
+const isValidObjectId = (v) => Types.ObjectId.isValid(String(v || ""));
+
 const escapeRegExp = (s = "") => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const boolFrom = (v) =>
@@ -69,7 +71,59 @@ const normalizeObjectId = (v) => {
   return id || undefined;
 };
 
-// ---------- TOPIC NORMALIZER ----------
+// Deeply remove undefined / empty-string values from plain objects/arrays
+const stripEmptyDeep = (val) => {
+  if (Array.isArray(val)) {
+    const arr = val.map(stripEmptyDeep).filter((x) => x !== undefined);
+    return arr;
+  }
+  if (val && typeof val === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      const nv = stripEmptyDeep(v);
+      if (nv !== undefined) out[k] = nv;
+    }
+    return out;
+  }
+  if (val === "") return undefined;
+  return val;
+};
+
+// Format mongoose errors into a consistent shape
+const getErrorPayload = (err) => {
+  if (!err) return { message: "Unknown error" };
+
+  if (err.name === "ValidationError") {
+    const details = {};
+    for (const [path, e] of Object.entries(err.errors || {})) {
+      details[path] = e.message;
+    }
+    return { message: "Validation failed", errors: details };
+  }
+
+  if (err.name === "CastError") {
+    return {
+      message: `Invalid value for "${err.path}"`,
+      path: err.path,
+      value: err.value,
+      kind: err.kind,
+    };
+  }
+
+  if (err.name === "StrictModeError") {
+    return { message: err.message };
+  }
+
+  if (err.code === 11000) {
+    const fields = Object.keys(err.keyPattern || {});
+    return { message: `Duplicate value for: ${fields.join(", ")}` };
+  }
+
+  return { message: err.message || "Server error" };
+};
+
+/* ---------- topic / module normalizers ---------- */
+
 const normTopic = (t = {}) => {
   const o = {};
   if (t.title !== undefined) o.title = normalizeString(t.title);
@@ -77,7 +131,8 @@ const normTopic = (t = {}) => {
   // learning content
   if (t.explanation !== undefined)
     o.explanation = normalizeString(t.explanation);
-  if (t.code !== undefined) o.code = String(t.code);
+  if (t.code !== undefined)
+    o.code = t.code == null ? undefined : String(t.code);
   if (t.codeExplanation !== undefined)
     o.codeExplanation = normalizeString(t.codeExplanation);
   if (t.codeLanguage !== undefined)
@@ -93,7 +148,7 @@ const normTopic = (t = {}) => {
   if (t.isFreePreview !== undefined)
     o.isFreePreview = boolFrom(t.isFreePreview);
 
-  return o;
+  return stripEmptyDeep(o);
 };
 
 const normalizeModules = (input) => {
@@ -115,10 +170,9 @@ const normalizeModules = (input) => {
       const parsed = parseJSON(topics);
       if (Array.isArray(parsed)) topics = parsed;
     }
-    if (Array.isArray(topics)) {
-      out.topics = topics.map(normTopic);
-    }
-    return out;
+    if (Array.isArray(topics)) out.topics = topics.map(normTopic);
+
+    return stripEmptyDeep(out);
   });
 };
 
@@ -139,7 +193,7 @@ const normalizeLearningResources = (v) => {
     out.assignments = normalizeStringArray(obj.assignments);
   if (obj.externalLinks !== undefined)
     out.externalLinks = normalizeStringArray(obj.externalLinks);
-  return out;
+  return stripEmptyDeep(out);
 };
 
 const normalizeEnrolledStudents = (v) => {
@@ -169,7 +223,7 @@ const normalizeEnrolledStudents = (v) => {
       out.completedTopics = normalizeStringArray(s.completedTopics);
     if (s.certificateIssued !== undefined)
       out.certificateIssued = boolFrom(s.certificateIssued);
-    return out;
+    return stripEmptyDeep(out);
   });
 };
 
@@ -196,7 +250,7 @@ const normalizeRatings = (v) => {
       const d = toDate(r.createdAt);
       if (d !== undefined) out.createdAt = d;
     }
-    return out;
+    return stripEmptyDeep(out);
   });
 };
 
@@ -233,11 +287,11 @@ const normalizeThreads = (v) => {
             const d = toDate(rp.createdAt);
             if (d !== undefined) r.createdAt = d;
           }
-          return r;
+          return stripEmptyDeep(r);
         });
       }
     }
-    return out;
+    return stripEmptyDeep(out);
   });
 };
 
@@ -273,6 +327,12 @@ const normalizeCourseInput = (payload = {}) => {
     out.category = normalizeObjectId(payload.category);
   if (payload.subCategory !== undefined)
     out.subCategory = normalizeObjectId(payload.subCategory);
+
+  // Degree / Semister (optional)
+  if (payload.degree !== undefined)
+    out.degree = normalizeObjectId(payload.degree);
+  if (payload.semester !== undefined)
+    out.semester = normalizeObjectId(payload.semester);
 
   // Marketing
   if (payload.requirements !== undefined)
@@ -323,9 +383,13 @@ const normalizeCourseInput = (payload = {}) => {
     if (n !== undefined) out.maxStudents = n;
   }
   if (payload.enrollmentDeadline !== undefined) {
-    const d = toDate(payload.enrollmentDeadline);
-    if (d !== undefined) out.enrollmentDeadline = d;
-    else if (payload.enrollmentDeadline === null) out.enrollmentDeadline = null;
+    // allow explicit null to clear, string/Date otherwise
+    if (payload.enrollmentDeadline === null) {
+      out.enrollmentDeadline = null;
+    } else {
+      const d = toDate(payload.enrollmentDeadline);
+      if (d !== undefined) out.enrollmentDeadline = d;
+    }
   }
   if (payload.completionCriteria !== undefined)
     out.completionCriteria = normalizeString(payload.completionCriteria);
@@ -370,152 +434,19 @@ const normalizeCourseInput = (payload = {}) => {
   if (payload.version !== undefined)
     out.version = normalizeString(payload.version);
 
+  return stripEmptyDeep(out);
+};
+
+/* ------------- only allow setting known schema paths ------------- */
+
+const pickSchemaPaths = (data) => {
+  const allowed = new Set(Object.keys(Course.schema.paths));
+  // allow nested arrays/objects by top-level keys (modules, learningResources, etc.)
+  const out = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (allowed.has(k)) out[k] = v;
+  }
   return out;
-};
-
-const buildFilter = (q = {}) => {
-  const {
-    search,
-    useText,
-    language,
-    level,
-    accessType,
-    category,
-    subCategory,
-    instructor,
-    author,
-    tag,
-    keyword,
-    published,
-    isArchived,
-    isFeatured,
-    minPrice,
-    maxPrice,
-    minHours,
-    maxHours,
-    minRating,
-    maxRating,
-    hasCertificate,
-    from,
-    to,
-  } = q;
-
-  const filter = {};
-
-  if (useText === "true" && search) {
-    filter.$text = { $search: String(search) };
-  } else if (search) {
-    const needle = new RegExp(escapeRegExp(String(search).trim()), "i");
-    filter.$or = [
-      { title: needle },
-      { description: needle },
-      { tags: needle },
-      { keywords: needle },
-      { metaTitle: needle },
-      { metaDescription: needle },
-    ];
-  }
-
-  if (language) {
-    const arr = toArray(language);
-    if (arr.length) filter.language = { $in: arr };
-  }
-
-  if (level) {
-    const arr = toArray(level);
-    if (arr.length) filter.level = { $in: arr };
-  }
-
-  if (accessType) {
-    const arr = toArray(accessType);
-    if (arr.length) filter.accessType = { $in: arr };
-  }
-
-  if (category) {
-    const ids = toArray(category).map(toObjectId).filter(Boolean);
-    if (ids.length) filter.category = { $in: ids };
-  }
-
-  if (subCategory) {
-    const ids = toArray(subCategory).map(toObjectId).filter(Boolean);
-    if (ids.length) filter.subCategory = { $in: ids };
-  }
-
-  if (instructor) {
-    const ids = toArray(instructor).map(toObjectId).filter(Boolean);
-    if (ids.length) filter.instructor = { $in: ids };
-  }
-
-  if (author) {
-    const ids = toArray(author).map(toObjectId).filter(Boolean);
-    if (ids.length) filter.authors = { $in: ids };
-  }
-
-  if (tag) {
-    const tags = normalizeStringArray(tag);
-    if (tags.length) filter.tags = { $in: tags };
-  }
-
-  if (keyword) {
-    const keys = normalizeStringArray(keyword);
-    if (keys.length) filter.keywords = { $in: keys };
-  }
-
-  if (published !== undefined) filter.published = boolFrom(published);
-  if (isArchived !== undefined) filter.isArchived = boolFrom(isArchived);
-  if (isFeatured !== undefined) filter.isFeatured = boolFrom(isFeatured);
-
-  const price = {};
-  const pMin = toNumber(minPrice);
-  const pMax = toNumber(maxPrice);
-  if (pMin !== undefined) price.$gte = pMin;
-  if (pMax !== undefined) price.$lte = pMax;
-  if (Object.keys(price).length) filter.price = price;
-
-  const hours = {};
-  const hMin = toNumber(minHours);
-  const hMax = toNumber(maxHours);
-  if (hMin !== undefined) hours.$gte = hMin;
-  if (hMax !== undefined) hours.$lte = hMax;
-  if (Object.keys(hours).length) filter.durationInHours = hours;
-
-  const rating = {};
-  const rMin = toNumber(minRating);
-  const rMax = toNumber(maxRating);
-  if (rMin !== undefined) rating.$gte = rMin;
-  if (rMax !== undefined) rating.$lte = rMax;
-  if (Object.keys(rating).length) filter.averageRating = rating;
-
-  if (hasCertificate !== undefined) {
-    filter.issueCertificate = boolFrom(hasCertificate);
-  }
-
-  if (from || to) {
-    filter.createdAt = {};
-    if (from) filter.createdAt.$gte = new Date(from);
-    if (to) filter.createdAt.$lte = new Date(to);
-  }
-
-  return filter;
-};
-
-const sortMap = {
-  createdAt: { createdAt: -1 },
-  updatedAt: { updatedAt: -1 },
-  title: { title: 1 },
-  price: { price: 1 },
-  durationInHours: { durationInHours: 1 },
-  averageRating: { averageRating: -1 },
-  order: { order: 1 },
-  published: { published: -1 },
-};
-
-const applySort = (sortBy = "createdAt", dir = "desc") => {
-  const base = sortMap[sortBy] || sortMap.createdAt;
-  const mult = dir === "asc" ? 1 : -1;
-  const result = {};
-  for (const k of Object.keys(base)) result[k] = base[k] * mult;
-  return result;
 };
 
 /* ----------------------------- CRUD ------------------------------ */
@@ -539,17 +470,18 @@ exports.createCourse = async (req, res) => {
     }
 
     const doc = new Course(data);
-    await doc.save(); // triggers hooks
+    await doc.save();
     res.status(201).json(doc.toObject());
   } catch (err) {
-    if (err?.code === 11000) {
-      const fields = Object.keys(err.keyPattern || {});
-      return res
-        .status(409)
-        .json({ message: `Duplicate value for: ${fields.join(", ")}` });
-    }
-    console.error("createCourse error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError"
+        ? 400
+        : err?.code === 11000
+        ? 409
+        : 500;
+    if (status >= 500) console.error("createCourse error:", err);
+    res.status(status).json(payload);
   }
 };
 
@@ -565,12 +497,8 @@ exports.listCourses = async (req, res) => {
       (req.query.order || "desc").toString().toLowerCase() === "asc" ? 1 : -1;
     const search = (req.query.search || "").trim();
 
-    // Build query
     const q = {};
     if (search) {
-      // If you have a text index on Course fields, prefer $text:
-      // q.$text = { $search: search };
-      // Otherwise simple regex on title/description:
       q.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
@@ -585,7 +513,6 @@ exports.listCourses = async (req, res) => {
       .sort({ [sortBy]: order })
       .skip((page - 1) * limit)
       .limit(limit)
-      // populate category so your AllCategories.jsx can resolve names
       .populate("category", "category_name name")
       .lean();
 
@@ -608,7 +535,11 @@ exports.listCourses = async (req, res) => {
 
 exports.getCourseById = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id).lean();
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const doc = await Course.findById(id).lean();
     if (!doc) return res.status(404).json({ message: "Course not found" });
     res.json(doc);
   } catch (err) {
@@ -631,33 +562,48 @@ exports.getCourseBySlug = async (req, res) => {
 // Use save() so pre-save recomputes totals/average
 exports.updateCourse = async (req, res) => {
   try {
-    const data = normalizeCourseInput(req.body);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
 
-    const doc = await Course.findById(req.params.id);
+    // Normalize incoming payload
+    const normalized = normalizeCourseInput(req.body);
+    // Remove anything not declared in the schema (prevents StrictModeError)
+    const data = pickSchemaPaths(normalized);
+
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    Object.entries(data).forEach(([k, v]) => {
-      if (v === undefined) return;
+    for (const [k, v] of Object.entries(data)) {
+      if (v === undefined) continue;
       doc.set(k, v);
-    });
+    }
 
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    if (err?.code === 11000) {
-      const fields = Object.keys(err.keyPattern || {});
-      return res
-        .status(409)
-        .json({ message: `Duplicate value for: ${fields.join(", ")}` });
-    }
-    console.error("updateCourse error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" ||
+      err?.name === "CastError" ||
+      err?.name === "StrictModeError"
+        ? 400
+        : err?.code === 11000
+        ? 409
+        : 500;
+    if (status >= 500) console.error("updateCourse error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.deleteCourse = async (req, res) => {
   try {
-    const deleted = await Course.findByIdAndDelete(req.params.id).lean();
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const deleted = await Course.findByIdAndDelete(id).lean();
     if (!deleted) return res.status(404).json({ message: "Course not found" });
     res.json({ message: "Course deleted", id: deleted._id });
   } catch (err) {
@@ -670,7 +616,11 @@ exports.deleteCourse = async (req, res) => {
 
 exports.togglePublished = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     if (req.body.published !== undefined) {
@@ -688,7 +638,11 @@ exports.togglePublished = async (req, res) => {
 
 exports.toggleArchived = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     if (req.body.isArchived !== undefined) {
@@ -706,7 +660,11 @@ exports.toggleArchived = async (req, res) => {
 
 exports.toggleFeatured = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     if (req.body.isFeatured !== undefined) {
@@ -844,7 +802,11 @@ exports.facets = async (_req, res) => {
 
 exports.addModule = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     const mod = normalizeModules([req.body])[0] || {};
@@ -856,64 +818,82 @@ exports.addModule = async (req, res) => {
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("addModule error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("addModule error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.updateModule = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const idx = Number(mIndex);
+    if (!Number.isInteger(idx) || idx < 0)
       return res.status(400).json({ message: "Invalid module index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
-    if (!doc.modules || !doc.modules[mIndex])
+    if (!doc.modules || !doc.modules[idx])
       return res.status(404).json({ message: "Module not found" });
 
     const patch = normalizeModules([req.body])[0] || {};
     Object.entries(patch).forEach(([k, v]) => {
-      if (v !== undefined) doc.modules[mIndex][k] = v;
+      if (v !== undefined) doc.modules[idx][k] = v;
     });
 
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("updateModule error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("updateModule error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.deleteModule = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const idx = Number(mIndex);
+    if (!Number.isInteger(idx) || idx < 0)
       return res.status(400).json({ message: "Invalid module index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
-    if (!doc.modules || !doc.modules[mIndex])
+    if (!doc.modules || !doc.modules[idx])
       return res.status(404).json({ message: "Module not found" });
 
-    doc.modules.splice(mIndex, 1);
+    doc.modules.splice(idx, 1);
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("deleteModule error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("deleteModule error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.addTopic = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const idx = Number(mIndex);
+    if (!Number.isInteger(idx) || idx < 0)
       return res.status(400).json({ message: "Invalid module index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
-    const mod = doc.modules?.[mIndex];
+    const mod = doc.modules?.[idx];
     if (!mod) return res.status(404).json({ message: "Module not found" });
 
     const t = normTopic(req.body);
@@ -926,64 +906,79 @@ exports.addTopic = async (req, res) => {
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("addTopic error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("addTopic error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.updateTopic = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    const tIndex = Number(req.params.tIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex, tIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const mi = Number(mIndex);
+    const ti = Number(tIndex);
+    if (!Number.isInteger(mi) || mi < 0)
       return res.status(400).json({ message: "Invalid module index" });
-    if (!Number.isInteger(tIndex) || tIndex < 0)
+    if (!Number.isInteger(ti) || ti < 0)
       return res.status(400).json({ message: "Invalid topic index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    const mod = doc.modules?.[mIndex];
+    const mod = doc.modules?.[mi];
     if (!mod) return res.status(404).json({ message: "Module not found" });
-    if (!mod.topics || !mod.topics[tIndex])
+    if (!mod.topics || !mod.topics[ti])
       return res.status(404).json({ message: "Topic not found" });
 
     const patch = normTopic(req.body);
     Object.entries(patch).forEach(([k, v]) => {
-      if (v !== undefined) mod.topics[tIndex][k] = v;
+      if (v !== undefined) mod.topics[ti][k] = v;
     });
 
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("updateTopic error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("updateTopic error:", err);
+    res.status(status).json(payload);
   }
 };
 
 exports.deleteTopic = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    const tIndex = Number(req.params.tIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex, tIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const mi = Number(mIndex);
+    const ti = Number(tIndex);
+    if (!Number.isInteger(mi) || mi < 0)
       return res.status(400).json({ message: "Invalid module index" });
-    if (!Number.isInteger(tIndex) || tIndex < 0)
+    if (!Number.isInteger(ti) || ti < 0)
       return res.status(400).json({ message: "Invalid topic index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    const mod = doc.modules?.[mIndex];
+    const mod = doc.modules?.[mi];
     if (!mod) return res.status(404).json({ message: "Module not found" });
-    if (!mod.topics || !mod.topics[tIndex])
+    if (!mod.topics || !mod.topics[ti])
       return res.status(404).json({ message: "Topic not found" });
 
-    mod.topics.splice(tIndex, 1);
+    mod.topics.splice(ti, 1);
     await doc.save();
     res.json(doc.toObject());
   } catch (err) {
-    console.error("deleteTopic error:", err);
-    res.status(500).json({ message: "Server error" });
+    const payload = getErrorPayload(err);
+    const status =
+      err?.name === "ValidationError" || err?.name === "CastError" ? 400 : 500;
+    if (status >= 500) console.error("deleteTopic error:", err);
+    res.status(status).json(payload);
   }
 };
 
@@ -991,7 +986,11 @@ exports.deleteTopic = async (req, res) => {
 
 exports.reorderModules = async (req, res) => {
   try {
-    const doc = await Course.findById(req.params.id);
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     const order = parseJSON(req.body.order) || req.body.order;
@@ -1037,14 +1036,17 @@ exports.reorderModules = async (req, res) => {
 
 exports.reorderTopics = async (req, res) => {
   try {
-    const mIndex = Number(req.params.mIndex);
-    if (!Number.isInteger(mIndex) || mIndex < 0)
+    const { id, mIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const idx = Number(mIndex);
+    if (!Number.isInteger(idx) || idx < 0)
       return res.status(400).json({ message: "Invalid module index" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    const mod = doc.modules?.[mIndex];
+    const mod = doc.modules?.[idx];
     if (!mod) return res.status(404).json({ message: "Module not found" });
 
     const order = parseJSON(req.body.order) || req.body.order;
@@ -1092,11 +1094,14 @@ exports.reorderTopics = async (req, res) => {
 
 exports.enrollStudent = async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
     const studentId = normalizeObjectId(req.body.studentId);
     if (!studentId)
       return res.status(400).json({ message: "Invalid studentId" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     doc.enrolledStudents = Array.isArray(doc.enrolledStudents)
@@ -1127,11 +1132,14 @@ exports.enrollStudent = async (req, res) => {
 
 exports.updateEnrollment = async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
     const studentId = normalizeObjectId(req.body.studentId);
     if (!studentId)
       return res.status(400).json({ message: "Invalid studentId" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     const idx = (doc.enrolledStudents || []).findIndex(
@@ -1152,7 +1160,7 @@ exports.updateEnrollment = async (req, res) => {
     if (req.body.completedTopics !== undefined)
       patch.completedTopics = normalizeStringArray(req.body.completedTopics);
 
-    Object.assign(doc.enrolledStudents[idx], patch);
+    Object.assign(doc.enrolledStudents[idx], stripEmptyDeep(patch));
 
     await doc.save();
     res.json(doc.toObject());
@@ -1164,11 +1172,14 @@ exports.updateEnrollment = async (req, res) => {
 
 exports.unenrollStudent = async (req, res) => {
   try {
-    const studentId = normalizeObjectId(req.params.studentId);
+    const { id, studentId: sid } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const studentId = normalizeObjectId(sid);
     if (!studentId)
       return res.status(400).json({ message: "Invalid studentId" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     const before = doc.enrolledStudents?.length || 0;
@@ -1192,6 +1203,9 @@ exports.unenrollStudent = async (req, res) => {
 
 exports.addOrUpdateRating = async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
     const studentId = normalizeObjectId(req.body.studentId);
     const rating = toNumber(req.body.rating);
     if (!studentId)
@@ -1199,7 +1213,7 @@ exports.addOrUpdateRating = async (req, res) => {
     if (rating === undefined || rating < 1 || rating > 5)
       return res.status(400).json({ message: "rating must be 1..5" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     doc.ratings = Array.isArray(doc.ratings) ? doc.ratings : [];
@@ -1233,6 +1247,9 @@ exports.addOrUpdateRating = async (req, res) => {
 
 exports.addThread = async (req, res) => {
   try {
+    const { id } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
     const userId = normalizeObjectId(req.body.userId);
     const message = normalizeString(req.body.message);
     if (!userId || !message)
@@ -1240,7 +1257,7 @@ exports.addThread = async (req, res) => {
         .status(400)
         .json({ message: "userId and message are required" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
     doc.discussionThreads = Array.isArray(doc.discussionThreads)
@@ -1263,8 +1280,11 @@ exports.addThread = async (req, res) => {
 
 exports.addReply = async (req, res) => {
   try {
-    const tIndex = Number(req.params.tIndex);
-    if (!Number.isInteger(tIndex) || tIndex < 0)
+    const { id, tIndex } = req.params;
+    if (!isValidObjectId(id))
+      return res.status(400).json({ message: "Invalid course id" });
+    const ti = Number(tIndex);
+    if (!Number.isInteger(ti) || ti < 0)
       return res.status(400).json({ message: "Invalid thread index" });
 
     const userId = normalizeObjectId(req.body.userId);
@@ -1274,10 +1294,10 @@ exports.addReply = async (req, res) => {
         .status(400)
         .json({ message: "userId and message are required" });
 
-    const doc = await Course.findById(req.params.id);
+    const doc = await Course.findById(id);
     if (!doc) return res.status(404).json({ message: "Course not found" });
 
-    const th = doc.discussionThreads?.[tIndex];
+    const th = doc.discussionThreads?.[ti];
     if (!th) return res.status(404).json({ message: "Thread not found" });
 
     th.replies = Array.isArray(th.replies) ? th.replies : [];

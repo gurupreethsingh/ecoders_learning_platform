@@ -22,7 +22,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 
 /** --- enums (match your backend model) --- */
 const CATEGORIES = [

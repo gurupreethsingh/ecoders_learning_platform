@@ -170,7 +170,7 @@ export default function CreateNotification() {
           email: u.email || "",
           role: (u.role || "").toLowerCase(),
           degree: u.degree || u.degreeId || u.degree_id || null,
-          semester: u.semester || u.semister || u.semesterId || null,
+          semester: u.semester || u.semester || u.semesterId || null,
           course: u.course || u.courseId || null,
         }));
         setAllUsers(normalized.filter((u) => u._id));
@@ -236,7 +236,7 @@ export default function CreateNotification() {
       : true;
     const semOk = contextSemesterId
       ? String(u.semester) === String(contextSemesterId) ||
-        String(u.semister) === String(contextSemesterId)
+        String(u.semester) === String(contextSemesterId)
       : true;
     const courseOk = contextCourseId
       ? String(u.course) === String(contextCourseId)

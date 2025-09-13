@@ -56,7 +56,7 @@ export default function CreateCourse() {
   const [categories, setCategories] = useState([]);
   const [subcats, setSubcats] = useState([]);
 
-  // selection (degree/semister are not sent to course API; just part of flow)
+  // selection (degree/semester are not sent to course API; just part of flow)
   const [degreeId, setDegreeId] = useState("");
   const [semisterId, setSemisterId] = useState("");
 

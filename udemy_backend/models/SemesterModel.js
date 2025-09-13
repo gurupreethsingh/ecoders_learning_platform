@@ -1,13 +1,13 @@
-// models/SemisterModel.js
+// models/SemesterModel.js
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const semisterSchema = new Schema(
+const semesterSchema = new Schema(
   {
     degree: {
       type: Schema.Types.ObjectId,
       ref: "Degree",
-      required: true,       // ✅ required: a semister must belong to a degree
+      required: true, // ✅ required: a semester must belong to a degree
       index: true,
     },
 
@@ -23,10 +23,10 @@ const semisterSchema = new Schema(
     },
 
     // Human-friendly title, e.g., "Semester 1" or "Fall 2025"
-    semister_name: { type: String, trim: true },
+    semester_name: { type: String, trim: true },
 
     // Optional short code; not globally unique
-    semister_code: { type: String, trim: true },
+    semester_code: { type: String, trim: true },
 
     // URL-safe id; unique per degree (compound index)
     slug: { type: String, lowercase: true, trim: true },
@@ -53,22 +53,22 @@ const semisterSchema = new Schema(
 );
 
 // ----- Validators -----
-semisterSchema.path("endDate").validate(function (v) {
+semesterSchema.path("endDate").validate(function (v) {
   if (!v || !this.startDate) return true;
   return v >= this.startDate;
 }, "endDate must be greater than or equal to startDate");
 
 // ----- Auto defaults / slug -----
-semisterSchema.pre("validate", function (next) {
+semesterSchema.pre("validate", function (next) {
   // Default name if missing
-  if (!this.semister_name && Number.isInteger(this.semNumber)) {
-    this.semister_name = `Semester ${this.semNumber}`;
+  if (!this.semester_name && Number.isInteger(this.semNumber)) {
+    this.semester_name = `Semester ${this.semNumber}`;
   }
 
-  // Build a slug if missing (from semister_name)
+  // Build a slug if missing (from semester_name)
   if (!this.slug) {
     const base =
-      (this.semister_name || `semester-${this.semNumber || ""}`)
+      (this.semester_name || `semester-${this.semNumber || ""}`)
         .toLowerCase()
         .trim()
         .replace(/\s+/g, "-")
@@ -82,30 +82,30 @@ semisterSchema.pre("validate", function (next) {
 
 // ----- Indexes -----
 // Ensure (degree, semNumber) is unique
-semisterSchema.index({ degree: 1, semNumber: 1 }, { unique: true });
+semesterSchema.index({ degree: 1, semNumber: 1 }, { unique: true });
 
 // Make slug unique per degree (not globally)
-semisterSchema.index({ degree: 1, slug: 1 }, { unique: true, sparse: true });
+semesterSchema.index({ degree: 1, slug: 1 }, { unique: true, sparse: true });
 
 // Helpful filters
-semisterSchema.index({ degree: 1, isActive: 1 });
+semesterSchema.index({ degree: 1, isActive: 1 });
 
 // Index on code within a degree (optional)
-semisterSchema.index({ degree: 1, semister_code: 1 }, { sparse: true });
+semesterSchema.index({ degree: 1, semester_code: 1 }, { sparse: true });
 
-// Case-insensitive searches on semister_name within a degree (non-unique)
-semisterSchema.index(
-  { degree: 1, semister_name: 1 },
+// Case-insensitive searches on semester_name within a degree (non-unique)
+semesterSchema.index(
+  { degree: 1, semester_name: 1 },
   { collation: { locale: "en", strength: 2 } }
 );
 
 // ----- Virtuals -----
-// Course docs should have: semister: { type: ObjectId, ref: 'Semister' }
-semisterSchema.virtual("courses", {
+// Course docs should have: semester: { type: ObjectId, ref: 'semester' }
+semesterSchema.virtual("courses", {
   ref: "Course",
   localField: "_id",
-  foreignField: "semister",
+  foreignField: "semester",
   justOne: false,
 });
 
-module.exports = mongoose.model("Semister", semisterSchema);
+module.exports = mongoose.model("semester", semesterSchema);

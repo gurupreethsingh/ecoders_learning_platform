@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 
 export default function AllExams() {
   const [view, setView] = useState("grid");
@@ -110,7 +110,7 @@ export default function AllExams() {
 
   useEffect(() => setPage(1), [searchTerm, pageSize]);
 
-  // lookups for degree/semister/course/(optional)users
+  // lookups for degree/semester/course/(optional)users
   useEffect(() => {
     let alive = true;
 
@@ -466,7 +466,7 @@ export default function AllExams() {
                 (typeof degreeId === "string" ? shortId(degreeId) : "—");
 
               // Semister/Semester
-              const semField = x?.semester ?? x?.semister;
+              const semField = x?.semester ?? x?.semester;
               const semId =
                 typeof semField === "object" ? semField?._id : semField;
               const semName =

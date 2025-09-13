@@ -13,7 +13,7 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 
 const slugify = (s = "") =>
   s

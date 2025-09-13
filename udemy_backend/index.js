@@ -27,7 +27,7 @@ const userRoutes = require("./routes/UserRoutes");
 const wishlistRoutes = require("./routes/WishlistRoutes");
 const dashboardRoutes = require("./routes/DashboardRoutes");
 const degreeRoutes = require("./routes/DegreeRoutes");
-const semisterRoutes = require("./routes/SemisterRoutes");
+const semesterRoutes = require("./routes/SemesterRoutes.js");
 const QuizRoutes = require("./routes/QuizRoutes.js");
 const questionRoutes = require("./routes/QuestionRoutes");
 const instructorRoutes = require("./routes/InstructorRoutes");
@@ -49,7 +49,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -80,7 +80,7 @@ app.use("/api", subCategoryRoutes);
 app.use("/api", subscriptionRoutes);
 app.use("/api", userRoutes);
 app.use("/api", wishlistRoutes);
-app.use("/api", semisterRoutes);
+app.use("/api", semesterRoutes);
 app.use("/api", questionRoutes);
 app.use("/api", QuizRoutes);
 app.use("/api/instructors", instructorRoutes);

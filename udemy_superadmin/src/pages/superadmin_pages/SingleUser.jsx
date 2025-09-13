@@ -12,7 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 
 // Keep your role list
 const roles = [

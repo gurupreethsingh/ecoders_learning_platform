@@ -1,6 +1,6 @@
-// controllers/SemisterController.js
+// controllers/SemesterController.js
 const mongoose = require("mongoose");
-const Semister = require("../models/SemisterModel");
+const Semester = require("../models/SemesterModel");
 
 const { Types } = mongoose;
 
@@ -29,7 +29,7 @@ const toObjectId = (v) => {
   }
 };
 
-const normalizeSemisterInput = (payload = {}) => {
+const normalizeSemesterInput = (payload = {}) => {
   const out = {};
 
   if (payload.degree !== undefined) {
@@ -42,11 +42,11 @@ const normalizeSemisterInput = (payload = {}) => {
     if (Number.isInteger(n)) out.semNumber = n;
   }
 
-  if (payload.semister_name !== undefined)
-    out.semister_name = String(payload.semister_name).trim();
+  if (payload.semester_name !== undefined)
+    out.semester_name = String(payload.semester_name).trim();
 
-  if (payload.semister_code !== undefined)
-    out.semister_code = String(payload.semister_code).trim();
+  if (payload.semester_code !== undefined)
+    out.semester_code = String(payload.semester_code).trim();
 
   if (payload.slug !== undefined) {
     out.slug = String(payload.slug)
@@ -105,31 +105,35 @@ const normalizeSemisterInput = (payload = {}) => {
 const buildFilter = (q) => {
   const {
     search,
-    degree,             // single id or csv of ids
-    isActive,           // true/false
-    minSem, maxSem,     // semNumber range
-    academicYear,       // string or csv
-    startFrom, startTo, // startDate range
-    endFrom, endTo,     // endDate range
-    minCredits, maxCredits,
-    minCourses, maxCourses,
-    from, to,           // createdAt range
+    degree, // single id or csv of ids
+    isActive, // true/false
+    minSem,
+    maxSem, // semNumber range
+    academicYear, // string or csv
+    startFrom,
+    startTo, // startDate range
+    endFrom,
+    endTo, // endDate range
+    minCredits,
+    maxCredits,
+    minCourses,
+    maxCourses,
+    from,
+    to, // createdAt range
   } = q || {};
 
   const filter = {};
 
   if (degree) {
-    const ids = toArray(degree)
-      .map(toObjectId)
-      .filter(Boolean);
+    const ids = toArray(degree).map(toObjectId).filter(Boolean);
     if (ids.length) filter.degree = { $in: ids };
   }
 
   if (search) {
     const needle = new RegExp(escapeRegExp(String(search).trim()), "i");
     filter.$or = [
-      { semister_name: needle },
-      { semister_code: needle },
+      { semester_name: needle },
+      { semester_code: needle },
       { slug: needle },
       { description: needle },
       { academicYear: needle },
@@ -193,7 +197,7 @@ const sortMap = {
   createdAt: { createdAt: -1 },
   updatedAt: { updatedAt: -1 },
   semNumber: { semNumber: 1 },
-  semister_name: { semister_name: 1 },
+  semester_name: { semester_name: 1 },
   academicYear: { academicYear: 1 },
   startDate: { startDate: 1 },
   endDate: { endDate: 1 },
@@ -211,35 +215,38 @@ const applySort = (sortBy = "createdAt", dir = "desc") => {
 
 // ----------------- controllers -----------------
 
-// Create one semister
-exports.createSemister = async (req, res) => {
+// Create one semester
+exports.createSemester = async (req, res) => {
   try {
-    const data = normalizeSemisterInput(req.body);
+    const data = normalizeSemesterInput(req.body);
     // degree and semNumber are required; let Mongoose enforce
-    const doc = await Semister.create(data);
+    const doc = await Semester.create(data);
     res.status(201).json(doc);
   } catch (err) {
     if (err?.code === 11000) {
       // Unique conflicts: (degree, semNumber) or (degree, slug)
       return res.status(409).json({
         message:
-          "Duplicate semister for the same degree (semNumber or slug already exists).",
+          "Duplicate semester for the same degree (semNumber or slug already exists).",
         keyValue: err.keyValue,
       });
     }
-    console.error("createSemister error:", err);
+    console.error("createSemester error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // List with filtering/pagination/sorting
-// GET /semisters?degree=...&search=...&page=1&limit=20&sortBy=semNumber&sortDir=asc ...
-exports.listSemisters = async (req, res) => {
+// GET /semesters?degree=...&search=...&page=1&limit=20&sortBy=semNumber&sortDir=asc ...
+exports.listSemesters = async (req, res) => {
   try {
     const filter = buildFilter(req.query);
 
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
-    const limit = Math.max(1, Math.min(200, parseInt(req.query.limit || "20", 10)));
+    const limit = Math.max(
+      1,
+      Math.min(200, parseInt(req.query.limit || "20", 10))
+    );
     const skip = (page - 1) * limit;
 
     const sortBy = String(req.query.sortBy || "createdAt");
@@ -247,8 +254,8 @@ exports.listSemisters = async (req, res) => {
     const sort = applySort(sortBy, sortDir);
 
     const [rows, total] = await Promise.all([
-      Semister.find(filter).sort(sort).skip(skip).limit(limit).lean(),
-      Semister.countDocuments(filter),
+      Semester.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+      Semester.countDocuments(filter),
     ]);
 
     res.json({
@@ -264,76 +271,79 @@ exports.listSemisters = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("listSemisters error:", err);
+    console.error("listSemesters error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // Get by id
-exports.getSemisterById = async (req, res) => {
+exports.getSemesterById = async (req, res) => {
   try {
-    const doc = await Semister.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ message: "Semister not found" });
+    const doc = await Semester.findById(req.params.id).lean();
+    if (!doc) return res.status(404).json({ message: "Semester not found" });
     res.json(doc);
   } catch (err) {
-    console.error("getSemisterById error:", err);
+    console.error("getSemesterById error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // Get by slug (slug is unique per degree)
-// GET /semisters/by-slug/:degreeId/:slug
-exports.getSemisterBySlug = async (req, res) => {
+// GET /semesters/by-slug/:degreeId/:slug
+exports.getSemesterBySlug = async (req, res) => {
   try {
     const degreeId = toObjectId(req.params.degreeId);
-    if (!degreeId) return res.status(400).json({ message: "Invalid degree id" });
+    if (!degreeId)
+      return res.status(400).json({ message: "Invalid degree id" });
 
-    const doc = await Semister.findOne({
+    const doc = await Semester.findOne({
       degree: degreeId,
       slug: req.params.slug,
     }).lean();
 
-    if (!doc) return res.status(404).json({ message: "Semister not found" });
+    if (!doc) return res.status(404).json({ message: "Semester not found" });
     res.json(doc);
   } catch (err) {
-    console.error("getSemisterBySlug error:", err);
+    console.error("getSemesterBySlug error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // Update (partial)
-exports.updateSemister = async (req, res) => {
+exports.updateSemester = async (req, res) => {
   try {
-    const data = normalizeSemisterInput(req.body);
-    const updated = await Semister.findByIdAndUpdate(
+    const data = normalizeSemesterInput(req.body);
+    const updated = await Semester.findByIdAndUpdate(
       req.params.id,
       { $set: data },
       { new: true, runValidators: true }
     ).lean();
 
-    if (!updated) return res.status(404).json({ message: "Semister not found" });
+    if (!updated)
+      return res.status(404).json({ message: "Semester not found" });
     res.json(updated);
   } catch (err) {
     if (err?.code === 11000) {
       return res.status(409).json({
         message:
-          "Duplicate semister for the same degree (semNumber or slug already exists).",
+          "Duplicate semester for the same degree (semNumber or slug already exists).",
         keyValue: err.keyValue,
       });
     }
-    console.error("updateSemister error:", err);
+    console.error("updateSemester error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // Delete (hard delete)
-exports.deleteSemister = async (req, res) => {
+exports.deleteSemester = async (req, res) => {
   try {
-    const deleted = await Semister.findByIdAndDelete(req.params.id).lean();
-    if (!deleted) return res.status(404).json({ message: "Semister not found" });
-    res.json({ message: "Semister deleted", id: deleted._id });
+    const deleted = await Semester.findByIdAndDelete(req.params.id).lean();
+    if (!deleted)
+      return res.status(404).json({ message: "Semester not found" });
+    res.json({ message: "Semester deleted", id: deleted._id });
   } catch (err) {
-    console.error("deleteSemister error:", err);
+    console.error("deleteSemester error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -341,8 +351,8 @@ exports.deleteSemister = async (req, res) => {
 // Toggle active
 exports.toggleActive = async (req, res) => {
   try {
-    const doc = await Semister.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "Semister not found" });
+    const doc = await Semester.findById(req.params.id);
+    if (!doc) return res.status(404).json({ message: "Semester not found" });
 
     if (typeof req.body.isActive === "boolean") {
       doc.isActive = req.body.isActive;
@@ -365,8 +375,8 @@ exports.toggleActive = async (req, res) => {
 exports.countsSummary = async (_req, res) => {
   try {
     const [total, active] = await Promise.all([
-      Semister.countDocuments(),
-      Semister.countDocuments({ isActive: true }),
+      Semester.countDocuments(),
+      Semester.countDocuments({ isActive: true }),
     ]);
     res.json({ total, active, inactive: Math.max(0, total - active) });
   } catch (err) {
@@ -378,7 +388,7 @@ exports.countsSummary = async (_req, res) => {
 // Count by degree
 exports.countsByDegree = async (_req, res) => {
   try {
-    const rows = await Semister.aggregate([
+    const rows = await Semester.aggregate([
       { $group: { _id: "$degree", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
@@ -392,8 +402,13 @@ exports.countsByDegree = async (_req, res) => {
 // Count by academic year
 exports.countsByAcademicYear = async (_req, res) => {
   try {
-    const rows = await Semister.aggregate([
-      { $group: { _id: { $ifNull: ["$academicYear", "Unspecified"] }, count: { $sum: 1 } } },
+    const rows = await Semester.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ["$academicYear", "Unspecified"] },
+          count: { $sum: 1 },
+        },
+      },
       { $sort: { count: -1, _id: 1 } },
     ]);
     res.json(rows);
@@ -407,8 +422,8 @@ exports.countsByAcademicYear = async (_req, res) => {
 exports.getFacets = async (_req, res) => {
   try {
     const [degrees, years] = await Promise.all([
-      Semister.distinct("degree"),
-      Semister.distinct("academicYear"),
+      Semester.distinct("degree"),
+      Semester.distinct("academicYear"),
     ]);
 
     res.json({
@@ -423,43 +438,49 @@ exports.getFacets = async (_req, res) => {
 
 // ----------------- bulk / advanced ops -----------------
 
-// Bulk activate/deactivate a set of semisters
+// Bulk activate/deactivate a set of semesters
 // POST body: { ids: [..], isActive: true/false }
 exports.bulkToggleActive = async (req, res) => {
   try {
     const ids = toArray(req.body.ids).map(toObjectId).filter(Boolean);
-    if (!ids.length) return res.status(400).json({ message: "No valid ids provided" });
+    if (!ids.length)
+      return res.status(400).json({ message: "No valid ids provided" });
 
     const isActive =
       typeof req.body.isActive === "boolean"
         ? req.body.isActive
         : boolFrom(req.body.isActive);
 
-    const r = await Semister.updateMany(
+    const r = await Semester.updateMany(
       { _id: { $in: ids } },
       { $set: { isActive } }
     );
-    res.json({ matched: r.matchedCount ?? r.n, modified: r.modifiedCount ?? r.nModified });
+    res.json({
+      matched: r.matchedCount ?? r.n,
+      modified: r.modifiedCount ?? r.nModified,
+    });
   } catch (err) {
     console.error("bulkToggleActive error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Move a semister to another degree
-// PATCH /semisters/:id/move-degree  body: { degreeId }
+// Move a semester to another degree
+// PATCH /semesters/:id/move-degree  body: { degreeId }
 exports.moveToDegree = async (req, res) => {
   try {
     const degreeId = toObjectId(req.body.degreeId);
-    if (!degreeId) return res.status(400).json({ message: "Invalid degree id" });
+    if (!degreeId)
+      return res.status(400).json({ message: "Invalid degree id" });
 
-    const updated = await Semister.findByIdAndUpdate(
+    const updated = await Semester.findByIdAndUpdate(
       req.params.id,
       { $set: { degree: degreeId } },
       { new: true, runValidators: true }
     ).lean();
 
-    if (!updated) return res.status(404).json({ message: "Semister not found" });
+    if (!updated)
+      return res.status(404).json({ message: "Semester not found" });
     res.json(updated);
   } catch (err) {
     if (err?.code === 11000) {
@@ -473,21 +494,22 @@ exports.moveToDegree = async (req, res) => {
   }
 };
 
-// Change the semNumber of a semister (renumber)
-// PATCH /semisters/:id/renumber  body: { semNumber }
+// Change the semNumber of a semester (renumber)
+// PATCH /semesters/:id/renumber  body: { semNumber }
 exports.renumber = async (req, res) => {
   try {
     const n = Number(req.body.semNumber);
     if (!Number.isInteger(n) || n < 1)
       return res.status(400).json({ message: "Invalid semNumber" });
 
-    const updated = await Semister.findByIdAndUpdate(
+    const updated = await Semester.findByIdAndUpdate(
       req.params.id,
       { $set: { semNumber: n } },
       { new: true, runValidators: true }
     ).lean();
 
-    if (!updated) return res.status(404).json({ message: "Semister not found" });
+    if (!updated)
+      return res.status(404).json({ message: "Semester not found" });
     res.json(updated);
   } catch (err) {
     if (err?.code === 11000) {
@@ -500,8 +522,8 @@ exports.renumber = async (req, res) => {
   }
 };
 
-// Reorder multiple semisters within a degree by assigning explicit semNumbers
-// PATCH /semisters/reorder  body: { degreeId, order: [{ id, semNumber }, ...] }
+// Reorder multiple semesters within a degree by assigning explicit semNumbers
+// PATCH /semesters/reorder  body: { degreeId, order: [{ id, semNumber }, ...] }
 exports.reorderWithinDegree = async (req, res) => {
   const degreeId = toObjectId(req.body.degreeId);
   const order = Array.isArray(req.body.order) ? req.body.order : [];
@@ -521,7 +543,9 @@ exports.reorderWithinDegree = async (req, res) => {
       if (!Number.isInteger(n) || n < 1)
         return res.status(400).json({ message: "Invalid semNumber in order" });
       if (nums.has(n))
-        return res.status(400).json({ message: "Duplicate semNumber in order payload" });
+        return res
+          .status(400)
+          .json({ message: "Duplicate semNumber in order payload" });
       nums.add(n);
     }
 
@@ -533,7 +557,7 @@ exports.reorderWithinDegree = async (req, res) => {
       },
     }));
 
-    const result = await Semister.bulkWrite(ops, { ordered: false });
+    const result = await Semester.bulkWrite(ops, { ordered: false });
     res.json({ ok: true, result });
   } catch (err) {
     if (err?.code === 11000) {
@@ -547,9 +571,9 @@ exports.reorderWithinDegree = async (req, res) => {
   }
 };
 
-// Clone a semister (or template body) to multiple degrees
-// POST /semisters/bulk/clone-to-degrees
-// body: { degrees: [degreeId1, degreeId2, ...], template: { ...semisterFieldsExceptDegree } }
+// Clone a semester (or template body) to multiple degrees
+// POST /semesters/bulk/clone-to-degrees
+// body: { degrees: [degreeId1, degreeId2, ...], template: { ...semesterFieldsExceptDegree } }
 exports.cloneToDegrees = async (req, res) => {
   try {
     const degreeIds = toArray(req.body.degrees).map(toObjectId).filter(Boolean);
@@ -557,12 +581,14 @@ exports.cloneToDegrees = async (req, res) => {
       return res.status(400).json({ message: "No valid degree ids provided" });
     }
 
-    const template = normalizeSemisterInput(req.body.template || {});
+    const template = normalizeSemesterInput(req.body.template || {});
     // Remove any incoming degree; we will apply each degreeId
     delete template.degree;
 
     if (template.semNumber == null) {
-      return res.status(400).json({ message: "template.semNumber is required" });
+      return res
+        .status(400)
+        .json({ message: "template.semNumber is required" });
     }
 
     const created = [];
@@ -570,11 +596,14 @@ exports.cloneToDegrees = async (req, res) => {
 
     for (const did of degreeIds) {
       try {
-        const doc = await Semister.create({ ...template, degree: did });
+        const doc = await Semester.create({ ...template, degree: did });
         created.push({ degree: did, id: doc._id });
       } catch (e) {
         // likely duplicate (degree, semNumber) or (degree, slug)
-        skipped.push({ degree: did, error: e?.code === 11000 ? "duplicate" : "error" });
+        skipped.push({
+          degree: did,
+          error: e?.code === 11000 ? "duplicate" : "error",
+        });
       }
     }
 

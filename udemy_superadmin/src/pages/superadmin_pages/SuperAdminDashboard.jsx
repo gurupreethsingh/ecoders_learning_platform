@@ -15,7 +15,7 @@ import {
   FaEnvelope,
 } from "react-icons/fa";
 
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import SearchBar from "../../components/common_components/SearchBar";
 import LeftSidebarNav from "../../components/common_components/LeftSidebarNav";
 import DashboardCard from "../../components/common_components/DashboardCard";
@@ -454,7 +454,7 @@ const SuperadminDashboard = () => {
                 {
                   label: "Add Semesters",
                   icon: <FaPlus className="text-orange-600" />,
-                  path: "/create-semister",
+                  path: "/create-semester",
                 }, // route name kept to your existing
                 {
                   label: "Create Course",

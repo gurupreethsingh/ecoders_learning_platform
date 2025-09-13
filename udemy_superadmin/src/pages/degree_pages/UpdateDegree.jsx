@@ -1,7 +1,7 @@
 // src/pages/degree_pages/UpdateDegree.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiSave,
   FiX,

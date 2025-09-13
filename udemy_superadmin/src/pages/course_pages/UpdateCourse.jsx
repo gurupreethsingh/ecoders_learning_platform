@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiSave,
   FiX,
@@ -140,7 +140,7 @@ const UpdateCourse = () => {
 
     // Associations
     degree: "",
-    semister: "",
+    semester: "",
     category: "",
     subCategory: "",
 
@@ -169,7 +169,7 @@ const UpdateCourse = () => {
 
   // lookups
   const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
+  const [semesters, setSemisters] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [instructors, setInstructors] = useState([]);
@@ -205,7 +205,7 @@ const UpdateCourse = () => {
           fetch(`${API}/api/list-degrees?page=1&limit=500`).then((r) =>
             r.json()
           ),
-          fetch(`${API}/api/semisters?page=1&limit=2000`).then((r) => r.json()),
+          fetch(`${API}/api/semesters?page=1&limit=2000`).then((r) => r.json()),
           fetch(`${API}/api/all-categories`).then((r) => r.json()),
           fetch(`${API}/api/all-subcategories`).then((r) => r.json()),
           fetch(`${API}/api/get-instructors`).then((r) => r.json()),
@@ -259,7 +259,7 @@ const UpdateCourse = () => {
 
           // Associations
           degree: c.degree || "",
-          semister: c.semister || "",
+          semester: c.semester || "",
           category: c.category || "",
           subCategory: c.subCategory || "",
 
@@ -521,7 +521,7 @@ const UpdateCourse = () => {
 
       // associations / people
       degree: form.degree || undefined,
-      semister: form.semister || undefined,
+      semester: form.semester || undefined,
       category: form.category || undefined,
       subCategory: form.subCategory || undefined,
       instructor: form.instructor || undefined,
@@ -1238,13 +1238,13 @@ const UpdateCourse = () => {
                       Semister
                     </label>
                     <select
-                      name="semister"
-                      value={form.semister || ""}
+                      name="semester"
+                      value={form.semester || ""}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
-                      {semisters.map((s) => {
+                      {semesters.map((s) => {
                         const label =
                           s.title ||
                           s.semister_name ||

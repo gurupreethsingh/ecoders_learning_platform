@@ -60,11 +60,11 @@ import AllDegrees from "../../pages/degree_pages/AllDegrees";
 import SingleDegree from "../../pages/degree_pages/SingleDegree";
 import UpdateDegree from "../../pages/degree_pages/UpdateDegree";
 
-// semister pages
-import CreateSemister from "../../pages/semister_pages/CreateSemister";
-import AllSemisters from "../../pages/semister_pages/AllSemisters";
-import SingleSemister from "../../pages/semister_pages/SingleSemister";
-import UpdateSemister from "../../pages/semister_pages/UpdateSemister";
+// semester pages
+import Createsemester from "../../pages/semester_pages/CreateSemester";
+import Allsemesters from "../../pages/semester_pages/AllSemesters";
+import Singlesemester from "../../pages/semester_pages/SingleSemester";
+import Updatesemester from "../../pages/semester_pages/UpdateSemester";
 
 // exam pages
 import CreateExam from "../../pages/exam_pages/CreateExam";
@@ -496,56 +496,56 @@ const MainLayout = () => {
             }
           />
 
-          {/* semisters */}
+          {/* semesters */}
           <Route
-            path="/all-semisters"
+            path="/all-semesters"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="All Semisters">
-                  <AllSemisters />
+                <PageTitle title="All semesters">
+                  <Allsemesters />
                 </PageTitle>
               </PrivateRoute>
             }
           />
           <Route
-            path="/create-semister"
+            path="/create-semester"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Create Semister">
-                  <CreateSemister />
+                <PageTitle title="Create semester">
+                  <Createsemester />
                 </PageTitle>
               </PrivateRoute>
             }
           />
-          {/* READ BY ID (GET /api/semisters/:id)
+          {/* READ BY ID (GET /api/semesters/:id)
               URL keeps a user-friendly slug first, like your Degree routes */}
           <Route
-            path="/single-semister/:slug/:id"
+            path="/single-semester/:slug/:id"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Semister Details">
-                  <SingleSemister />
+                <PageTitle title="semester Details">
+                  <Singlesemester />
                 </PageTitle>
               </PrivateRoute>
             }
           />
           <Route
-            path="/single-semister/by-slug/:degreeId/:slug"
+            path="/single-semester/by-slug/:degreeId/:slug"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Semister Details">
-                  <SingleSemister />
+                <PageTitle title="semester Details">
+                  <Singlesemester />
                 </PageTitle>
               </PrivateRoute>
             }
           />
-          {/* UPDATE BY ID (PATCH /api/semisters/:id) */}
+          {/* UPDATE BY ID (PATCH /api/semesters/:id) */}
           <Route
-            path="/update-semister/:slug/:id"
+            path="/update-semester/:slug/:id"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
-                <PageTitle title="Update Semister">
-                  <UpdateSemister />
+                <PageTitle title="Update semester">
+                  <Updatesemester />
                 </PageTitle>
               </PrivateRoute>
             }

@@ -21,7 +21,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 
 /** Match your model enums exactly */
 const QUESTION_TYPES = [
@@ -289,7 +289,7 @@ export default function AllQuestions() {
           )
           .catch(() => ({ data: { data: [] } }));
 
-        // exams by degree+semister+course
+        // exams by degree+semester+course
         const examPromise =
           filters.degreeId && filters.semisterId && filters.courseId
             ? axios
@@ -849,14 +849,14 @@ export default function AllQuestions() {
                 (typeof q?.degree === "string" ? shortId(q.degree) : "—");
 
               const semisterName =
-                semisterMap[q?.semister] ||
-                (typeof q?.semister === "object" &&
-                  (q?.semister?.title ||
-                    q?.semister?.semister_name ||
-                    (q?.semister?.semNumber
-                      ? `Semister ${q?.semister?.semNumber}`
+                semisterMap[q?.semester] ||
+                (typeof q?.semester === "object" &&
+                  (q?.semester?.title ||
+                    q?.semester?.semister_name ||
+                    (q?.semester?.semNumber
+                      ? `Semister ${q?.semester?.semNumber}`
                       : ""))) ||
-                (typeof q?.semister === "string" ? shortId(q.semister) : "—");
+                (typeof q?.semester === "string" ? shortId(q.semester) : "—");
 
               const courseName =
                 courseMap[q?.course] ||
@@ -1014,13 +1014,13 @@ export default function AllQuestions() {
                                     Semister:
                                   </span>{" "}
                                   {semisterName}{" "}
-                                  {q?.semister && (
+                                  {q?.semester && (
                                     <span className="text-xs text-gray-500">
                                       (
-                                      {typeof q?.semister === "string"
-                                        ? q?.semister
-                                        : q?.semister?._id ||
-                                          q?.semister?.id ||
+                                      {typeof q?.semester === "string"
+                                        ? q?.semester
+                                        : q?.semester?._id ||
+                                          q?.semester?.id ||
                                           "—"}
                                       )
                                     </span>

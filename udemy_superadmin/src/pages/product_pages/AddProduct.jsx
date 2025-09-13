@@ -1,4 +1,4 @@
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -321,23 +321,22 @@ export default function AddProduct() {
           </div>
         </div>
 
- <input
-  type="file"
-  name="product_image"  // ✅ Important
-  accept="image/*"
-  onChange={(e) => setProductImage(e.target.files[0])}
-  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300"
-/>
+        <input
+          type="file"
+          name="product_image" // ✅ Important
+          accept="image/*"
+          onChange={(e) => setProductImage(e.target.files[0])}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300"
+        />
 
-<input
-  type="file"
-  name="all_product_images"  // ✅ Important
-  accept="image/*"
-  multiple
-  onChange={(e) => setGalleryImages([...e.target.files])}
-  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300"
-/>
-
+        <input
+          type="file"
+          name="all_product_images" // ✅ Important
+          accept="image/*"
+          multiple
+          onChange={(e) => setGalleryImages([...e.target.files])}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-gray-300"
+        />
 
         <button
           type="submit"

@@ -97,7 +97,7 @@ const normalizeSemester = (raw) => ({
     firstNonEmpty(
       raw?.name,
       raw?.title,
-      raw?.semister_name,
+      raw?.semester_name,
       raw?.slug && `Sem ${raw.slug}`,
       raw?.semNumber && `Sem ${raw.semNumber}`
     ) || "Semester",
@@ -115,9 +115,9 @@ const normalizeCourse = (raw) => ({
     (typeof raw?.degree === "string" && raw.degree) ||
     null,
   semesterId:
-    safeId(raw, "semester", "semesterId", "semister", "semisterId") ||
+    safeId(raw, "semester", "semesterId", "semester", "semesterId") ||
     (typeof raw?.semester === "string" && raw.semester) ||
-    (typeof raw?.semister === "string" && raw.semister) ||
+    (typeof raw?.semester === "string" && raw.semester) ||
     null,
   completion:
     Number(
@@ -227,7 +227,7 @@ export default function StudentDashboard() {
 
         // 3) Semesters (all, then filter by degree)
         const semRes = await axios.get(
-          `${API}/semisters?page=1&limit=2000`,
+          `${API}/semesters?page=1&limit=2000`,
           auth()
         );
         const semListRaw = Array.isArray(semRes?.data?.data)

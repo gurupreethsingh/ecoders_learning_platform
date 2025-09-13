@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import axios from "axios";
 import { FaSignInAlt, FaEye, FaEyeSlash } from "react-icons/fa"; // ✅ Added Eye icons
 import { AuthContext } from "../../components/auth_components/AuthManager";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 
 const Login = () => {
   const { login } = useContext(AuthContext);

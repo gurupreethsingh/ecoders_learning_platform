@@ -320,7 +320,7 @@ export default function CreateQuestion() {
 
         // relations (optional)
         degree: degreeId || undefined,
-        semister: semisterId || undefined,
+        semester: semisterId || undefined,
         course: courseId || undefined,
 
         // choose one container

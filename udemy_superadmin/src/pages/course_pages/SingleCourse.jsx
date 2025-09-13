@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiCheckCircle,
   FiSlash,
@@ -151,7 +151,7 @@ const SingleCourse = () => {
   const degreeId =
     typeof data?.degree === "object" ? data?.degree?._id : data?.degree;
   const semId =
-    typeof data?.semister === "object" ? data?.semister?._id : data?.semister;
+    typeof data?.semester === "object" ? data?.semester?._id : data?.semester;
   const catId =
     typeof data?.category === "object" ? data?.category?._id : data?.category;
   const subId =
@@ -170,8 +170,8 @@ const SingleCourse = () => {
     degreeMap[degreeId] ||
     pretty(degreeId);
   const semName =
-    (typeof data?.semister === "object" &&
-      (data?.semister?.title || data?.semister?.semister_name)) ||
+    (typeof data?.semester === "object" &&
+      (data?.semester?.title || data?.semester?.semister_name)) ||
     semMap[semId] ||
     pretty(semId);
   const catName =

@@ -22,7 +22,7 @@ import {
   FiEdit,
 } from "react-icons/fi";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 
 const API = globalBackendRoute;
 const NA = "—";

@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 
 export default function AllCourses() {
   const [view, setView] = useState("grid");
@@ -87,7 +87,7 @@ export default function AllCourses() {
 
   useEffect(() => setPage(1), [searchTerm, pageSize]);
 
-  // lookups for degree/category/subcategory/semister/instructor
+  // lookups for degree/category/subcategory/semester/instructor
   useEffect(() => {
     let alive = true;
 
@@ -153,8 +153,8 @@ export default function AllCourses() {
             const label =
               s.title ||
               s.semister_name ||
-              (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-              "Semister";
+              (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+              "Semester";
             map[s._id || s.id] = label;
           });
           setSemisterMap(map);
@@ -442,14 +442,14 @@ export default function AllCourses() {
 
               const semisterName =
                 c?.semisterName ||
-                semisterMap[c?.semister] ||
-                (typeof c?.semister === "object" &&
-                  (c?.semister?.title ||
-                    c?.semister?.semister_name ||
-                    (c?.semister?.semNumber
-                      ? `Semister ${c?.semister?.semNumber}`
+                semisterMap[c?.semester] ||
+                (typeof c?.semester === "object" &&
+                  (c?.semester?.title ||
+                    c?.semester?.semister_name ||
+                    (c?.semester?.semNumber
+                      ? `Semester ${c?.semester?.semNumber}`
                       : ""))) ||
-                (typeof c?.semister === "string" ? shortId(c.semister) : "—");
+                (typeof c?.semester === "string" ? shortId(c.semester) : "—");
 
               const categoryName =
                 c?.categoryName ||
@@ -583,7 +583,7 @@ export default function AllCourses() {
                               {semisterName ? (
                                 <>
                                   <span className="ml-2 font-medium">
-                                    Semister:
+                                    Semester:
                                   </span>{" "}
                                   {semisterName}
                                 </>

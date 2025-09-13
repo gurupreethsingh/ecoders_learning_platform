@@ -162,7 +162,7 @@ const QuestionSchema = new Schema(
       index: true,
     },
     // Your backend uses "semisters" in routes; we’ll stick to "Semister" model name to match that.
-    semister: {
+    semester: {
       type: Schema.Types.ObjectId,
       ref: "Semister",
       required: false,
@@ -381,7 +381,7 @@ QuestionSchema.index(
 
 // For building banks by curriculum path
 QuestionSchema.index(
-  { degree: 1, semister: 1, course: 1, difficultyLevel: 1 },
+  { degree: 1, semester: 1, course: 1, difficultyLevel: 1 },
   { name: "program_lookup_idx" }
 );
 

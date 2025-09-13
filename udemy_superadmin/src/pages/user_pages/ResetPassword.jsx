@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaLock } from "react-icons/fa";
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "@/config/Config.js";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");

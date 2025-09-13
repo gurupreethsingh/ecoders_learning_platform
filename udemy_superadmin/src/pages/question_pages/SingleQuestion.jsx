@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiCheckCircle,
   FiSlash,
@@ -172,7 +172,7 @@ export default function SingleQuestion() {
 
   // ids + names
   const degreeId = asStringId(data?.degree);
-  const semId = asStringId(data?.semister);
+  const semId = asStringId(data?.semester);
   const courseId = asStringId(data?.course);
   const examId = asStringId(data?.exam);
   const quizId = asStringId(data?.quiz);
@@ -183,8 +183,8 @@ export default function SingleQuestion() {
     degreeMap[degreeId] ||
     pretty(degreeId);
   const semName =
-    (typeof data?.semister === "object" &&
-      (data?.semister?.title || data?.semister?.semister_name)) ||
+    (typeof data?.semester === "object" &&
+      (data?.semester?.title || data?.semester?.semister_name)) ||
     semMap[semId] ||
     pretty(semId);
   const courseName =

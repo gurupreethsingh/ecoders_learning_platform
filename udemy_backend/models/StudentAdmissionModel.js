@@ -43,7 +43,7 @@ const IntendedEnrollmentSchema = new Schema(
   {
     academicYear: { type: String, trim: true }, // e.g., "2025-26"
     degree: { type: Types.ObjectId, ref: "Degree" },
-    semister: { type: Types.ObjectId, ref: "Semister" },
+    semester: { type: Types.ObjectId, ref: "semester" },
     course: { type: Types.ObjectId, ref: "Course" },
     preferredBatch: { type: String, trim: true },
   },

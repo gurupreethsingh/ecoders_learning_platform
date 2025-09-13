@@ -1,7 +1,7 @@
 // src/pages/question_pages/UpdateQuestion.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import globalBackendRoute from "../../config/Config.js";
+import globalBackendRoute from "@/config/Config.js";
 import {
   FiSave,
   FiX,
@@ -145,7 +145,7 @@ export default function UpdateQuestion() {
 
     // relations
     degree: "",
-    semister: "",
+    semester: "",
     course: "",
     exam: "",
     quiz: "",
@@ -284,7 +284,7 @@ export default function UpdateQuestion() {
 
           // relations
           degree: q.degree?._id || q.degree || "",
-          semister: q.semister?._id || q.semister || "",
+          semester: q.semester?._id || q.semester || "",
           course: q.course?._id || q.course || "",
           exam: q.exam?._id || q.exam || "",
           quiz: q.quiz?._id || q.quiz || "",
@@ -528,7 +528,7 @@ export default function UpdateQuestion() {
       answer_status: form.answer_status,
       // relations
       degree: form.degree || undefined,
-      semister: form.semister || undefined,
+      semester: form.semester || undefined,
       course: form.course || undefined,
       exam: form.exam || undefined,
       quiz: form.quiz || undefined,
@@ -1590,8 +1590,8 @@ export default function UpdateQuestion() {
                       Semister
                     </label>
                     <select
-                      name="semister"
-                      value={form.semister || ""}
+                      name="semester"
+                      value={form.semester || ""}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border px-4 py-2.5 bg-white"
                     >

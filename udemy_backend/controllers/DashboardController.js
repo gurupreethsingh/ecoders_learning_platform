@@ -12,7 +12,7 @@ const {
   Notification: NotificationModel,
 } = require("../models/NotificationModel");
 const Degree = require("../models/DegreeModel");
-const Semister = require("../models/SemisterModel");
+const Semister = require("../models/SemesterModel");
 const Exam = require("../models/ExamModel");
 
 let Quiz, Question;

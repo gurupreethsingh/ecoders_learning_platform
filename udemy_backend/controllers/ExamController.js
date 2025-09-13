@@ -293,8 +293,8 @@ exports.listExams = async (req, res) => {
     // Filters
     const q = {};
     if (req.query.degree) q.degree = req.query.degree;
-    if (req.query.semester || req.query.semister)
-      q.semester = req.query.semester || req.query.semister;
+    if (req.query.semester || req.query.semester)
+      q.semester = req.query.semester || req.query.semester;
     if (req.query.course) q.course = req.query.course;
 
     if (req.query.search) {
