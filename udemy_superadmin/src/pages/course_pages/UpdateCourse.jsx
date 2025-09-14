@@ -35,6 +35,37 @@ const SECTION_KEYS = [
   "visibility",
 ];
 
+/* ---------------------- helpers to fix 400s ---------------------- */
+
+// robustly coerce anything that "looks like" an ObjectId into a string
+const toIdString = (v) => {
+  if (!v && v !== 0) return "";
+  // already a string
+  if (typeof v === "string") return v;
+  // Typical Mongoose ObjectId has .toString() => "hex24"
+  try {
+    const s = String(v);
+    return s;
+  } catch {
+    return "";
+  }
+};
+
+const isValidObjectIdHex = (s) => /^[a-f\d]{24}$/i.test(s || "");
+
+// Only include a field if it's a valid 24-hex ObjectId string
+const idOrUndef = (v) => {
+  const s = toIdString(v);
+  return isValidObjectIdHex(s) ? s : undefined;
+};
+
+// Only include a date if it's a valid datetime-local string
+const dateOrUndef = (v) => {
+  if (!v || typeof v !== "string") return undefined;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? undefined : v; // send the same string; backend will parse
+};
+
 const cleanCsv = (s) =>
   String(s || "")
     .split(/[,\n]/) // allow comma or newline
@@ -223,6 +254,13 @@ const UpdateCourse = () => {
         const lr = c.learningResources || {};
         const arrOrEmpty = (a) => (Array.isArray(a) ? a : []);
 
+        // Coerce incoming ids to strings (avoid BSON objects in selects)
+        const degreeId = toIdString(c.degree);
+        const semesterId = toIdString(c.semester);
+        const categoryId = toIdString(c.category);
+        const subCategoryId = toIdString(c.subCategory);
+        const instructorId = toIdString(c.instructor);
+
         setForm({
           // Basics
           title: c.title || "",
@@ -252,16 +290,16 @@ const UpdateCourse = () => {
             : "",
 
           // People
-          instructor: c.instructor || "",
+          instructor: instructorId || "",
           authorsCsv: Array.isArray(c.authors)
-            ? c.authors.map(String).join(", ")
+            ? c.authors.map((x) => toIdString(x)).join(", ")
             : "",
 
           // Associations
-          degree: c.degree || "",
-          semester: c.semester || "",
-          category: c.category || "",
-          subCategory: c.subCategory || "",
+          degree: degreeId || "",
+          semester: semesterId || "",
+          category: categoryId || "",
+          subCategory: subCategoryId || "",
 
           // Learning resources
           lrVideosCsv: arrOrEmpty(lr.videos).join(", "),
@@ -312,17 +350,22 @@ const UpdateCourse = () => {
           }))
         );
 
+        // Option lists (leave raw but ensure selects use string values)
         if (deg.status === "fulfilled") {
-          setDegrees(deg.value?.data || deg.value || []);
+          const list = deg.value?.data || deg.value || [];
+          setDegrees(Array.isArray(list) ? list : []);
         }
         if (sem.status === "fulfilled") {
-          setSemisters(sem.value?.data || sem.value || []);
+          const list = sem.value?.data || sem.value || [];
+          setSemisters(Array.isArray(list) ? list : []);
         }
         if (cat.status === "fulfilled") {
-          setCategories(cat.value?.data || cat.value || []);
+          const list = cat.value?.data || cat.value || [];
+          setCategories(Array.isArray(list) ? list : []);
         }
         if (sub.status === "fulfilled") {
-          setSubcategories(sub.value?.data || sub.value || []);
+          const list = sub.value?.data || sub.value || [];
+          setSubcategories(Array.isArray(list) ? list : []);
         }
         if (inst.status === "fulfilled") {
           const list =
@@ -498,7 +541,7 @@ const UpdateCourse = () => {
       return;
     }
 
-    // Build payload (includes modules)
+    // Build payload (includes modules) — GUARANTEE strings for IDs & valid date
     const payload = {
       // basics
       title: form.title.trim(),
@@ -519,13 +562,13 @@ const UpdateCourse = () => {
       requirements: cleanCsv(form.requirementsCsv),
       learningOutcomes: cleanCsv(form.learningOutcomesCsv),
 
-      // associations / people
-      degree: form.degree || undefined,
-      semester: form.semester || undefined,
-      category: form.category || undefined,
-      subCategory: form.subCategory || undefined,
-      instructor: form.instructor || undefined,
-      authors: cleanCsv(form.authorsCsv),
+      // associations / people (only send if valid 24-hex)
+      degree: idOrUndef(form.degree),
+      semester: idOrUndef(form.semester),
+      category: idOrUndef(form.category),
+      subCategory: idOrUndef(form.subCategory),
+      instructor: idOrUndef(form.instructor),
+      authors: cleanCsv(form.authorsCsv).filter(isValidObjectIdHex),
 
       // learning resources
       learningResources: {
@@ -538,7 +581,7 @@ const UpdateCourse = () => {
       // access / enrollment
       maxStudents:
         form.maxStudents === "" ? undefined : Number(form.maxStudents),
-      enrollmentDeadline: form.enrollmentDeadlineLocal || undefined,
+      enrollmentDeadline: dateOrUndef(form.enrollmentDeadlineLocal),
       completionCriteria: form.completionCriteria,
 
       // certificate
@@ -575,6 +618,19 @@ const UpdateCourse = () => {
       payload.durationInHours = Number(form.durationInHours);
     if (form.price !== "") payload.price = Number(form.price);
 
+    // remove undefined keys so we don't send empty objects/dates
+    Object.keys(payload).forEach((k) => {
+      if (
+        payload[k] === undefined ||
+        (typeof payload[k] === "object" &&
+          payload[k] !== null &&
+          !Array.isArray(payload[k]) &&
+          Object.keys(payload[k]).length === 0)
+      ) {
+        delete payload[k];
+      }
+    });
+
     try {
       setSaving(true);
       const res = await fetch(`${API}/api/update-course/${id}`, {
@@ -588,7 +644,10 @@ const UpdateCourse = () => {
         ? await res.json()
         : { message: await res.text() };
 
-      if (!res.ok) throw new Error(body?.message || "Failed to update course.");
+      if (!res.ok) {
+        console.log("UPDATE /update-course status:", res.status, "body:", body);
+        throw new Error(body?.message || "Failed to update course.");
+      }
 
       setMsg({ type: "success", text: "Course updated successfully." });
       showToast("Updated successfully");
@@ -1220,38 +1279,43 @@ const UpdateCourse = () => {
                     </label>
                     <select
                       name="degree"
-                      value={form.degree || ""}
+                      value={toIdString(form.degree)}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
-                      {degrees.map((d) => (
-                        <option key={d._id || d.id} value={d._id || d.id}>
-                          {d.name || "Untitled Degree"}
-                        </option>
-                      ))}
+                      {degrees.map((d) => {
+                        const val = toIdString(d._id || d.id);
+                        return (
+                          <option key={val} value={val}>
+                            {d.name || "Untitled Degree"}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-800">
-                      Semister
+                      Semester
                     </label>
                     <select
                       name="semester"
-                      value={form.semester || ""}
+                      value={toIdString(form.semester)}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
                       {semesters.map((s) => {
+                        const val = toIdString(s._id || s.id);
                         const label =
                           s.title ||
-                          s.semister_name ||
-                          (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                          "Semister";
+                          s.semester_name ||
+                          s.semister_name || // tolerate old field
+                          (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                          "Semester";
                         return (
-                          <option key={s._id || s.id} value={s._id || s.id}>
+                          <option key={val} value={val}>
                             {label}
                           </option>
                         );
@@ -1265,16 +1329,19 @@ const UpdateCourse = () => {
                     </label>
                     <select
                       name="category"
-                      value={form.category || ""}
+                      value={toIdString(form.category)}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
-                      {categories.map((c) => (
-                        <option key={c._id || c.id} value={c._id || c.id}>
-                          {c.category_name || c.name || "Uncategorized"}
-                        </option>
-                      ))}
+                      {categories.map((c) => {
+                        const val = toIdString(c._id || c.id);
+                        return (
+                          <option key={val} value={val}>
+                            {c.category_name || c.name || "Uncategorized"}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -1284,16 +1351,19 @@ const UpdateCourse = () => {
                     </label>
                     <select
                       name="subCategory"
-                      value={form.subCategory || ""}
+                      value={toIdString(form.subCategory)}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
-                      {subcategories.map((s) => (
-                        <option key={s._id || s.id} value={s._id || s.id}>
-                          {s.subcategory_name || s.name || "—"}
-                        </option>
-                      ))}
+                      {subcategories.map((s) => {
+                        const val = toIdString(s._id || s.id);
+                        return (
+                          <option key={val} value={val}>
+                            {s.subcategory_name || s.name || "—"}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -1303,16 +1373,19 @@ const UpdateCourse = () => {
                     </label>
                     <select
                       name="instructor"
-                      value={form.instructor || ""}
+                      value={toIdString(form.instructor)}
                       onChange={onChange}
                       className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                     >
                       <option value="">—</option>
-                      {instructors.map((u) => (
-                        <option key={u._id || u.id} value={u._id || u.id}>
-                          {u.name || u.fullName || u.email || "Instructor"}
-                        </option>
-                      ))}
+                      {instructors.map((u) => {
+                        const val = toIdString(u._id || u.id);
+                        return (
+                          <option key={val} value={val}>
+                            {u.name || u.fullName || u.email || "Instructor"}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
