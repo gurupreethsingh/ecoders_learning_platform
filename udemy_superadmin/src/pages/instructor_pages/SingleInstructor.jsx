@@ -374,7 +374,7 @@ export default function SingleInstructor() {
                 const label =
                   s?.semester_name ||
                   (s?.semNumber ? `Semester ${s.semNumber}` : s?.slug) ||
-                  "Semister";
+                  "Semester";
                 if (_id) map[_id] = label;
               });
               setSemMap(map);
@@ -493,7 +493,7 @@ export default function SingleInstructor() {
       inst.semester ||
       inst.semesterId,
     semMap,
-    "Semister"
+    "Semester"
   );
   const coursePairs = toPairs(
     inst.courses || inst.course || inst.courseId,

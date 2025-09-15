@@ -736,8 +736,8 @@ export default function UpdateNotification() {
                   const label =
                     s.title ||
                     s.semester_name ||
-                    (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                    "Semister";
+                    (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                    "Semester";
                   return (
                     <option key={s._id || s.id} value={s._id || s.id}>
                       {label}

@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const QuizSchema = new Schema(
   {
-    // Link ONLY to Course (no Degree/Semister here)
+    // Link ONLY to Course (no Degree/Semester here)
     course: { type: Schema.Types.ObjectId, ref: "Course", required: false },
 
     // Identity

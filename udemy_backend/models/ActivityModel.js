@@ -35,7 +35,7 @@ const ActivitySchema = new Schema(
     // Context targeting (IDs only)
     context: {
       degrees: [{ type: Schema.Types.ObjectId, ref: "Degree" }],
-      semesters: [{ type: Schema.Types.ObjectId, ref: "Semister" }],
+      semesters: [{ type: Schema.Types.ObjectId, ref: "Semester" }],
       courses: [{ type: Schema.Types.ObjectId, ref: "Course" }],
       section: { type: String, trim: true },
       batchYear: { type: String, trim: true },

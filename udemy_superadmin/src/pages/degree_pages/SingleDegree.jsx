@@ -406,7 +406,7 @@ const SingleDegree = () => {
                     const name =
                       s.name ||
                       s.title ||
-                      (s.semNumber ? `Sem ${s.semNumber}` : "Semister");
+                      (s.semNumber ? `Sem ${s.semNumber}` : "Semester");
                     const short = sid ? sid.slice(-8) : "—";
                     return (
                       <span
@@ -426,7 +426,7 @@ const SingleDegree = () => {
                               e.stopPropagation();
                               copy(sid);
                             }}
-                            title="Copy Semister ID"
+                            title="Copy Semester ID"
                           >
                             <FiCopy className="inline-block" />
                           </button>

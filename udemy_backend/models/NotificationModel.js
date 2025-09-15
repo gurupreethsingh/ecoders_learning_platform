@@ -29,8 +29,8 @@ const AUDIENCE_TYPE = ["all", "roles", "users", "contextual"];
 const AudienceContextSchema = new Schema(
   {
     degree: { type: Schema.Types.ObjectId, ref: "Degree" },
-    // Your code uses "Semister" elsewhere, keep that spelling here:
-    semester: { type: Schema.Types.ObjectId, ref: "Semister" },
+    // Your code uses "Semester" elsewhere, keep that spelling here:
+    semester: { type: Schema.Types.ObjectId, ref: "Semester" },
     course: { type: Schema.Types.ObjectId, ref: "Course" },
     offering: { type: Schema.Types.ObjectId, ref: "CourseOffering" },
     section: { type: String },

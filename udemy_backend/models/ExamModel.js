@@ -5,8 +5,8 @@ const ExamSchema = new Schema(
   {
     degree: { type: Schema.Types.ObjectId, ref: "Degree", required: true },
 
-    // ⬇️ IMPORTANT: match your model name "Semister"
-    semester: { type: Schema.Types.ObjectId, ref: "Semister", required: true },
+    // ⬇️ IMPORTANT: match your model name "Semester"
+    semester: { type: Schema.Types.ObjectId, ref: "Semester", required: true },
 
     course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
 

@@ -138,12 +138,12 @@ export default function AllNotifications() {
 
   // lookup maps for rendering (context names)
   const [degreeMap, setDegreeMap] = useState({});
-  const [semesterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemesterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
 
   // cascading lists
   const [degreeList, setDegreeList] = useState([]);
-  const [semesterList, setSemisterList] = useState([]);
+  const [semesterList, setSemesterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
 
   // bulk selection
@@ -204,10 +204,10 @@ export default function AllNotifications() {
     };
   }, []);
 
-  /** Degree -> Semisters */
+  /** Degree -> Semesters */
   useEffect(() => {
     let alive = true;
-    setSemisterList([]);
+    setSemesterList([]);
     setCourseList([]);
     setFilters((f) => ({
       ...f,
@@ -215,7 +215,7 @@ export default function AllNotifications() {
       context_course: "",
     }));
     if (!filters.context_degree) {
-      setSemisterMap({});
+      setSemesterMap({});
       return;
     }
     (async () => {
@@ -231,17 +231,17 @@ export default function AllNotifications() {
         if (!alive) return;
         const list = res?.data?.data || res?.data || [];
         const sl = Array.isArray(list) ? list : [];
-        setSemisterList(sl);
+        setSemesterList(sl);
         const map = {};
         sl.forEach((s) => {
           const label =
             s.title ||
             s.semester_name ||
-            (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-            "Semister";
+            (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+            "Semester";
           map[s._id || s.id] = label;
         });
-        setSemisterMap(map);
+        setSemesterMap(map);
       } catch {
         /* ignore */
       }
@@ -252,7 +252,7 @@ export default function AllNotifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.context_degree]);
 
-  /** Semister -> Courses */
+  /** Semester -> Courses */
   useEffect(() => {
     let alive = true;
     setCourseList([]);
@@ -1025,7 +1025,7 @@ export default function AllNotifications() {
           />
 
           <FilterSelect
-            label="Semister (context)"
+            label="Semester (context)"
             value={filters.context_semester}
             onChange={(v) => setFilters((f) => ({ ...f, context_semester: v }))}
             options={semesterList}
@@ -1035,8 +1035,8 @@ export default function AllNotifications() {
               name:
                 s.title ||
                 s.semester_name ||
-                (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                "Semister",
+                (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                "Semester",
             })}
             allLabel="(any)"
           />
@@ -1161,9 +1161,9 @@ export default function AllNotifications() {
                   (n.context.semester?.title ||
                     n.context.semester?.semester_name ||
                     (n.context.semester?.semNumber
-                      ? `Semister ${n.context.semester?.semNumber}`
+                      ? `Semester ${n.context.semester?.semNumber}`
                       : ""))) ||
-                (n?.context?.semester ? "Semister" : "—");
+                (n?.context?.semester ? "Semester" : "—");
 
               const ctxCourseName =
                 (typeof n?.context?.course === "string" &&
@@ -1328,7 +1328,7 @@ export default function AllNotifications() {
                                   {n?.context?.semester ? (
                                     <>
                                       <span className="ml-2 font-medium">
-                                        Semister:
+                                        Semester:
                                       </span>{" "}
                                       {ctxSemName}
                                       {n?.context?.semester && (

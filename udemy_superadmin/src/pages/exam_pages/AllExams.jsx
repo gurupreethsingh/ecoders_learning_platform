@@ -38,7 +38,7 @@ export default function AllExams() {
 
   // lookups
   const [degreeMap, setDegreeMap] = useState({});
-  const [semesterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemesterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
   const [userMap, setUserMap] = useState({}); // fallback labels for createdBy (optional)
 
@@ -147,7 +147,7 @@ export default function AllExams() {
           setDegreeMap(map);
         }
 
-        // Semisters
+        // Semesters
         if (semRes.status === "fulfilled") {
           const list = semRes.value?.data?.data || semRes.value?.data || [];
           const map = {};
@@ -155,11 +155,11 @@ export default function AllExams() {
             const label =
               s.title ||
               s.semester_name ||
-              (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-              "Semister";
+              (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+              "Semester";
             map[s._id || s.id] = label;
           });
-          setSemisterMap(map);
+          setSemesterMap(map);
         }
 
         // Courses
@@ -465,7 +465,7 @@ export default function AllExams() {
                 degreeMap[degreeId] ||
                 (typeof degreeId === "string" ? shortId(degreeId) : "—");
 
-              // Semister/Semester
+              // Semester/Semester
               const semField = x?.semester ?? x?.semester;
               const semId =
                 typeof semField === "object" ? semField?._id : semField;
@@ -474,7 +474,7 @@ export default function AllExams() {
                   (semField?.title ||
                     semField?.semester_name ||
                     (semField?.semNumber
-                      ? `Semister ${semField?.semNumber}`
+                      ? `Semester ${semField?.semNumber}`
                       : ""))) ||
                 semesterMap[semId] ||
                 (typeof semId === "string" ? shortId(semId) : "—");
@@ -601,7 +601,7 @@ export default function AllExams() {
                             {semName ? (
                               <>
                                 <span className="ml-2 font-medium">
-                                  Semister:
+                                  Semester:
                                 </span>{" "}
                                 {semName}
                               </>

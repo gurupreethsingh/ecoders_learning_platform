@@ -108,4 +108,4 @@ semesterSchema.virtual("courses", {
   justOne: false,
 });
 
-module.exports = mongoose.model("semester", semesterSchema);
+module.exports = mongoose.model("Semester", semesterSchema);

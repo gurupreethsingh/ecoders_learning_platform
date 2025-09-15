@@ -221,7 +221,7 @@ export default function AllInstructors() {
           const label =
             x?.semester_name ||
             (x?.semNumber ? `Semester ${x.semNumber}` : x?.slug);
-          if (id) seMap[id] = label || "Semister";
+          if (id) seMap[id] = label || "Semester";
         });
         setSemMap(seMap);
       } catch {}
@@ -444,7 +444,7 @@ export default function AllInstructors() {
       categories: toPairs(ids.categories, catMap, "Category"),
       subcategories: toPairs(ids.subcategories, subcatMap, "Subcategory"),
       courses: toPairs(ids.courses, courseMap, "Course"),
-      semesters: toPairs(ids.semesters, semMap, "Semister"),
+      semesters: toPairs(ids.semesters, semMap, "Semester"),
     };
   };
 
@@ -657,7 +657,7 @@ export default function AllInstructors() {
                   "Subcategory"
                 ),
                 courses: toPairs(ids.courses, courseMap, "Course"),
-                semesters: toPairs(ids.semesters, semMap, "Semister"),
+                semesters: toPairs(ids.semesters, semMap, "Semester"),
               };
 
               const renderPairsLocal = (pairs) => {
@@ -795,7 +795,7 @@ export default function AllInstructors() {
                             </div>
 
                             <div className="text-xs mt-1">
-                              <span className="font-medium">Semisters: </span>
+                              <span className="font-medium">Semesters: </span>
                               {renderPairsLocal(assoc.semesters)}
                             </div>
                           </div>

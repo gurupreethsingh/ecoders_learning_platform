@@ -85,8 +85,8 @@ const InstructorSchema = new Schema(
 
     // ---- LMS Relations ----
     degrees: [{ type: Types.ObjectId, ref: "Degree" }],
-    // Your app uses the model name "Semister" — keep this ref consistent
-    semesters: [{ type: Types.ObjectId, ref: "Semister" }],
+    // Your app uses the model name "Semester" — keep this ref consistent
+    semesters: [{ type: Types.ObjectId, ref: "Semester" }],
     courses: [{ type: Types.ObjectId, ref: "Course" }],
 
     // Optional link to user account if you have one

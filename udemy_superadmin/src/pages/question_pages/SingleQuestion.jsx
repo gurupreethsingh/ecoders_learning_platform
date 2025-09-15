@@ -790,7 +790,7 @@ export default function SingleQuestion() {
                 </code>
               </p>
               <p className="text-sm text-gray-700">
-                <span className="font-medium">Semister:</span> {semName}{" "}
+                <span className="font-medium">Semester:</span> {semName}{" "}
                 <code className="ml-2 bg-gray-100 border px-1 py-0.5 rounded">
                   {semId || NA}
                 </code>

@@ -117,7 +117,7 @@ const UpdateExam = () => {
 
   // lookups
   const [degrees, setDegrees] = useState([]);
-  const [semesters, setSemisters] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
 
   const [form, setForm] = useState({
@@ -189,7 +189,7 @@ const UpdateExam = () => {
           setDegrees(degRes.value?.data || degRes.value || []);
         }
         if (semRes.status === "fulfilled") {
-          setSemisters(semRes.value?.data || semRes.value || []);
+          setSemesters(semRes.value?.data || semRes.value || []);
         }
         if (courseRes.status === "fulfilled") {
           setAllCourses(courseRes.value?.data || courseRes.value || []);
@@ -306,7 +306,7 @@ const UpdateExam = () => {
     if (!form.degree || !form.semester || !form.course) {
       setMsg({
         type: "error",
-        text: "Please select Degree, Semister and Course.",
+        text: "Please select Degree, Semester and Course.",
       });
       return;
     }
@@ -736,7 +736,7 @@ const UpdateExam = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-800">
-                  Semister *
+                  Semester *
                 </label>
                 <select
                   name="semester"
@@ -753,8 +753,8 @@ const UpdateExam = () => {
                       const label =
                         s.title ||
                         s.semester_name ||
-                        (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                        "Semister";
+                        (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                        "Semester";
                       return (
                         <option key={s._id || s.id} value={s._id || s.id}>
                           {label}

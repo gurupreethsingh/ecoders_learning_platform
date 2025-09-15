@@ -66,14 +66,14 @@ const toCSV = (arr) =>
 export default function CreateQuestion() {
   // -------- dropdowns / lists --------
   const [degrees, setDegrees] = useState([]);
-  const [semesters, setSemisters] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
 
   // selection
   const [degreeId, setDegreeId] = useState("");
-  const [semesterId, setSemisterId] = useState("");
+  const [semesterId, setSemesterId] = useState("");
   const [courseId, setCourseId] = useState("");
 
   const [attachTarget, setAttachTarget] = useState("none"); // "none" | "exam" | "quiz"
@@ -156,11 +156,11 @@ export default function CreateQuestion() {
     loadDegrees();
   }, []);
 
-  // Semisters by degree
+  // Semesters by degree
   useEffect(() => {
     if (!degreeId) {
-      setSemisters([]);
-      setSemisterId("");
+      setSemesters([]);
+      setSemesterId("");
       return;
     }
     const ac = new AbortController();
@@ -175,11 +175,11 @@ export default function CreateQuestion() {
           { signal: ac.signal }
         );
         const j = await r.json();
-        setSemisters(
+        setSemesters(
           Array.isArray(j?.data) ? j.data : Array.isArray(j) ? j : []
         );
       } catch (e) {
-        if (e.name !== "AbortError") setSemisters([]);
+        if (e.name !== "AbortError") setSemesters([]);
       }
     })();
     return () => ac.abort();
@@ -419,7 +419,7 @@ export default function CreateQuestion() {
 
   const reset = () => {
     setDegreeId("");
-    setSemisterId("");
+    setSemesterId("");
     setCourseId("");
     setAttachTarget("none");
     setExamId("");
@@ -600,11 +600,11 @@ export default function CreateQuestion() {
             </select>
           </Field>
 
-          <Field label="Semister">
+          <Field label="Semester">
             <select
               className="w-full border rounded-md p-2"
               value={semesterId}
-              onChange={(e) => setSemisterId(e.target.value)}
+              onChange={(e) => setSemesterId(e.target.value)}
               disabled={!degreeId}
             >
               <option value="">(none)</option>

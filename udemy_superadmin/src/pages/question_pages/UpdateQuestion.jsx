@@ -105,7 +105,7 @@ export default function UpdateQuestion() {
 
   // lookups
   const [degrees, setDegrees] = useState([]);
-  const [semesters, setSemisters] = useState([]);
+  const [semesters, setSemesters] = useState([]);
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
@@ -331,7 +331,7 @@ export default function UpdateQuestion() {
             : [];
 
         if (deg.status === "fulfilled") setDegrees(toArr(deg.value));
-        if (sem.status === "fulfilled") setSemisters(toArr(sem.value));
+        if (sem.status === "fulfilled") setSemesters(toArr(sem.value));
         if (crs.status === "fulfilled") setCourses(toArr(crs.value));
         if (exm.status === "fulfilled") setExams(toArr(exm.value));
         if (qz.status === "fulfilled") setQuizzes(toArr(qz.value));
@@ -1587,7 +1587,7 @@ export default function UpdateQuestion() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium">
-                      Semister
+                      Semester
                     </label>
                     <select
                       name="semester"
@@ -1600,8 +1600,8 @@ export default function UpdateQuestion() {
                         const label =
                           s.title ||
                           s.semester_name ||
-                          (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                          "Semister";
+                          (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                          "Semester";
                         return (
                           <option key={s._id || s.id} value={s._id || s.id}>
                             {label}

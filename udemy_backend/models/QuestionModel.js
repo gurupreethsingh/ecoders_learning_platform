@@ -161,10 +161,10 @@ const QuestionSchema = new Schema(
       required: false,
       index: true,
     },
-    // Your backend uses "semisters" in routes; we’ll stick to "Semister" model name to match that.
+    // Your backend uses "semisters" in routes; we’ll stick to "Semester" model name to match that.
     semester: {
       type: Schema.Types.ObjectId,
-      ref: "Semister",
+      ref: "Semester",
       required: false,
       index: true,
     },

@@ -72,7 +72,7 @@ export default function AllQuestions() {
 
   // lookup maps for rendering
   const [degreeMap, setDegreeMap] = useState({});
-  const [semesterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemesterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
   const [quizMap, setQuizMap] = useState({});
   const [examMap, setExamMap] = useState({});
@@ -80,7 +80,7 @@ export default function AllQuestions() {
 
   // cascading lists
   const [degreeList, setDegreeList] = useState([]);
-  const [semesterList, setSemisterList] = useState([]);
+  const [semesterList, setSemesterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
   const [quizList, setQuizList] = useState([]);
   const [examList, setExamList] = useState([]);
@@ -164,12 +164,12 @@ export default function AllQuestions() {
     };
   }, []);
 
-  /** Degree -> Semisters (filtered) */
+  /** Degree -> Semesters (filtered) */
   useEffect(() => {
     let alive = true;
 
     // clear downstream
-    setSemisterList([]);
+    setSemesterList([]);
     setCourseList([]);
     setQuizList([]);
     setExamList([]);
@@ -182,7 +182,7 @@ export default function AllQuestions() {
     }));
 
     if (!filters.degreeId) {
-      setSemisterMap({});
+      setSemesterMap({});
       return;
     }
 
@@ -199,18 +199,18 @@ export default function AllQuestions() {
         if (!alive) return;
         const list = res?.data?.data || res?.data || [];
         const sl = Array.isArray(list) ? list : [];
-        setSemisterList(sl);
+        setSemesterList(sl);
 
         const map = {};
         sl.forEach((s) => {
           const label =
             s.title ||
             s.semester_name ||
-            (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-            "Semister";
+            (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+            "Semester";
           map[s._id || s.id] = label;
         });
-        setSemisterMap(map);
+        setSemesterMap(map);
       } catch {
         /* keep empty */
       }
@@ -222,7 +222,7 @@ export default function AllQuestions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.degreeId]);
 
-  /** Semister -> Courses (filtered by Degree + Semister) */
+  /** Semester -> Courses (filtered by Degree + Semester) */
   useEffect(() => {
     let alive = true;
 
@@ -670,9 +670,9 @@ export default function AllQuestions() {
             })}
           />
 
-          {/* Semister (depends on Degree) */}
+          {/* Semester (depends on Degree) */}
           <FilterSelect
-            label="Semister"
+            label="Semester"
             value={filters.semesterId}
             onChange={(v) => setFilters((f) => ({ ...f, semesterId: v }))}
             options={semesterList}
@@ -682,12 +682,12 @@ export default function AllQuestions() {
               name:
                 s.title ||
                 s.semester_name ||
-                (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
-                "Semister",
+                (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
+                "Semester",
             })}
           />
 
-          {/* Course (depends on Degree+Semister) */}
+          {/* Course (depends on Degree+Semester) */}
           <FilterSelect
             label="Course"
             value={filters.courseId}
@@ -713,7 +713,7 @@ export default function AllQuestions() {
             })}
           />
 
-          {/* Exam (depends on Degree+Semister+Course) */}
+          {/* Exam (depends on Degree+Semester+Course) */}
           <FilterSelect
             label="Exam"
             value={filters.examId}
@@ -854,7 +854,7 @@ export default function AllQuestions() {
                   (q?.semester?.title ||
                     q?.semester?.semester_name ||
                     (q?.semester?.semNumber
-                      ? `Semister ${q?.semester?.semNumber}`
+                      ? `Semester ${q?.semester?.semNumber}`
                       : ""))) ||
                 (typeof q?.semester === "string" ? shortId(q.semester) : "—");
 
@@ -993,7 +993,7 @@ export default function AllQuestions() {
                             </span>
                           </p>
 
-                          {/* Degree / Semister */}
+                          {/* Degree / Semester */}
                           <p className="text-sm text-gray-600 flex items-center">
                             <FaUniversity className="mr-1 text-indigo-500" />
                             <span className="truncate">
@@ -1011,7 +1011,7 @@ export default function AllQuestions() {
                               {semesterName ? (
                                 <>
                                   <span className="ml-2 font-medium">
-                                    Semister:
+                                    Semester:
                                   </span>{" "}
                                   {semesterName}{" "}
                                   {q?.semester && (
