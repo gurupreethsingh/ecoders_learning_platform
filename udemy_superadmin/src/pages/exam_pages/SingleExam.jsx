@@ -88,7 +88,7 @@ const SingleExam = () => {
           fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
             r.json()
           ),
-          fetch(`${API}/api/semisters?page=1&limit=2000`).then((r) => r.json()),
+          fetch(`${API}/api/semesters?page=1&limit=2000`).then((r) => r.json()),
           fetch(`${API}/api/list-courses?page=1&limit=2000`).then((r) =>
             r.json()
           ),
@@ -115,7 +115,7 @@ const SingleExam = () => {
           (Array.isArray(list) ? list : []).forEach((s) => {
             const label =
               s.title ||
-              s.semister_name ||
+              s.semester_name ||
               (s.semNumber ? `Sem ${s.semNumber}` : s.slug) ||
               "Semister";
             map[s._id || s.id] = label;
@@ -179,7 +179,7 @@ const SingleExam = () => {
   const semName =
     (typeof data?.semester === "object" &&
       (data?.semester?.title ||
-        data?.semester?.semister_name ||
+        data?.semester?.semester_name ||
         (data?.semester?.semNumber ? `Sem ${data.semester.semNumber}` : ""))) ||
     semMap[data?.semester] ||
     (typeof data?.semester === "string" ? data.semester : "—");

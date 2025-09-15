@@ -161,7 +161,7 @@ export default function UpdateNotification() {
     }
     (async () => {
       try {
-        const res = await api.get(`/api/semisters`, {
+        const res = await api.get(`/api/semesters`, {
           params: {
             page: 1,
             limit: 1000,
@@ -197,7 +197,7 @@ export default function UpdateNotification() {
             page: 1,
             limit: 1000,
             degreeId: form.context_degree,
-            semisterId: form.context_semester,
+            semesterId: form.context_semester,
           },
         });
         if (!alive) return;
@@ -735,7 +735,7 @@ export default function UpdateNotification() {
                 {semesterList.map((s) => {
                   const label =
                     s.title ||
-                    s.semister_name ||
+                    s.semester_name ||
                     (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
                     "Semister";
                   return (

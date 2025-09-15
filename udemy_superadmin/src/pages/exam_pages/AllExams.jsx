@@ -38,7 +38,7 @@ export default function AllExams() {
 
   // lookups
   const [degreeMap, setDegreeMap] = useState({});
-  const [semisterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemisterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
   const [userMap, setUserMap] = useState({}); // fallback labels for createdBy (optional)
 
@@ -121,7 +121,7 @@ export default function AllExams() {
             params: { page: 1, limit: 1000 },
           }),
           axios
-            .get(`${globalBackendRoute}/api/semisters`, {
+            .get(`${globalBackendRoute}/api/semesters`, {
               params: { page: 1, limit: 5000 },
             })
             .catch(() => ({ data: { data: [] } })),
@@ -154,7 +154,7 @@ export default function AllExams() {
           (Array.isArray(list) ? list : []).forEach((s) => {
             const label =
               s.title ||
-              s.semister_name ||
+              s.semester_name ||
               (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
               "Semister";
             map[s._id || s.id] = label;
@@ -472,11 +472,11 @@ export default function AllExams() {
               const semName =
                 (typeof semField === "object" &&
                   (semField?.title ||
-                    semField?.semister_name ||
+                    semField?.semester_name ||
                     (semField?.semNumber
                       ? `Semister ${semField?.semNumber}`
                       : ""))) ||
-                semisterMap[semId] ||
+                semesterMap[semId] ||
                 (typeof semId === "string" ? shortId(semId) : "—");
 
               // Course

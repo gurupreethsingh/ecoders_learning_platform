@@ -69,7 +69,7 @@ const courseMatchesSemester = (course, semesterId) => {
     course.semester,
     course.semester,
     course.semesterId,
-    course.semisterId,
+    course.semesterId,
     course.semId,
   ]
     .map(normId)
@@ -82,7 +82,7 @@ const courseMatchesSemester = (course, semesterId) => {
     normId(course.semester?._id) === s ||
     normId(course.semester?._id) === s;
 
-  const arrMatch = [course.semesters, course.semisters]
+  const arrMatch = [course.semesters, course.semesters]
     .filter(Array.isArray)
     .some((arr) => arr.map(normId).includes(s));
 
@@ -117,7 +117,7 @@ const UpdateExam = () => {
 
   // lookups
   const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
+  const [semesters, setSemisters] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
 
   const [form, setForm] = useState({
@@ -171,7 +171,7 @@ const UpdateExam = () => {
           fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
             r.json()
           ),
-          fetch(`${API}/api/semisters?page=1&limit=5000`).then((r) => r.json()),
+          fetch(`${API}/api/semesters?page=1&limit=5000`).then((r) => r.json()),
           fetch(`${API}/api/list-courses?page=1&limit=5000`).then((r) =>
             r.json()
           ),
@@ -745,14 +745,14 @@ const UpdateExam = () => {
                   className="mt-2 w-full rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-0 px-4 py-2.5 text-gray-900 bg-white"
                 >
                   <option value="">—</option>
-                  {semisters
+                  {semesters
                     .filter(
                       (s) => !form.degree || normId(s.degree) === form.degree
                     )
                     .map((s) => {
                       const label =
                         s.title ||
-                        s.semister_name ||
+                        s.semester_name ||
                         (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
                         "Semister";
                       return (

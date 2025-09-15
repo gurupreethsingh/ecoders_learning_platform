@@ -244,11 +244,11 @@
 //   ];
 //   const semesterIds = [
 //     ...extractIds(c.semesters),
-//     ...extractIds(c.semisterIds),
+//     ...extractIds(c.semesterIds),
 //     ...extractIds(c.semester),
-//     ...extractIds(c.semister),
+//     ...extractIds(c.semester),
 //     ...extractIds(a?.semesterId),
-//     ...extractIds(a?.semisterId),
+//     ...extractIds(a?.semesterId),
 //   ];
 //   const courseIds = [
 //     ...extractIds(c.courses),
@@ -282,12 +282,12 @@
 
 //   // cascading lists
 //   const [degreeList, setDegreeList] = useState([]);
-//   const [semisterList, setSemisterList] = useState([]);
+//   const [semesterList, setSemisterList] = useState([]);
 //   const [courseList, setCourseList] = useState([]);
 
 //   // lookup maps
 //   const [degreeMap, setDegreeMap] = useState({});
-//   const [semisterMap, setSemisterMap] = useState({});
+//   const [semesterMap, setSemisterMap] = useState({});
 //   const [courseMap, setCourseMap] = useState({});
 
 //   // roles (for audienceType=roles)
@@ -300,7 +300,7 @@
 //     status: "",
 //     tag: "",
 //     degreeId: "",
-//     semisterId: "",
+//     semesterId: "",
 //     courseId: "",
 //     since: "",
 //     until: "",
@@ -374,7 +374,7 @@
 //     // Clear downstream selections
 //     setSemisterList([]);
 //     setCourseList([]);
-//     setFilters((f) => ({ ...f, semisterId: "", courseId: "" }));
+//     setFilters((f) => ({ ...f, semesterId: "", courseId: "" }));
 
 //     if (!filters.degreeId) {
 //       setSemisterMap({});
@@ -383,7 +383,7 @@
 
 //     (async () => {
 //       try {
-//         const res = await api.get("/api/semisters", {
+//         const res = await api.get("/api/semesters", {
 //           params: {
 //             page: 1,
 //             limit: 1000,
@@ -401,7 +401,7 @@
 //           const key = String(s._id || s.id);
 //           const label =
 //             s.title ||
-//             s.semister_name ||
+//             s.semester_name ||
 //             (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
 //             "Semester";
 //           map[key] = label;
@@ -425,7 +425,7 @@
 //     setCourseList([]);
 //     setFilters((f) => ({ ...f, courseId: "" }));
 
-//     if (!filters.degreeId || !filters.semisterId) {
+//     if (!filters.degreeId || !filters.semesterId) {
 //       setCourseMap({});
 //       return;
 //     }
@@ -437,7 +437,7 @@
 //             page: 1,
 //             limit: 1000,
 //             degreeId: filters.degreeId,
-//             semisterId: filters.semisterId,
+//             semesterId: filters.semesterId,
 //           },
 //         });
 //         if (!alive) return;
@@ -459,7 +459,7 @@
 //       alive = false;
 //     };
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [filters.semisterId]);
+//   }, [filters.semesterId]);
 
 //   /** Fetch Activities with active filters */
 //   useEffect(() => {
@@ -501,10 +501,10 @@
 //           params.degree = filters.degreeId;
 //           params.context_degree = filters.degreeId;
 //         }
-//         if (filters.semisterId) {
-//           params.semisterId = filters.semisterId;
-//           params.semesterId = filters.semisterId;
-//           params.context_semester = filters.semisterId;
+//         if (filters.semesterId) {
+//           params.semesterId = filters.semesterId;
+//           params.semesterId = filters.semesterId;
+//           params.context_semester = filters.semesterId;
 //         }
 //         if (filters.courseId) {
 //           params.courseId = filters.courseId;
@@ -527,7 +527,7 @@
 //         // -------- Client-side robust filtering --------
 //         // 1) Context filters: only ENFORCE when the activity actually has those IDs.
 //         const dId = String(filters.degreeId || "");
-//         const sId = String(filters.semisterId || "");
+//         const sId = String(filters.semesterId || "");
 //         const cId = String(filters.courseId || "");
 
 //         if (
@@ -591,7 +591,7 @@
 //               .join(" ")
 //               .toLowerCase();
 //             const semNames = semesterIds
-//               .map((s) => semisterMap[s] || s)
+//               .map((s) => semesterMap[s] || s)
 //               .join(" ")
 //               .toLowerCase();
 //             const crsNames = courseIds
@@ -656,7 +656,7 @@
 //     filters,
 //     refreshKey,
 //     degreeMap,
-//     semisterMap,
+//     semesterMap,
 //     courseMap,
 //   ]);
 
@@ -793,7 +793,7 @@
 //       status: "",
 //       tag: "",
 //       degreeId: "",
-//       semisterId: "",
+//       semesterId: "",
 //       courseId: "",
 //       since: "",
 //       until: "",
@@ -970,18 +970,18 @@
 //           {/* Semester */}
 //           <FilterSelect
 //             label="Semester"
-//             value={filters.semisterId}
+//             value={filters.semesterId}
 //             onChange={(v) =>
-//               setFilters((f) => ({ ...f, semisterId: String(v) }))
+//               setFilters((f) => ({ ...f, semesterId: String(v) }))
 //             }
-//             options={semisterList}
+//             options={semesterList}
 //             disabled={!filters.degreeId}
 //             nameKeyPrefix="sem"
 //             getOption={(s) => ({
 //               id: String(s._id || s.id),
 //               name:
 //                 s.title ||
-//                 s.semister_name ||
+//                 s.semester_name ||
 //                 (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
 //                 "Semester",
 //             })}
@@ -993,7 +993,7 @@
 //             value={filters.courseId}
 //             onChange={(v) => setFilters((f) => ({ ...f, courseId: String(v) }))}
 //             options={courseList}
-//             disabled={!filters.degreeId || !filters.semisterId}
+//             disabled={!filters.degreeId || !filters.semesterId}
 //             nameKeyPrefix="course"
 //             getOption={(c) => ({
 //               id: String(c._id || c.id),
@@ -1086,9 +1086,9 @@
 //                   degreeMap[d] ||
 //                   (typeof d === "string" ? shortId(d) : "Degree")
 //               );
-//               const semisterNames = semesterIds.map(
+//               const semesterNames = semesterIds.map(
 //                 (s) =>
-//                   semisterMap[s] ||
+//                   semesterMap[s] ||
 //                   (typeof s === "string" ? shortId(s) : "Semester")
 //               );
 //               const courseNames = courseIds.map(
@@ -1213,7 +1213,7 @@
 
 //                           {/* Context */}
 //                           {(degreeNames.length ||
-//                             semisterNames.length ||
+//                             semesterNames.length ||
 //                             courseNames.length) && (
 //                             <p className="text-sm text-gray-600 flex items-center">
 //                               <FaUniversity className="mr-1 text-indigo-500" />
@@ -1226,12 +1226,12 @@
 //                                     {degreeNames.join(", ")}
 //                                   </>
 //                                 ) : null}
-//                                 {semisterNames.length ? (
+//                                 {semesterNames.length ? (
 //                                   <>
 //                                     <span className="ml-2 font-medium">
 //                                       Semesters:
 //                                     </span>{" "}
-//                                     {semisterNames.join(", ")}
+//                                     {semesterNames.join(", ")}
 //                                   </>
 //                                 ) : null}
 //                                 {courseNames.length ? (
@@ -1654,11 +1654,11 @@ const normalizeContextIds = (a) => {
   ];
   const semesterIds = [
     ...extractIds(c.semesters),
-    ...extractIds(c.semisterIds),
+    ...extractIds(c.semesterIds),
     ...extractIds(c.semester),
-    ...extractIds(c.semister),
+    ...extractIds(c.semester),
     ...extractIds(a?.semesterId),
-    ...extractIds(a?.semisterId),
+    ...extractIds(a?.semesterId),
   ];
   const courseIds = [
     ...extractIds(c.courses),
@@ -1681,8 +1681,8 @@ const getCourseDegreeId = (c) =>
 const getCourseSemesterId = (c) =>
   idOf(c.semester) ||
   idOf(c.semesterId) ||
-  idOf(c.semister) ||
-  idOf(c.semisterId) ||
+  idOf(c.semester) ||
+  idOf(c.semesterId) ||
   "";
 
 export default function AllActivities() {
@@ -1708,12 +1708,12 @@ export default function AllActivities() {
 
   // cascading lists
   const [degreeList, setDegreeList] = useState([]);
-  const [semisterList, setSemisterList] = useState([]);
+  const [semesterList, setSemisterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
 
   // lookup maps
   const [degreeMap, setDegreeMap] = useState({});
-  const [semisterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemisterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
 
   // roles (for audienceType=roles)
@@ -1726,7 +1726,7 @@ export default function AllActivities() {
     status: "",
     tag: "",
     degreeId: "",
-    semisterId: "",
+    semesterId: "",
     courseId: "",
     since: "",
     until: "",
@@ -1799,7 +1799,7 @@ export default function AllActivities() {
     // Clear downstream selections
     setSemisterList([]);
     setCourseList([]);
-    setFilters((f) => ({ ...f, semisterId: "", courseId: "" }));
+    setFilters((f) => ({ ...f, semesterId: "", courseId: "" }));
 
     if (!filters.degreeId) {
       setSemisterMap({});
@@ -1808,7 +1808,7 @@ export default function AllActivities() {
 
     (async () => {
       try {
-        const res = await api.get("/api/semisters", {
+        const res = await api.get("/api/semesters", {
           params: {
             page: 1,
             limit: 1000,
@@ -1826,7 +1826,7 @@ export default function AllActivities() {
           const key = String(s._id || s.id);
           const label =
             s.title ||
-            s.semister_name ||
+            s.semester_name ||
             (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
             "Semester";
           map[key] = label;
@@ -1850,7 +1850,7 @@ export default function AllActivities() {
     setCourseList([]);
     setFilters((f) => ({ ...f, courseId: "" }));
 
-    if (!filters.degreeId || !filters.semisterId) {
+    if (!filters.degreeId || !filters.semesterId) {
       setCourseMap({});
       return;
     }
@@ -1863,7 +1863,7 @@ export default function AllActivities() {
             page: 1,
             limit: 2000,
             degreeId: filters.degreeId,
-            semisterId: filters.semisterId,
+            semesterId: filters.semesterId,
           },
         });
         if (!alive) return;
@@ -1872,7 +1872,7 @@ export default function AllActivities() {
 
         // 2) Apply strict client-side filter (in case backend ignores params)
         const wantDeg = String(filters.degreeId);
-        const wantSem = String(filters.semisterId);
+        const wantSem = String(filters.semesterId);
 
         const seen = new Set();
         const filtered = [];
@@ -1935,7 +1935,7 @@ export default function AllActivities() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.semisterId]);
+  }, [filters.semesterId]);
 
   /** Fetch Activities with active filters */
   useEffect(() => {
@@ -1977,10 +1977,10 @@ export default function AllActivities() {
           params.degree = filters.degreeId;
           params.context_degree = filters.degreeId;
         }
-        if (filters.semisterId) {
-          params.semisterId = filters.semisterId;
-          params.semesterId = filters.semisterId;
-          params.context_semester = filters.semisterId;
+        if (filters.semesterId) {
+          params.semesterId = filters.semesterId;
+          params.semesterId = filters.semesterId;
+          params.context_semester = filters.semesterId;
         }
         if (filters.courseId) {
           params.courseId = filters.courseId;
@@ -2002,7 +2002,7 @@ export default function AllActivities() {
 
         // -------- Client-side robust filtering --------
         const dId = String(filters.degreeId || "");
-        const sId = String(filters.semisterId || "");
+        const sId = String(filters.semesterId || "");
         const cId = String(filters.courseId || "");
 
         if (
@@ -2066,7 +2066,7 @@ export default function AllActivities() {
               .join(" ")
               .toLowerCase();
             const semNames = semesterIds
-              .map((s) => semisterMap[s] || s)
+              .map((s) => semesterMap[s] || s)
               .join(" ")
               .toLowerCase();
             const crsNames = courseIds
@@ -2131,7 +2131,7 @@ export default function AllActivities() {
     filters,
     refreshKey,
     degreeMap,
-    semisterMap,
+    semesterMap,
     courseMap,
   ]);
 
@@ -2268,7 +2268,7 @@ export default function AllActivities() {
       status: "",
       tag: "",
       degreeId: "",
-      semisterId: "",
+      semesterId: "",
       courseId: "",
       since: "",
       until: "",
@@ -2445,18 +2445,18 @@ export default function AllActivities() {
           {/* Semester */}
           <FilterSelect
             label="Semester"
-            value={filters.semisterId}
+            value={filters.semesterId}
             onChange={(v) =>
-              setFilters((f) => ({ ...f, semisterId: String(v) }))
+              setFilters((f) => ({ ...f, semesterId: String(v) }))
             }
-            options={semisterList}
+            options={semesterList}
             disabled={!filters.degreeId}
             nameKeyPrefix="sem"
             getOption={(s) => ({
               id: String(s._id || s.id),
               name:
                 s.title ||
-                s.semister_name ||
+                s.semester_name ||
                 (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
                 "Semester",
             })}
@@ -2468,7 +2468,7 @@ export default function AllActivities() {
             value={filters.courseId}
             onChange={(v) => setFilters((f) => ({ ...f, courseId: String(v) }))}
             options={courseList}
-            disabled={!filters.degreeId || !filters.semisterId}
+            disabled={!filters.degreeId || !filters.semesterId}
             nameKeyPrefix="course"
             getOption={(c) => ({
               id: String(c._id || c.id),
@@ -2561,9 +2561,9 @@ export default function AllActivities() {
                   degreeMap[d] ||
                   (typeof d === "string" ? shortId(d) : "Degree")
               );
-              const semisterNames = semesterIds.map(
+              const semesterNames = semesterIds.map(
                 (s) =>
-                  semisterMap[s] ||
+                  semesterMap[s] ||
                   (typeof s === "string" ? shortId(s) : "Semester")
               );
               const courseNames = courseIds.map(
@@ -2687,7 +2687,7 @@ export default function AllActivities() {
 
                           {/* Context */}
                           {(degreeNames.length ||
-                            semisterNames.length ||
+                            semesterNames.length ||
                             courseNames.length) && (
                             <p className="text-sm text-gray-600 flex items-center">
                               <FaUniversity className="mr-1 text-indigo-500" />
@@ -2700,12 +2700,12 @@ export default function AllActivities() {
                                     {degreeNames.join(", ")}
                                   </>
                                 ) : null}
-                                {semisterNames.length ? (
+                                {semesterNames.length ? (
                                   <>
                                     <span className="ml-2 font-medium">
                                       Semesters:
                                     </span>{" "}
-                                    {semisterNames.join(", ")}
+                                    {semesterNames.join(", ")}
                                   </>
                                 ) : null}
                                 {courseNames.length ? (

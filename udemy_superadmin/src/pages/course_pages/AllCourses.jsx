@@ -37,7 +37,7 @@ export default function AllCourses() {
   const [degreeMap, setDegreeMap] = useState({});
   const [categoryMap, setCategoryMap] = useState({});
   const [subCategoryMap, setSubCategoryMap] = useState({});
-  const [semisterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemisterMap] = useState({});
   const [instructorMap, setInstructorMap] = useState({});
 
   const iconStyle = {
@@ -103,7 +103,7 @@ export default function AllCourses() {
               .get(`${globalBackendRoute}/api/all-subcategories`)
               .catch(() => ({ data: { data: [] } })),
             axios
-              .get(`${globalBackendRoute}/api/semisters`, {
+              .get(`${globalBackendRoute}/api/semesters`, {
                 params: { page: 1, limit: 2000 },
               })
               .catch(() => ({ data: { data: [] } })),
@@ -152,7 +152,7 @@ export default function AllCourses() {
           (Array.isArray(list) ? list : []).forEach((s) => {
             const label =
               s.title ||
-              s.semister_name ||
+              s.semester_name ||
               (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
               "Semester";
             map[s._id || s.id] = label;
@@ -440,12 +440,12 @@ export default function AllCourses() {
                 (typeof c?.degree === "object" && c?.degree?.name) ||
                 (typeof c?.degree === "string" ? shortId(c.degree) : "—");
 
-              const semisterName =
-                c?.semisterName ||
-                semisterMap[c?.semester] ||
+              const semesterName =
+                c?.semesterName ||
+                semesterMap[c?.semester] ||
                 (typeof c?.semester === "object" &&
                   (c?.semester?.title ||
-                    c?.semester?.semister_name ||
+                    c?.semester?.semester_name ||
                     (c?.semester?.semNumber
                       ? `Semester ${c?.semester?.semNumber}`
                       : ""))) ||
@@ -580,12 +580,12 @@ export default function AllCourses() {
                             <span className="truncate">
                               <span className="font-medium">Degree:</span>{" "}
                               {degreeName}{" "}
-                              {semisterName ? (
+                              {semesterName ? (
                                 <>
                                   <span className="ml-2 font-medium">
                                     Semester:
                                   </span>{" "}
-                                  {semisterName}
+                                  {semesterName}
                                 </>
                               ) : null}
                             </span>

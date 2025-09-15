@@ -105,7 +105,7 @@ export default function UpdateQuestion() {
 
   // lookups
   const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
+  const [semesters, setSemisters] = useState([]);
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
@@ -199,7 +199,7 @@ export default function UpdateQuestion() {
           fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
             r.json()
           ),
-          fetch(`${API}/api/semisters?page=1&limit=2000`).then((r) => r.json()),
+          fetch(`${API}/api/semesters?page=1&limit=2000`).then((r) => r.json()),
           fetch(`${API}/api/list-courses?page=1&limit=5000`).then((r) =>
             r.json()
           ),
@@ -1596,10 +1596,10 @@ export default function UpdateQuestion() {
                       className="mt-2 w-full rounded-lg border px-4 py-2.5 bg-white"
                     >
                       <option value="">—</option>
-                      {semisters.map((s) => {
+                      {semesters.map((s) => {
                         const label =
                           s.title ||
-                          s.semister_name ||
+                          s.semester_name ||
                           (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
                           "Semister";
                         return (

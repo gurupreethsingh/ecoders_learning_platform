@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import globalBackendRoute from "@/config/Config.js";
 const DEGREES_PATH = "list-degrees";
-const SEMESTERS_PATH = "semisters";
+const SEMESTERS_PATH = "semesters";
 const LIST_COURSES_PATH = "list-courses"; // <- only list endpoint your server provides
 const TOKEN_KEY = "token";
 const CREATE_EXAM_PATH = "create-exam";
@@ -104,10 +104,10 @@ function matchesSemester(course, semId, semesterObject) {
     course.semId,
     course.sem_id,
     course.semesterRef,
-    course.semisterRef,
+    course.semesterRef,
     // ↓ commonly seen with this schema
-    course.semisterId,
-    course.semister_id,
+    course.semesterId,
+    course.semester_id,
   ].map(normalizeId);
 
   if (directFields.includes(s)) return true;
@@ -115,17 +115,17 @@ function matchesSemester(course, semId, semesterObject) {
   if (normalizeId(course.semester?._id) === s) return true;
 
   if (arrayHasId(course.semesters, s)) return true;
-  if (arrayHasId(course.semisters, s)) return true;
+  if (arrayHasId(course.semesters, s)) return true;
   if (arrayHasId(course.semesterIds, s)) return true;
   if (arrayHasId(course.semester_ids, s)) return true;
-  if (arrayHasId(course.semisterIds, s)) return true;
-  if (arrayHasId(course.semister_ids, s)) return true;
+  if (arrayHasId(course.semesterIds, s)) return true;
+  if (arrayHasId(course.semester_ids, s)) return true;
 
   // Heuristic: match "semX" in slug
   const semNum =
     semesterObject?.semNumber ||
-    (typeof semesterObject?.semister_name === "string"
-      ? Number((semesterObject.semister_name.match(/\d+/) || [])[0] || 0)
+    (typeof semesterObject?.semester_name === "string"
+      ? Number((semesterObject.semester_name.match(/\d+/) || [])[0] || 0)
       : 0);
   if (semNum && typeof course.slug === "string") {
     const probe = `sem${semNum}`;
@@ -718,7 +718,7 @@ const CreateExam = () => {
                   .filter((s) => (semMeta[s._id]?.courseCount || 0) > 0)
                   .map((s) => (
                     <option key={s._id} value={s._id}>
-                      {s.semister_name ||
+                      {s.semester_name ||
                         (s.semNumber ? `Sem ${s.semNumber}` : s._id)}
                     </option>
                   ))}
@@ -728,7 +728,7 @@ const CreateExam = () => {
                   .filter((s) => (semMeta[s._id]?.courseCount || 0) === 0)
                   .map((s) => (
                     <option key={s._id} value={s._id} disabled>
-                      {(s.semister_name ||
+                      {(s.semester_name ||
                         (s.semNumber ? `Sem ${s.semNumber}` : s._id)) +
                         " — (no courses yet)"}
                     </option>

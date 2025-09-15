@@ -11,7 +11,7 @@ import {
   FiX,
   FiSend,
 } from "react-icons/fi";
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config";
 
 const AllMessages = () => {
   const API =

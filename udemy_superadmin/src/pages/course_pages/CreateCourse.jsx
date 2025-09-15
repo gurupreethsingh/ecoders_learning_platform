@@ -52,13 +52,13 @@
 // export default function CreateCourse() {
 //   // dropdown data
 //   const [degrees, setDegrees] = useState([]);
-//   const [semisters, setSemisters] = useState([]);
+//   const [semesters, setSemisters] = useState([]);
 //   const [categories, setCategories] = useState([]);
 //   const [subcats, setSubcats] = useState([]);
 
 //   // selection (degree/semester are not sent to course API; just part of flow)
 //   const [degreeId, setDegreeId] = useState("");
-//   const [semisterId, setSemisterId] = useState("");
+//   const [semesterId, setSemisterId] = useState("");
 
 //   // category & subcategory (subcategory optional here)
 //   const [categoryId, setCategoryId] = useState("");
@@ -154,7 +154,7 @@
 //     loadCategories();
 //   }, []);
 
-//   // when degree changes -> load semisters for degree
+//   // when degree changes -> load semesters for degree
 //   useEffect(() => {
 //     if (!degreeId) {
 //       setSemisters([]);
@@ -165,7 +165,7 @@
 //     const loadSemisters = async () => {
 //       try {
 //         const r = await fetch(
-//           `${API}/api/semisters?degree=${encodeURIComponent(
+//           `${API}/api/semesters?degree=${encodeURIComponent(
 //             degreeId
 //           )}&degreeId=${encodeURIComponent(
 //             degreeId
@@ -496,12 +496,12 @@
 //           <Field label="Semister (within selected degree)" required>
 //             <select
 //               className="w-full border rounded-md p-2"
-//               value={semisterId}
+//               value={semesterId}
 //               onChange={(e) => setSemisterId(e.target.value)}
 //               disabled={!degreeId}
 //             >
-//               <option value="">Select semister…</option>
-//               {semisters.map((s) => (
+//               <option value="">Select semester…</option>
+//               {semesters.map((s) => (
 //                 <option key={s._id || s.id} value={s._id || s.id}>
 //                   {s.title || s.name || s.slug || s._id}
 //                 </option>
@@ -1217,13 +1217,13 @@ const PrimaryButton = ({ className = "", ...props }) => (
 export default function CreateCourse() {
   // dropdown data
   const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
+  const [semesters, setSemisters] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcats, setSubcats] = useState([]);
 
   // selection (degree/semester are not sent to course API; just part of flow)
   const [degreeId, setDegreeId] = useState("");
-  const [semisterId, setSemisterId] = useState("");
+  const [semesterId, setSemisterId] = useState("");
 
   // category & subcategory (subcategory optional here)
   const [categoryId, setCategoryId] = useState("");
@@ -1319,7 +1319,7 @@ export default function CreateCourse() {
     loadCategories();
   }, []);
 
-  // when degree changes -> load semisters for degree
+  // when degree changes -> load semesters for degree
   useEffect(() => {
     if (!degreeId) {
       setSemisters([]);
@@ -1330,7 +1330,7 @@ export default function CreateCourse() {
     const loadSemisters = async () => {
       try {
         const r = await fetch(
-          `${API}/api/semisters?degree=${encodeURIComponent(
+          `${API}/api/semesters?degree=${encodeURIComponent(
             degreeId
           )}&degreeId=${encodeURIComponent(
             degreeId
@@ -1682,12 +1682,12 @@ export default function CreateCourse() {
           <Field label="Semister (within selected degree)" required>
             <select
               className="w-full border rounded-md p-2"
-              value={semisterId}
+              value={semesterId}
               onChange={(e) => setSemisterId(e.target.value)}
               disabled={!degreeId}
             >
-              <option value="">Select semister…</option>
-              {semisters.map((s) => (
+              <option value="">Select semester…</option>
+              {semesters.map((s) => (
                 <option key={s._id || s.id} value={s._id || s.id}>
                   {s.title || s.name || s.slug || s._id}
                 </option>

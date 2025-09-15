@@ -89,7 +89,7 @@ const SingleDegree = () => {
     (async () => {
       setSemesters((s) => ({ ...s, loading: true, err: "" }));
       try {
-        const url = `${API}/api/semisters?degree=${encodeURIComponent(
+        const url = `${API}/api/semesters?degree=${encodeURIComponent(
           data._id
         )}&degreeId=${encodeURIComponent(data._id)}`;
         const res = await fetch(url);

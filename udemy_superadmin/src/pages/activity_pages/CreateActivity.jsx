@@ -89,8 +89,8 @@ const getCourseDegreeId = (c) =>
 const getCourseSemesterId = (c) =>
   idOf(c.semester) ||
   idOf(c.semesterId) ||
-  idOf(c.semister) ||
-  idOf(c.semisterId) ||
+  idOf(c.semester) ||
+  idOf(c.semesterId) ||
   idOf(c.semester_ref) ||
   "";
 
@@ -160,7 +160,7 @@ export default function CreateActivity() {
       try {
         const all = [];
         for (const degId of selDegreeIds) {
-          const r = await api.get("/api/semisters", {
+          const r = await api.get("/api/semesters", {
             params: { page: 1, limit: 1000, degreeId: degId, degree: degId },
           });
           const list = r?.data?.data || r?.data || [];
@@ -208,7 +208,7 @@ export default function CreateActivity() {
                 page: 1,
                 limit: 2000,
                 degreeId: degId,
-                semisterId: semId,
+                semesterId: semId,
               },
             });
             const list = r?.data?.data || r?.data || [];
@@ -506,7 +506,7 @@ export default function CreateActivity() {
                 {semesters.map((s) => {
                   const label =
                     s.title ||
-                    s.semister_name ||
+                    s.semester_name ||
                     (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
                     "Semester";
                   return (

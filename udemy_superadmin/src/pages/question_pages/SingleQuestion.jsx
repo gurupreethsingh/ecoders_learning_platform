@@ -124,7 +124,7 @@ export default function SingleQuestion() {
           fetch(`${API}/api/list-degrees?page=1&limit=1000`).then((r) =>
             r.json()
           ),
-          fetch(`${API}/api/semisters?page=1&limit=2000`).then((r) => r.json()),
+          fetch(`${API}/api/semesters?page=1&limit=2000`).then((r) => r.json()),
           fetch(`${API}/api/list-courses?page=1&limit=5000`).then((r) =>
             r.json()
           ),
@@ -141,7 +141,7 @@ export default function SingleQuestion() {
         if (deg.status === "fulfilled")
           setDegreeMap(buildMap(toArr(deg.value), ["name", "title"]));
         if (sem.status === "fulfilled")
-          setSemMap(buildMap(toArr(sem.value), ["title", "semister_name"]));
+          setSemMap(buildMap(toArr(sem.value), ["title", "semester_name"]));
         if (crs.status === "fulfilled")
           setCourseMap(buildMap(toArr(crs.value), ["title", "name"]));
         if (exm.status === "fulfilled")
@@ -184,7 +184,7 @@ export default function SingleQuestion() {
     pretty(degreeId);
   const semName =
     (typeof data?.semester === "object" &&
-      (data?.semester?.title || data?.semester?.semister_name)) ||
+      (data?.semester?.title || data?.semester?.semester_name)) ||
     semMap[semId] ||
     pretty(semId);
   const courseName =

@@ -66,14 +66,14 @@ const toCSV = (arr) =>
 export default function CreateQuestion() {
   // -------- dropdowns / lists --------
   const [degrees, setDegrees] = useState([]);
-  const [semisters, setSemisters] = useState([]);
+  const [semesters, setSemisters] = useState([]);
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
 
   // selection
   const [degreeId, setDegreeId] = useState("");
-  const [semisterId, setSemisterId] = useState("");
+  const [semesterId, setSemisterId] = useState("");
   const [courseId, setCourseId] = useState("");
 
   const [attachTarget, setAttachTarget] = useState("none"); // "none" | "exam" | "quiz"
@@ -167,7 +167,7 @@ export default function CreateQuestion() {
     (async () => {
       try {
         const r = await fetch(
-          `${API}/api/semisters?degree=${encodeURIComponent(
+          `${API}/api/semesters?degree=${encodeURIComponent(
             degreeId
           )}&degreeId=${encodeURIComponent(
             degreeId
@@ -320,7 +320,7 @@ export default function CreateQuestion() {
 
         // relations (optional)
         degree: degreeId || undefined,
-        semester: semisterId || undefined,
+        semester: semesterId || undefined,
         course: courseId || undefined,
 
         // choose one container
@@ -603,12 +603,12 @@ export default function CreateQuestion() {
           <Field label="Semister">
             <select
               className="w-full border rounded-md p-2"
-              value={semisterId}
+              value={semesterId}
               onChange={(e) => setSemisterId(e.target.value)}
               disabled={!degreeId}
             >
               <option value="">(none)</option>
-              {semisters.map((s) => (
+              {semesters.map((s) => (
                 <option key={s._id || s.id} value={s._id || s.id}>
                   {s.title || s.name || s.slug || s._id}
                 </option>

@@ -211,7 +211,7 @@ export default function AllInstructors() {
         setCourseMap(coMap);
       } catch {}
       try {
-        const se = await axios.get(makeURL("/api/semisters"), {
+        const se = await axios.get(makeURL("/api/semesters"), {
           params: { page: 1, limit: 5000 },
         });
         const seArr = extractArray(se.data);
@@ -219,7 +219,7 @@ export default function AllInstructors() {
         seArr.forEach((x) => {
           const id = x?._id || x?.id;
           const label =
-            x?.semister_name ||
+            x?.semester_name ||
             (x?.semNumber ? `Semester ${x.semNumber}` : x?.slug);
           if (id) seMap[id] = label || "Semister";
         });
@@ -397,7 +397,7 @@ export default function AllInstructors() {
       categories: new Set(),
       subcategories: new Set(),
       courses: new Set(),
-      semisters: new Set(),
+      semesters: new Set(),
     };
 
     const pushIds = (s, v) => {
@@ -426,12 +426,12 @@ export default function AllInstructors() {
     pushIds("courses", u.courses);
     if (u.assignments?.courses) pushIds("courses", u.assignments.courses);
 
-    pushIds("semisters", u.semester);
-    pushIds("semisters", u.semisterId);
-    pushIds("semisters", u.semisters);
-    pushIds("semisters", u.semester);
-    pushIds("semisters", u.semesterId);
-    pushIds("semisters", u.semesters);
+    pushIds("semesters", u.semester);
+    pushIds("semesters", u.semesterId);
+    pushIds("semesters", u.semesters);
+    pushIds("semesters", u.semester);
+    pushIds("semesters", u.semesterId);
+    pushIds("semesters", u.semesters);
 
     const toPairs = (set, map, fallback) =>
       Array.from(set).map((id) => ({
@@ -444,7 +444,7 @@ export default function AllInstructors() {
       categories: toPairs(ids.categories, catMap, "Category"),
       subcategories: toPairs(ids.subcategories, subcatMap, "Subcategory"),
       courses: toPairs(ids.courses, courseMap, "Course"),
-      semisters: toPairs(ids.semisters, semMap, "Semister"),
+      semesters: toPairs(ids.semesters, semMap, "Semister"),
     };
   };
 
@@ -604,7 +604,7 @@ export default function AllInstructors() {
                 categories: new Set(),
                 subcategories: new Set(),
                 courses: new Set(),
-                semisters: new Set(),
+                semesters: new Set(),
               };
               const pushIds = (s, v) => {
                 asArray(v)
@@ -634,12 +634,12 @@ export default function AllInstructors() {
               if (u.assignments?.courses)
                 pushIds("courses", u.assignments.courses);
 
-              pushIds("semisters", u.semester);
-              pushIds("semisters", u.semisterId);
-              pushIds("semisters", u.semisters);
-              pushIds("semisters", u.semester);
-              pushIds("semisters", u.semesterId);
-              pushIds("semisters", u.semesters);
+              pushIds("semesters", u.semester);
+              pushIds("semesters", u.semesterId);
+              pushIds("semesters", u.semesters);
+              pushIds("semesters", u.semester);
+              pushIds("semesters", u.semesterId);
+              pushIds("semesters", u.semesters);
 
               const toPairs = (set, map, fallback) =>
                 Array.from(set).map((id) => ({
@@ -657,7 +657,7 @@ export default function AllInstructors() {
                   "Subcategory"
                 ),
                 courses: toPairs(ids.courses, courseMap, "Course"),
-                semisters: toPairs(ids.semisters, semMap, "Semister"),
+                semesters: toPairs(ids.semesters, semMap, "Semister"),
               };
 
               const renderPairsLocal = (pairs) => {
@@ -796,7 +796,7 @@ export default function AllInstructors() {
 
                             <div className="text-xs mt-1">
                               <span className="font-medium">Semisters: </span>
-                              {renderPairsLocal(assoc.semisters)}
+                              {renderPairsLocal(assoc.semesters)}
                             </div>
                           </div>
                         </div>

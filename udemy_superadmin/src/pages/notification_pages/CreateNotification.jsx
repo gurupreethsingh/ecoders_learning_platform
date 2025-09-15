@@ -194,7 +194,7 @@ export default function CreateNotification() {
 
     const loadSemesters = async () => {
       try {
-        const r = await fetch(`${API}/api/semisters`, {
+        const r = await fetch(`${API}/api/semesters`, {
           headers: authHeaders(),
         });
         const j = await r.json();

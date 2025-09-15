@@ -4,7 +4,7 @@ import { MdEdit } from "react-icons/md";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config";
 import ModernTextInput from "../../components/common_components/MordernTextInput";
 
 export default function SingleSubCategory() {

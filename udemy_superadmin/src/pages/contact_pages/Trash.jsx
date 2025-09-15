@@ -1,7 +1,7 @@
 // src/pages/contact_pages/Trash.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { FiTrash2, FiRefreshCcw, FiSearch } from "react-icons/fi";
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config";
 
 const Trash = () => {
   const API =

@@ -138,12 +138,12 @@ export default function AllNotifications() {
 
   // lookup maps for rendering (context names)
   const [degreeMap, setDegreeMap] = useState({});
-  const [semisterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemisterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
 
   // cascading lists
   const [degreeList, setDegreeList] = useState([]);
-  const [semisterList, setSemisterList] = useState([]);
+  const [semesterList, setSemisterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
 
   // bulk selection
@@ -220,7 +220,7 @@ export default function AllNotifications() {
     }
     (async () => {
       try {
-        const res = await api.get(`/api/semisters`, {
+        const res = await api.get(`/api/semesters`, {
           params: {
             page: 1,
             limit: 1000,
@@ -236,7 +236,7 @@ export default function AllNotifications() {
         sl.forEach((s) => {
           const label =
             s.title ||
-            s.semister_name ||
+            s.semester_name ||
             (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
             "Semister";
           map[s._id || s.id] = label;
@@ -268,7 +268,7 @@ export default function AllNotifications() {
             page: 1,
             limit: 1000,
             degreeId: filters.context_degree,
-            semisterId: filters.context_semester,
+            semesterId: filters.context_semester,
           },
         });
         if (!alive) return;
@@ -1028,13 +1028,13 @@ export default function AllNotifications() {
             label="Semister (context)"
             value={filters.context_semester}
             onChange={(v) => setFilters((f) => ({ ...f, context_semester: v }))}
-            options={semisterList}
+            options={semesterList}
             disabled={!filters.context_degree}
             getOption={(s) => ({
               id: s._id || s.id,
               name:
                 s.title ||
-                s.semister_name ||
+                s.semester_name ||
                 (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
                 "Semister",
             })}
@@ -1155,11 +1155,11 @@ export default function AllNotifications() {
 
               const ctxSemName =
                 (typeof n?.context?.semester === "string" &&
-                  (semisterMap[n.context.semester] ||
+                  (semesterMap[n.context.semester] ||
                     shortId(n.context.semester))) ||
                 (typeof n?.context?.semester === "object" &&
                   (n.context.semester?.title ||
-                    n.context.semester?.semister_name ||
+                    n.context.semester?.semester_name ||
                     (n.context.semester?.semNumber
                       ? `Semister ${n.context.semester?.semNumber}`
                       : ""))) ||

@@ -329,7 +329,7 @@ export default function SingleInstructor() {
       const needSemLookup =
         (instData?.semesters && instData.semesters.length) ||
         looksLikeObjectId(instData?.semester) ||
-        looksLikeObjectId(instData?.semisterId) ||
+        looksLikeObjectId(instData?.semesterId) ||
         looksLikeObjectId(instData?.semesterId);
 
       const needCourseLookup =
@@ -363,7 +363,7 @@ export default function SingleInstructor() {
       if (needSemLookup) {
         tasks.push(
           axios
-            .get(`${globalBackendRoute}/api/semisters`, {
+            .get(`${globalBackendRoute}/api/semesters`, {
               params: { page: 1, limit: 5000 },
             })
             .then((res) => {
@@ -372,7 +372,7 @@ export default function SingleInstructor() {
               arr.forEach((s) => {
                 const _id = s?._id || s?.id;
                 const label =
-                  s?.semister_name ||
+                  s?.semester_name ||
                   (s?.semNumber ? `Semester ${s.semNumber}` : s?.slug) ||
                   "Semister";
                 if (_id) map[_id] = label;
@@ -468,7 +468,7 @@ export default function SingleInstructor() {
         (typeof item === "object" &&
           (item.title ||
             item.name ||
-            item.semister_name ||
+            item.semester_name ||
             item.code ||
             item.slug)) ||
         (idVal && map[idVal]) ||
@@ -489,7 +489,7 @@ export default function SingleInstructor() {
   const semesterPairs = toPairs(
     inst.semesters ||
       inst.semester ||
-      inst.semisterId ||
+      inst.semesterId ||
       inst.semester ||
       inst.semesterId,
     semMap,

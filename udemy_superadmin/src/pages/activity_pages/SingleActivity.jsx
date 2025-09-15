@@ -95,10 +95,10 @@ const extractContextIds = (a) => {
   const semesterIds = []
     .concat(
       c.semesters || [],
-      c.semisterIds || [],
+      c.semesterIds || [],
       c.semester || [],
-      c.semister || [],
-      a?.semisterId || [],
+      c.semester || [],
+      a?.semesterId || [],
       a?.semesterId || []
     )
     .map(asId)
@@ -163,7 +163,7 @@ export default function SingleActivity() {
       try {
         const [dRes, sRes, cRes] = await Promise.allSettled([
           api.get("/api/list-degrees", { params: { page: 1, limit: 1000 } }),
-          api.get("/api/semisters", { params: { page: 1, limit: 5000 } }),
+          api.get("/api/semesters", { params: { page: 1, limit: 5000 } }),
           api.get("/api/list-courses", { params: { page: 1, limit: 10000 } }),
         ]);
 
@@ -186,7 +186,7 @@ export default function SingleActivity() {
             if (key)
               map[key] =
                 s.title ||
-                s.semister_name ||
+                s.semester_name ||
                 (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
                 "Semester";
           });

@@ -17,7 +17,7 @@ import {
   FiRefreshCcw,
   FiFlag,
 } from "react-icons/fi";
-import globalBackendRoute from "../../config/config";
+import globalBackendRoute from "../../config/Config";
 
 const ReplyMessage = () => {
   const { id } = useParams();

@@ -1311,7 +1311,7 @@ const UpdateCourse = () => {
                         const label =
                           s.title ||
                           s.semester_name ||
-                          s.semister_name || // tolerate old field
+                          s.semester_name || // tolerate old field
                           (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
                           "Semester";
                         return (

@@ -98,8 +98,8 @@ const getCourseDegreeId = (c) =>
 const getCourseSemesterId = (c) =>
   idOf(c.semester) ||
   idOf(c.semesterId) ||
-  idOf(c.semister) ||
-  idOf(c.semisterId) ||
+  idOf(c.semester) ||
+  idOf(c.semesterId) ||
   idOf(c.semester_ref) ||
   "";
 
@@ -114,10 +114,10 @@ const extractContextIds = (a) => {
   const semesterIds = []
     .concat(
       c.semesters || [],
-      c.semisterIds || [],
+      c.semesterIds || [],
       c.semester || [],
-      c.semister || [],
-      a?.semisterId || [],
+      c.semester || [],
+      a?.semesterId || [],
       a?.semesterId || []
     )
     .map(idOf)
@@ -249,7 +249,7 @@ export default function UpdateActivity() {
       try {
         const all = [];
         for (const degId of selDegreeIds) {
-          const r = await api.get("/api/semisters", {
+          const r = await api.get("/api/semesters", {
             params: { page: 1, limit: 2000, degreeId: degId, degree: degId },
           });
           const list = r?.data?.data || r?.data || [];
@@ -294,7 +294,7 @@ export default function UpdateActivity() {
                 page: 1,
                 limit: 5000,
                 degreeId: degId,
-                semisterId: semId,
+                semesterId: semId,
               },
             });
             const list = r?.data?.data || r?.data || [];
@@ -637,7 +637,7 @@ export default function UpdateActivity() {
                 {semesters.map((s) => {
                   const label =
                     s.title ||
-                    s.semister_name ||
+                    s.semester_name ||
                     (s.semNumber ? `Semester ${s.semNumber}` : s.slug) ||
                     "Semester";
                   return (

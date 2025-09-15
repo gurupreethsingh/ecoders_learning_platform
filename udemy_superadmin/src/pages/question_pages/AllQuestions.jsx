@@ -72,7 +72,7 @@ export default function AllQuestions() {
 
   // lookup maps for rendering
   const [degreeMap, setDegreeMap] = useState({});
-  const [semisterMap, setSemisterMap] = useState({});
+  const [semesterMap, setSemisterMap] = useState({});
   const [courseMap, setCourseMap] = useState({});
   const [quizMap, setQuizMap] = useState({});
   const [examMap, setExamMap] = useState({});
@@ -80,7 +80,7 @@ export default function AllQuestions() {
 
   // cascading lists
   const [degreeList, setDegreeList] = useState([]);
-  const [semisterList, setSemisterList] = useState([]);
+  const [semesterList, setSemisterList] = useState([]);
   const [courseList, setCourseList] = useState([]);
   const [quizList, setQuizList] = useState([]);
   const [examList, setExamList] = useState([]);
@@ -88,7 +88,7 @@ export default function AllQuestions() {
   // filters
   const [filters, setFilters] = useState({
     degreeId: "",
-    semisterId: "",
+    semesterId: "",
     courseId: "",
     quizId: "",
     examId: "",
@@ -175,7 +175,7 @@ export default function AllQuestions() {
     setExamList([]);
     setFilters((f) => ({
       ...f,
-      semisterId: "",
+      semesterId: "",
       courseId: "",
       quizId: "",
       examId: "",
@@ -188,7 +188,7 @@ export default function AllQuestions() {
 
     (async () => {
       try {
-        const res = await axios.get(`${globalBackendRoute}/api/semisters`, {
+        const res = await axios.get(`${globalBackendRoute}/api/semesters`, {
           params: {
             page: 1,
             limit: 1000,
@@ -205,7 +205,7 @@ export default function AllQuestions() {
         sl.forEach((s) => {
           const label =
             s.title ||
-            s.semister_name ||
+            s.semester_name ||
             (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
             "Semister";
           map[s._id || s.id] = label;
@@ -231,7 +231,7 @@ export default function AllQuestions() {
     setExamList([]);
     setFilters((f) => ({ ...f, courseId: "", quizId: "", examId: "" }));
 
-    if (!filters.degreeId || !filters.semisterId) {
+    if (!filters.degreeId || !filters.semesterId) {
       setCourseMap({});
       return;
     }
@@ -243,7 +243,7 @@ export default function AllQuestions() {
             page: 1,
             limit: 1000,
             degreeId: filters.degreeId,
-            semisterId: filters.semisterId,
+            semesterId: filters.semesterId,
           },
         });
         if (!alive) return;
@@ -264,7 +264,7 @@ export default function AllQuestions() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.semisterId]);
+  }, [filters.semesterId]);
 
   /** Course -> Quizzes + Exams */
   useEffect(() => {
@@ -291,10 +291,10 @@ export default function AllQuestions() {
 
         // exams by degree+semester+course
         const examPromise =
-          filters.degreeId && filters.semisterId && filters.courseId
+          filters.degreeId && filters.semesterId && filters.courseId
             ? axios
                 .get(
-                  `${globalBackendRoute}/api/get-by-degree-semester-course/${filters.degreeId}/${filters.semisterId}/${filters.courseId}`
+                  `${globalBackendRoute}/api/get-by-degree-semester-course/${filters.degreeId}/${filters.semesterId}/${filters.courseId}`
                 )
                 .catch(() => ({ data: { data: [] } }))
             : Promise.resolve({ data: { data: [] } });
@@ -355,7 +355,7 @@ export default function AllQuestions() {
 
         // cascading filters
         if (filters.degreeId) params.degreeId = filters.degreeId;
-        if (filters.semisterId) params.semisterId = filters.semisterId;
+        if (filters.semesterId) params.semesterId = filters.semesterId;
         if (filters.courseId) params.courseId = filters.courseId;
         if (filters.quizId) params.quizId = filters.quizId;
         if (filters.examId) params.examId = filters.examId;
@@ -585,7 +585,7 @@ export default function AllQuestions() {
   const resetFilters = () =>
     setFilters({
       degreeId: "",
-      semisterId: "",
+      semesterId: "",
       courseId: "",
       quizId: "",
       examId: "",
@@ -673,15 +673,15 @@ export default function AllQuestions() {
           {/* Semister (depends on Degree) */}
           <FilterSelect
             label="Semister"
-            value={filters.semisterId}
-            onChange={(v) => setFilters((f) => ({ ...f, semisterId: v }))}
-            options={semisterList}
+            value={filters.semesterId}
+            onChange={(v) => setFilters((f) => ({ ...f, semesterId: v }))}
+            options={semesterList}
             disabled={!filters.degreeId}
             getOption={(s) => ({
               id: s._id || s.id,
               name:
                 s.title ||
-                s.semister_name ||
+                s.semester_name ||
                 (s.semNumber ? `Semister ${s.semNumber}` : s.slug) ||
                 "Semister",
             })}
@@ -693,7 +693,7 @@ export default function AllQuestions() {
             value={filters.courseId}
             onChange={(v) => setFilters((f) => ({ ...f, courseId: v }))}
             options={courseList}
-            disabled={!filters.degreeId || !filters.semisterId}
+            disabled={!filters.degreeId || !filters.semesterId}
             getOption={(c) => ({
               id: c._id || c.id,
               name: c.title || c.name || "Untitled Course",
@@ -720,7 +720,7 @@ export default function AllQuestions() {
             onChange={(v) => setFilters((f) => ({ ...f, examId: v }))}
             options={examList}
             disabled={
-              !filters.degreeId || !filters.semisterId || !filters.courseId
+              !filters.degreeId || !filters.semesterId || !filters.courseId
             }
             getOption={(ex) => ({
               id: ex._id || ex.id,
@@ -848,11 +848,11 @@ export default function AllQuestions() {
                   (q?.degree?.name || q?.degree?.title)) ||
                 (typeof q?.degree === "string" ? shortId(q.degree) : "—");
 
-              const semisterName =
-                semisterMap[q?.semester] ||
+              const semesterName =
+                semesterMap[q?.semester] ||
                 (typeof q?.semester === "object" &&
                   (q?.semester?.title ||
-                    q?.semester?.semister_name ||
+                    q?.semester?.semester_name ||
                     (q?.semester?.semNumber
                       ? `Semister ${q?.semester?.semNumber}`
                       : ""))) ||
@@ -1008,12 +1008,12 @@ export default function AllQuestions() {
                                   )
                                 </span>
                               )}
-                              {semisterName ? (
+                              {semesterName ? (
                                 <>
                                   <span className="ml-2 font-medium">
                                     Semister:
                                   </span>{" "}
-                                  {semisterName}{" "}
+                                  {semesterName}{" "}
                                   {q?.semester && (
                                     <span className="text-xs text-gray-500">
                                       (
