@@ -931,7 +931,7 @@ const MainLayout = () => {
 />
 
 <Route
-  path="/single-student-admission/:id"
+  path="/single-admission/:id"
   element={
     <PrivateRoute allowedRoles={["superadmin"]}>
       <PageTitle title="Admission Details">
@@ -942,7 +942,7 @@ const MainLayout = () => {
 />
 
 <Route
-  path="/update-student-admission/:id"
+  path="/update-admission/:id"
   element={
     <PrivateRoute allowedRoles={["superadmin"]}>
       <PageTitle title="Update Student Admission">
