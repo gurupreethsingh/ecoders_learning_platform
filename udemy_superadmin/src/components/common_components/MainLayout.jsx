@@ -107,6 +107,20 @@ import AllActivities from "../../pages/activity_pages/AllActivities";
 import SingleActivity from "../../pages/activity_pages/SingleActivity";
 import UpdateActivity from "../../pages/activity_pages/UpdateActivity";
 
+// student admission routes — imports
+import CreateAdmission from "../../pages/student_admission_pages/CreateAdmission";
+import AllAdmissions from "../../pages/student_admission_pages/AllAdmissions";
+import SingleStudentAdmission from "../../pages/student_admission_pages/SingleStudentAdmission";
+import UpdateStudentAdmission from "../../pages/student_admission_pages/UpdateStudentAdmission";
+import TransferAdmission from "../../pages/student_admission_pages/TransferAdmission";
+import BulkAdmissions from "../../pages/student_admission_pages/BulkAdmissions";
+import AdmissionsAnalytics from "../../pages/student_admission_pages/AdmissionsAnalytics";
+import AdmissionsCanceled from "../../pages/student_admission_pages/AdmissionsCanceled";
+// Prefer this (rename the file if needed):
+import AdmissionsExport from "../../pages/student_admission_pages/AdmissionsExport";
+// If your file is currently named AsmissionsExport.jsx, use this instead:
+// import AdmissionsExport from "../../pages/student_admission_pages/AsmissionsExport";
+
 const MainLayout = () => {
   return (
     <div id="app-scroll" className="h-full overflow-y-auto">
@@ -649,7 +663,7 @@ const MainLayout = () => {
           />
 
           <Route
-            path="/all-quizes"
+            path="/all-quizzes"
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <PageTitle title="All Quizzes">
@@ -891,6 +905,108 @@ const MainLayout = () => {
               </PrivateRoute>
             }
           />
+
+
+          {/* student admission routes */}
+<Route
+  path="/create-admission"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Create Admission">
+        <CreateAdmission />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/all-admissions"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="All Admissions">
+        <AllAdmissions />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/single-student-admission/:id"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Admission Details">
+        <SingleStudentAdmission />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/update-student-admission/:id"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Update Student Admission">
+        <UpdateStudentAdmission />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/transfer-admission/:id"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Transfer Admission">
+        <TransferAdmission />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/bulk-admissions"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Bulk Admissions">
+        <BulkAdmissions />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/admissions-analytics"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Admissions Analytics">
+        <AdmissionsAnalytics />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/admissions-export"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Admissions Export">
+        <AdmissionsExport />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/admissions-canceled"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Canceled / Withdrawn Admissions">
+        <AdmissionsCanceled />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
 
           {/* 404s */}
           <Route

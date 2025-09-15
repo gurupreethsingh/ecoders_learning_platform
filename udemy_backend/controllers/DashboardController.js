@@ -6,6 +6,7 @@ const Blog = require("../models/BlogModel");
 const Course = require("../models/CourseModel");
 const Contact = require("../models/ContactModel");
 const { Activity } = require("../models/ActivityModel");
+const StudentAdmission = require("../models/StudentAdmissionModel");
 
 // Notification model may export a named "Notification"
 const {
@@ -40,6 +41,7 @@ const DEFAULT_COUNTS = {
   subcategories: 0,
   users: 0,
   students: 0,
+  admissions: 0,
 };
 
 const safeCount = async (fn) => {
@@ -74,6 +76,7 @@ exports.getDashboardCounts = async (req, res) => {
     questions: () => (Question ? Question.countDocuments({}) : 0),
     students: () => User.countDocuments({ role: "student" }),
     instructors: () => User.countDocuments({ role: "instructor" }),
+    admissions: () => StudentAdmission.countDocuments({ isDeleted: { $ne: true } }),
   };
 
   try {

@@ -67,7 +67,8 @@ const DEFAULT_COUNT_KEYS = {
   subcategories: 0,
   users: 0,
   students: 0,
-  activities: 0, // <-- keep activities visible even if API misses it
+  activities: 0,
+  admissions:0,
 };
 
 const SuperadminDashboard = () => {
@@ -431,6 +432,7 @@ const SuperadminDashboard = () => {
                   icon: <FaCog className="text-indigo-600" />,
                   path: `/profile/${userId}`,
                 },
+
                 {
                   label: "Add Blog",
                   icon: <FaPlus className="text-red-600" />,
@@ -491,6 +493,12 @@ const SuperadminDashboard = () => {
                   icon: <FaPlus className="text-purple-800" />,
                   path: "/create-activity",
                 },
+                {
+  label: "Create Admission",
+  icon: <FaPlus className="text-indigo-600" />,
+  path: "/create-admission",
+},
+
               ]}
             />
           }
