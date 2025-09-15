@@ -162,6 +162,92 @@ const normalizeAssignmentActivity = (raw) => {
   };
 };
 
+
+/* ------------------- UPDATED: robust degree resolution ------------------- */
+
+// Match your routes that include `/slug/` in the path.
+const fetchDegreeDetails = async (idOrSlug) => {
+  // by id
+  try {
+    const r1 = await axios.get(
+      `${API}/get-degree-by-id/slug/${idOrSlug}`,
+      auth()
+    );
+    const d = r1?.data?.data || r1?.data;
+    if (d) return normalizeDegree(d);
+  } catch {}
+
+  // by slug
+  try {
+    const r2 = await axios.get(
+      `${API}/get-degree-by-slug/slug/${idOrSlug}`,
+      auth()
+    );
+    const d = r2?.data?.data || r2?.data;
+    if (d) return normalizeDegree(d);
+  } catch {}
+
+  // fall back: scan list
+  try {
+    const r3 = await axios.get(
+      `${API}/list-degrees?page=1&limit=2000`,
+      auth()
+    );
+    const list = Array.isArray(r3?.data?.data)
+      ? r3.data.data
+      : Array.isArray(r3?.data)
+      ? r3.data
+      : [];
+    const found = list.find(
+      (d) =>
+        String(d?._id) === String(idOrSlug) ||
+        String(d?.id) === String(idOrSlug) ||
+        String(d?.slug) === String(idOrSlug) ||
+        String(d?.code) === String(idOrSlug)
+    );
+    if (found) return normalizeDegree(found);
+  } catch {}
+
+  return normalizeDegree({ _id: idOrSlug, name: "Degree" });
+};
+
+// Prefer user.degree; else take latest admission.intendedEnrollment.degree
+const resolveDegreeForUser = async (uid, userObj) => {
+  const idFromUser =
+    safeId(userObj, "degree", "degreeId", "program", "programId") ||
+    userObj?.degree ||
+    userObj?.degreeId ||
+    null;
+
+  if (idFromUser) return await fetchDegreeDetails(idFromUser);
+
+  try {
+    const res = await axios.get(`${API}/list-admissions`, {
+      params: {
+        userId: uid,
+        page: 1,
+        limit: 1,
+        sortBy: "createdAt",
+        sortDir: "desc",
+      },
+      ...auth(),
+    });
+    const list = Array.isArray(res?.data?.data)
+      ? res.data.data
+      : Array.isArray(res?.data)
+      ? res.data
+      : [];
+    const doc = list[0];
+    const degId =
+      safeId(doc?.intendedEnrollment, "degree") ||
+      doc?.intendedEnrollment?.degree ||
+      null;
+    if (degId) return await fetchDegreeDetails(degId);
+  } catch {}
+
+  throw new Error("Degree not found for this user.");
+};
+
 /* ---------------- Main Component ---------------- */
 export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
@@ -194,38 +280,17 @@ export default function StudentDashboard() {
       setLoading(true);
       setErr("");
       try {
-        // 1) Identify current user
         const uid = getTokenUserId();
         if (!uid) throw new Error("Not logged in.");
 
-        // /api prefix FIXED here and below
         const userRes = await axios.get(`${API}/getUserById/${uid}`, auth());
         const user = userRes?.data?.data || userRes?.data || {};
-        const userDegreeId =
-          safeId(user, "degree", "degreeId", "program", "programId") ||
-          user?.degree ||
-          user?.degreeId ||
-          null;
 
-        // 2) Degree (details)
-        let degreeObj = null;
-        if (userDegreeId) {
-          try {
-            const degRes = await axios.get(
-              `${API}/get-degree-by-id/slug/${userDegreeId}`,
-              auth()
-            );
-            const degRaw = degRes?.data?.data || degRes?.data || null;
-            degreeObj = normalizeDegree(degRaw || { _id: userDegreeId });
-          } catch {
-            degreeObj = normalizeDegree({ _id: userDegreeId });
-          }
-        }
+        const degreeObj = await resolveDegreeForUser(uid, user);
         if (!degreeObj?.id) throw new Error("Degree not found for this user.");
         if (!alive) return;
         setDegree(degreeObj);
 
-        // 3) Semesters (all, then filter by degree)
         const semRes = await axios.get(
           `${API}/semesters?page=1&limit=2000`,
           auth()
@@ -242,11 +307,9 @@ export default function StudentDashboard() {
         if (!alive) return;
         setSemesters(degSem);
 
-        // Auto-select first semester
         const firstSemId = degSem[0]?.id || null;
         setSelectedSemesterId((prev) => prev || firstSemId);
 
-        // 4) Courses (we’ll filter client-side by degree + semester)
         const courseRes = await axios.get(
           `${API}/list-courses?page=1&limit=2000`,
           auth()
@@ -260,7 +323,6 @@ export default function StudentDashboard() {
         if (!alive) return;
         setCourses(allCourses);
 
-        // 5) Activities for current user (assignments/progress)
         const aRes = await axios.get(`${API}/my-activity-assignments`, auth());
         const aRaw = Array.isArray(aRes?.data?.data)
           ? aRes.data.data
@@ -429,9 +491,9 @@ export default function StudentDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6">
-      {/* Top App Header */}
+      {/* Top App Header (stacked on mobile, two columns on large) */}
       <header className="border rounded-xl bg-white p-4 md:p-5 mb-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           {/* Left: Title + Degree + Semester */}
           <div className="flex flex-col md:flex-row md:items-center md:gap-4 min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 shrink-0">
@@ -478,16 +540,16 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Right: Search + Tabs */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-[320px]">
+          {/* Right: Search + Tabs (stack vertically on mobile) */}
+          <div className="flex flex-col gap-3 w-full">
+            <div className="relative w-full">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search courses or activities…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full border border-gray-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 px-10 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm"
+                className="w-full rounded-full border border-gray-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm"
               />
             </div>
             <div className="flex items-center gap-2 overflow-x-auto">
