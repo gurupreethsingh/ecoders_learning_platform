@@ -725,3 +725,629 @@ export default function AllCourses() {
     </div>
   );
 }
+
+//
+
+//
+
+//
+
+// // src/pages/courses/AllCourses.jsx
+// import React, { useEffect, useMemo, useState } from "react";
+// import { Link, useNavigate } from "react-router-dom";
+// import axios from "axios";
+// import { FaThList, FaThLarge, FaTh, FaSearch } from "react-icons/fa";
+// import { FiChevronDown, FiChevronRight } from "react-icons/fi";
+// import globalBackendRoute from "../../config/Config";
+
+// // --------------------------- helpers / normalizers ---------------------------
+// const API = `${globalBackendRoute}/api`;
+
+// const firstNonEmpty = (...vals) =>
+//   vals.find((v) => v !== undefined && v !== null && String(v).trim() !== "");
+
+// const safeId = (obj) => {
+//   if (!obj) return null;
+//   if (typeof obj === "string") return obj;
+//   if (typeof obj === "object") return obj._id || obj.id || null;
+//   return null;
+// };
+
+// const normalizeDegree = (raw) => ({
+//   id: raw?._id || raw?.id || null,
+//   name:
+//     firstNonEmpty(raw?.name, raw?.degree_name, raw?.title, "Degree") ||
+//     "Degree",
+//   slug: raw?.slug || null,
+// });
+
+// const normalizeSemester = (raw) => ({
+//   id: raw?._id || raw?.id || null,
+//   name:
+//     firstNonEmpty(
+//       raw?.name,
+//       raw?.semester_name,
+//       raw?.title,
+//       raw?.slug && `Sem ${raw.slug}`,
+//       raw?.semNumber && `Sem ${raw.semNumber}`
+//     ) || "Semester",
+//   degreeId: safeId(raw?.degree) || raw?.degreeId || null,
+//   slug: raw?.slug || null,
+// });
+
+// const normalizeCourse = (raw) => ({
+//   id: raw?._id || raw?.id || null,
+//   title: firstNonEmpty(raw?.title, raw?.name, raw?.code, "Course") || "Course",
+//   degreeId: safeId(raw?.degree) || raw?.degreeId || null,
+//   semesterId: safeId(raw?.semester) || raw?.semesterId || null,
+//   level: raw?.level || raw?.difficulty || null, // optional facets if you have them
+//   accessType: raw?.access || raw?.accessType || null,
+//   featured: !!raw?.featured,
+// });
+
+// // --------------------------------- page -------------------------------------
+// export default function AllCourses() {
+//   const [degrees, setDegrees] = useState([]);
+//   const [semesters, setSemesters] = useState([]);
+//   const [courses, setCourses] = useState([]);
+
+//   // sidebar expand/collapse state by degreeId
+//   const [openDegreeIds, setOpenDegreeIds] = useState(new Set());
+
+//   // selection state
+//   const [selectedDegreeId, setSelectedDegreeId] = useState(null);
+//   const [selectedSemesterId, setSelectedSemesterId] = useState(null);
+
+//   // top filters
+//   const [view, setView] = useState("grid"); // list | card | grid
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [rowsPerPage, setRowsPerPage] = useState(12);
+//   const [page, setPage] = useState(1);
+
+//   const navigate = useNavigate();
+
+//   // ------------------------------ fetch data ------------------------------
+//   useEffect(() => {
+//     const load = async () => {
+//       try {
+//         const [degRes, semRes, crsRes] = await Promise.all([
+//           axios.get(`${API}/list-degrees`),
+//           axios.get(`${API}/semesters?page=1&limit=2000`),
+//           axios.get(`${API}/list-courses?page=1&limit=5000`),
+//         ]);
+
+//         const degList = Array.isArray(degRes?.data?.data)
+//           ? degRes.data.data
+//           : Array.isArray(degRes?.data)
+//           ? degRes.data
+//           : [];
+//         const semList = Array.isArray(semRes?.data?.data)
+//           ? semRes.data.data
+//           : Array.isArray(semRes?.data)
+//           ? semRes.data
+//           : [];
+//         const crsList = Array.isArray(crsRes?.data?.data)
+//           ? crsRes.data.data
+//           : Array.isArray(crsRes?.data)
+//           ? crsRes.data
+//           : [];
+
+//         setDegrees(degList.map(normalizeDegree));
+//         setSemesters(semList.map(normalizeSemester));
+//         setCourses(crsList.map(normalizeCourse));
+//       } catch (e) {
+//         console.error("Failed to load degrees/semesters/courses", e);
+//       }
+//     };
+//     load();
+//   }, []);
+
+//   // ------------------------------ derived ------------------------------
+//   const semestersByDegree = useMemo(() => {
+//     const map = new Map();
+//     for (const s of semesters) {
+//       const key = String(s.degreeId || "");
+//       if (!map.has(key)) map.set(key, []);
+//       map.get(key).push(s);
+//     }
+//     // Optional: stable ordering by name/id
+//     for (const arr of map.values()) {
+//       arr.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+//     }
+//     return map;
+//   }, [semesters]);
+
+//   const degreeName = useMemo(() => {
+//     const d = degrees.find((x) => String(x.id) === String(selectedDegreeId));
+//     return d?.name || "All Degrees";
+//   }, [degrees, selectedDegreeId]);
+
+//   // right-panel semester dropdown options (based on selected degree)
+//   const degreeSemesters = useMemo(() => {
+//     if (!selectedDegreeId) return [];
+//     return semestersByDegree.get(String(selectedDegreeId)) || [];
+//   }, [selectedDegreeId, semestersByDegree]);
+
+//   // master filter: degree + semester
+//   const filteredByDegreeSemester = useMemo(() => {
+//     // If nothing selected: show all courses across degrees/semesters
+//     if (!selectedDegreeId && !selectedSemesterId) return courses;
+
+//     // If degree selected but not semester: show all courses under that degree
+//     if (selectedDegreeId && !selectedSemesterId) {
+//       return courses.filter(
+//         (c) => String(c.degreeId) === String(selectedDegreeId)
+//       );
+//     }
+
+//     // If a semester is selected, that implies a degree constraint as well
+//     return courses.filter(
+//       (c) =>
+//         String(c.degreeId) === String(selectedDegreeId) &&
+//         String(c.semesterId) === String(selectedSemesterId)
+//     );
+//   }, [courses, selectedDegreeId, selectedSemesterId]);
+
+//   // search filter
+//   const filteredBySearch = useMemo(() => {
+//     const q = searchQuery.trim().toLowerCase();
+//     if (!q) return filteredByDegreeSemester;
+//     const words = q.split(/\s+/).filter(Boolean);
+//     if (!words.length) return filteredByDegreeSemester;
+
+//     return filteredByDegreeSemester.filter((c) => {
+//       const t = String(c.title || "").toLowerCase();
+//       return words.some(
+//         (w) => t.includes(w) || t.includes(w.replace(/s$/, ""))
+//       );
+//     });
+//   }, [filteredByDegreeSemester, searchQuery]);
+
+//   // pagination
+//   useEffect(
+//     () => setPage(1),
+//     [searchQuery, selectedDegreeId, selectedSemesterId, rowsPerPage]
+//   );
+
+//   const total = filteredBySearch.length;
+//   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, rowsPerPage)));
+//   const currentPage = Math.min(page, totalPages);
+//   const startIdx = (currentPage - 1) * rowsPerPage;
+//   const endIdx = Math.min(startIdx + rowsPerPage, total);
+//   const visible = filteredBySearch.slice(startIdx, endIdx);
+
+//   const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
+//   const buildPages = () => {
+//     const pages = [];
+//     const maxBtns = 7;
+//     if (totalPages <= maxBtns) {
+//       for (let i = 1; i <= totalPages; i++) pages.push(i);
+//       return pages;
+//     }
+//     pages.push(1);
+//     if (currentPage > 4) pages.push("…");
+//     const s = Math.max(2, currentPage - 1);
+//     const e = Math.min(totalPages - 1, currentPage + 1);
+//     for (let i = s; i <= e; i++) pages.push(i);
+//     if (currentPage < totalPages - 3) pages.push("…");
+//     pages.push(totalPages);
+//     return pages;
+//   };
+
+//   // ------------------------------ handlers ------------------------------
+//   const toggleDegreeOpen = (degreeId) => {
+//     setOpenDegreeIds((prev) => {
+//       const next = new Set(prev);
+//       const key = String(degreeId);
+//       if (next.has(key)) next.delete(key);
+//       else next.add(key);
+//       return next;
+//     });
+//   };
+
+//   const onSelectDegree = (degreeId) => {
+//     setSelectedDegreeId(degreeId);
+//     setSelectedSemesterId(null); // reset semester selection on degree change
+//     setPage(1);
+//   };
+
+//   const onSelectSemester = (semesterId) => {
+//     setSelectedSemesterId(semesterId || null);
+//     setPage(1);
+//   };
+
+//   const clearSelection = () => {
+//     setSelectedDegreeId(null);
+//     setSelectedSemesterId(null);
+//     setSearchQuery("");
+//     setPage(1);
+//   };
+
+//   // ------------------------------ UI bits ------------------------------
+//   const CourseCard = ({ course }) => {
+//     const go = () => navigate(`/single-course/${course.id}`);
+//     return (
+//       <button
+//         type="button"
+//         onClick={go}
+//         className={`text-left bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition w-full`}
+//         title={course.title}
+//       >
+//         <div className="font-semibold text-gray-900 truncate">
+//           {course.title}
+//         </div>
+//         <div className="mt-1.5 text-xs text-gray-600">
+//           Degree:{" "}
+//           <span className="font-medium">
+//             {degrees.find((d) => String(d.id) === String(course.degreeId))
+//               ?.name || "—"}
+//           </span>
+//         </div>
+//         <div className="mt-0.5 text-[11px] text-gray-500">
+//           <span className="mr-1">Course ID:</span>
+//           <code className="bg-gray-100 border px-1 py-0.5 rounded">
+//             {course.id}
+//           </code>
+//         </div>
+//       </button>
+//     );
+//   };
+
+//   // -------------------------------- render --------------------------------
+//   return (
+//     <div className="p-4 sm:p-6 max-w-7xl mx-auto border-b">
+//       <div className="flex flex-col lg:flex-row gap-6">
+//         {/* -------------------- Left Sidebar: Degrees + Semesters -------------------- */}
+//         <aside className="lg:w-1/4 space-y-4">
+//           {/* Sidebar header */}
+//           <div className="flex items-center justify-between">
+//             <h3 className="text-xl font-bold">Degrees</h3>
+//             <button
+//               onClick={clearSelection}
+//               className="px-2 py-1 text-xs border rounded text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+//               title="Show all courses"
+//             >
+//               Clear
+//             </button>
+//           </div>
+
+//           {/* Scrollable list */}
+//           <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1 custom-scroll">
+//             {degrees.map((deg) => {
+//               const isOpen = openDegreeIds.has(String(deg.id));
+//               const sems = semestersByDegree.get(String(deg.id)) || [];
+//               const isSelected = String(selectedDegreeId) === String(deg.id);
+
+//               return (
+//                 <div
+//                   key={deg.id}
+//                   className={`border rounded transition bg-white ${
+//                     isSelected ? "border-indigo-500" : "border-gray-300"
+//                   }`}
+//                 >
+//                   {/* Degree row */}
+//                   <button
+//                     className={`w-full flex items-center justify-between p-2 rounded-t cursor-pointer ${
+//                       isSelected ? "bg-indigo-50" : "hover:bg-gray-50"
+//                     }`}
+//                     onClick={() => {
+//                       onSelectDegree(deg.id);
+//                       toggleDegreeOpen(deg.id);
+//                     }}
+//                     title={deg.name}
+//                   >
+//                     <div className="text-left min-w-0">
+//                       <div className="font-medium text-sm truncate">
+//                         {deg.name}
+//                       </div>
+//                       <div className="mt-0.5 text-[11px] text-gray-500">
+//                         <span className="mr-1">ID:</span>
+//                         <code className="bg-gray-100 border px-1 py-0.5 rounded">
+//                           {deg.id}
+//                         </code>
+//                       </div>
+//                     </div>
+//                     <FiChevronRight
+//                       className={`ml-2 shrink-0 text-gray-500 transition-transform ${
+//                         isOpen ? "rotate-90" : ""
+//                       }`}
+//                     />
+//                   </button>
+
+//                   {/* Semesters under degree */}
+//                   {isOpen && (
+//                     <div className="px-2 pb-2">
+//                       {sems.length === 0 && (
+//                         <div className="text-xs text-gray-500 px-2 py-1">
+//                           No semesters.
+//                         </div>
+//                       )}
+//                       <div className="mt-1 space-y-1">
+//                         {sems.map((s) => {
+//                           const semSelected =
+//                             String(selectedSemesterId) === String(s.id);
+//                           return (
+//                             <button
+//                               key={s.id}
+//                               onClick={() => {
+//                                 onSelectDegree(deg.id);
+//                                 onSelectSemester(s.id);
+//                               }}
+//                               className={`w-full text-left text-xs px-2 py-1 rounded border ${
+//                                 semSelected
+//                                   ? "bg-indigo-100 text-indigo-800 border-indigo-300"
+//                                   : "hover:bg-gray-50 border-gray-200 text-gray-700"
+//                               }`}
+//                               title={s.name}
+//                             >
+//                               {s.name}
+//                             </button>
+//                           );
+//                         })}
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               );
+//             })}
+
+//             {degrees.length === 0 && (
+//               <div className="text-sm text-gray-500 py-6 text-center">
+//                 No degrees found.
+//               </div>
+//             )}
+//           </div>
+//         </aside>
+
+//         {/* -------------------- Right Panel: Courses + Toolbar -------------------- */}
+//         <section className="flex-1">
+//           {/* Top bar: title + actions + semester dropdown */}
+//           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+//             <div>
+//               <h2 className="text-xl font-bold">
+//                 {selectedSemesterId
+//                   ? "Courses in Selected Semester"
+//                   : selectedDegreeId
+//                   ? "Courses in Selected Degree"
+//                   : "All Courses"}{" "}
+//                 <span className="ml-2 text-gray-500 text-sm">({total})</span>
+//               </h2>
+//               <div className="text-sm text-gray-600 mt-1">
+//                 Showing{" "}
+//                 <span className="font-semibold">
+//                   {total === 0 ? 0 : startIdx + 1}–{endIdx}
+//                 </span>{" "}
+//                 of <span className="font-semibold">{total}</span>
+//               </div>
+//             </div>
+
+//             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+//               {/* Semester dropdown for the selected degree */}
+//               <div className="relative">
+//                 <select
+//                   disabled={!selectedDegreeId}
+//                   value={selectedSemesterId || ""}
+//                   onChange={(e) => onSelectSemester(e.target.value || null)}
+//                   className={`appearance-none pr-8 pl-3 py-2 rounded border text-sm bg-white hover:border-gray-400 cursor-pointer min-w-[220px] ${
+//                     !selectedDegreeId ? "text-gray-400" : "text-gray-800"
+//                   }`}
+//                   title={
+//                     selectedDegreeId
+//                       ? "Select semester"
+//                       : "Select a degree first"
+//                   }
+//                 >
+//                   {!selectedDegreeId && (
+//                     <option value="">Select a degree first</option>
+//                   )}
+//                   {selectedDegreeId && (
+//                     <>
+//                       <option value="">All semesters in this degree</option>
+//                       {degreeSemesters.map((s) => (
+//                         <option key={s.id} value={s.id}>
+//                           {s.name}
+//                         </option>
+//                       ))}
+//                     </>
+//                   )}
+//                 </select>
+//                 <FiChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />
+//               </div>
+
+//               {/* View toggles */}
+//               <div className="flex items-center gap-3 border rounded-full px-3 py-1.5">
+//                 <FaThList
+//                   className={`text-lg cursor-pointer ${
+//                     view === "list" ? "text-indigo-600" : "text-gray-500"
+//                   }`}
+//                   onClick={() => setView("list")}
+//                   title="List view"
+//                 />
+//                 <FaThLarge
+//                   className={`text-lg cursor-pointer ${
+//                     view === "card" ? "text-indigo-600" : "text-gray-500"
+//                   }`}
+//                   onClick={() => setView("card")}
+//                   title="Card view"
+//                 />
+//                 <FaTh
+//                   className={`text-lg cursor-pointer ${
+//                     view === "grid" ? "text-indigo-600" : "text-gray-500"
+//                   }`}
+//                   onClick={() => setView("grid")}
+//                   title="Grid view"
+//                 />
+//               </div>
+
+//               {/* Search */}
+//               <div className="relative">
+//                 <FaSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+//                 <input
+//                   type="text"
+//                   placeholder="Search courses…"
+//                   className="pl-8 pr-3 py-2 border rounded-md w-40 sm:w-56 text-sm"
+//                   value={searchQuery}
+//                   onChange={(e) => setSearchQuery(e.target.value)}
+//                 />
+//               </div>
+
+//               {/* Rows selector */}
+//               <div className="flex items-center gap-2">
+//                 <label className="text-sm text-gray-600">Rows:</label>
+//                 <select
+//                   className="text-sm border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+//                   value={rowsPerPage}
+//                   onChange={(e) => setRowsPerPage(Number(e.target.value) || 12)}
+//                 >
+//                   {[6, 12, 24, 48].map((n) => (
+//                     <option key={n} value={n}>
+//                       {n}
+//                     </option>
+//                   ))}
+//                 </select>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Courses list/grid */}
+//           <div
+//             className={
+//               view === "list"
+//                 ? "space-y-3"
+//                 : view === "card"
+//                 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+//                 : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+//             }
+//           >
+//             {visible.map((course) =>
+//               view === "list" ? (
+//                 <Link
+//                   key={course.id}
+//                   to={`/single-course/${course.id}`}
+//                   className="block"
+//                 >
+//                   <div className="bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition flex items-center justify-between">
+//                     <div className="min-w-0">
+//                       <div className="font-semibold text-gray-900 truncate">
+//                         {course.title}
+//                       </div>
+//                       <div className="mt-1 text-xs text-gray-600">
+//                         Degree:{" "}
+//                         <span className="font-medium">
+//                           {degrees.find(
+//                             (d) => String(d.id) === String(course.degreeId)
+//                           )?.name || "—"}
+//                         </span>
+//                       </div>
+//                     </div>
+//                     <div className="ml-3 text-[11px] text-gray-500 shrink-0">
+//                       <code className="bg-gray-100 border px-1.5 py-0.5 rounded">
+//                         {course.id}
+//                       </code>
+//                     </div>
+//                   </div>
+//                 </Link>
+//               ) : (
+//                 <CourseCard key={course.id} course={course} />
+//               )
+//             )}
+//           </div>
+
+//           {/* Empty state */}
+//           {total === 0 && (
+//             <div className="text-center text-gray-500 mt-8">
+//               No courses found.
+//             </div>
+//           )}
+
+//           {/* Pagination */}
+//           {totalPages > 1 && (
+//             <div className="mt-8 flex items-center justify-center gap-2">
+//               <button
+//                 onClick={() => goTo(1)}
+//                 disabled={currentPage === 1}
+//                 className={`px-3 py-1 rounded-full border text-sm ${
+//                   currentPage === 1
+//                     ? "text-gray-400 border-gray-200 cursor-not-allowed"
+//                     : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+//                 }`}
+//               >
+//                 « First
+//               </button>
+//               <button
+//                 onClick={() => goTo(currentPage - 1)}
+//                 disabled={currentPage === 1}
+//                 className={`px-3 py-1 rounded-full border text-sm ${
+//                   currentPage === 1
+//                     ? "text-gray-400 border-gray-200 cursor-not-allowed"
+//                     : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+//                 }`}
+//               >
+//                 ‹ Prev
+//               </button>
+
+//               {buildPages().map((p, idx) =>
+//                 p === "…" ? (
+//                   <span
+//                     key={`dots-${idx}`}
+//                     className="px-2 text-gray-400 select-none"
+//                   >
+//                     …
+//                   </span>
+//                 ) : (
+//                   <button
+//                     key={p}
+//                     onClick={() => goTo(p)}
+//                     className={`min-w-[36px] px-3 py-1 rounded-full border text-sm transition ${
+//                       p === currentPage
+//                         ? "bg-indigo-600 text-white border-indigo-600 shadow"
+//                         : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+//                     }`}
+//                   >
+//                     {p}
+//                   </button>
+//                 )
+//               )}
+
+//               <button
+//                 onClick={() => goTo(currentPage + 1)}
+//                 disabled={currentPage === totalPages}
+//                 className={`px-3 py-1 rounded-full border text-sm ${
+//                   currentPage === totalPages
+//                     ? "text-gray-400 border-gray-200 cursor-not-allowed"
+//                     : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+//                 }`}
+//               >
+//                 Next ›
+//               </button>
+//               <button
+//                 onClick={() => goTo(totalPages)}
+//                 disabled={currentPage === totalPages}
+//                 className={`px-3 py-1 rounded-full border text-sm ${
+//                   currentPage === totalPages
+//                     ? "text-gray-400 border-gray-200 cursor-not-allowed"
+//                     : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+//                 }`}
+//               >
+//                 Last »
+//               </button>
+//             </div>
+//           )}
+//         </section>
+//       </div>
+
+//       {/* Optional: light custom scrollbar for the sidebar */}
+//       <style>{`
+//         .custom-scroll::-webkit-scrollbar { width: 8px; }
+//         .custom-scroll::-webkit-scrollbar-thumb {
+//           background-color: rgba(99, 102, 241, 0.25);
+//           border-radius: 9999px;
+//         }
+//         .custom-scroll::-webkit-scrollbar-track {
+//           background-color: rgba(0,0,0,0.03);
+//           border-radius: 9999px;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// }
