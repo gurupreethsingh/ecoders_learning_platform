@@ -1,13 +1,10 @@
 // src/pages/student/StudentDashboard.jsx
-
 import React, { useEffect, useMemo, useRef, useState, memo } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import {
   FiChevronDown,
   FiSearch,
-  FiGrid,
-  FiList,
   FiCheckCircle,
   FiClock,
   FiXCircle,
@@ -112,6 +109,22 @@ const safeId = (obj, ...keys) => {
   return null;
 };
 
+const firstId = (v) =>
+  Array.isArray(v) && v.length ? String(v[0]) : v ? String(v) : null;
+
+const mapStatus = (s) => {
+  const t = String(s || "").toLowerCase();
+  if (t === "completed") return "completed";
+  if (t === "inprogress" || t === "ongoing" || t === "new") return "ongoing";
+  return "pending";
+};
+
+// NEW: helper to pull a number out of a string (e.g., "Semester 3" -> 3)
+const extractNum = (v) => {
+  const m = String(v ?? "").match(/\d+/);
+  return m ? Number(m[0]) : null;
+};
+
 const normalizeDegree = (raw) => ({
   id: raw?._id || raw?.id || null,
   name:
@@ -119,6 +132,7 @@ const normalizeDegree = (raw) => ({
     "Degree",
 });
 
+// UPDATED: add `order` for sorting (Sem 1, Sem 2, ...)
 const normalizeSemester = (raw) => ({
   id: raw?._id || raw?.id || null,
   name:
@@ -133,6 +147,11 @@ const normalizeSemester = (raw) => ({
     safeId(raw, "degree", "degreeId", "program", "programId") ||
     (typeof raw?.degree === "string" && raw.degree) ||
     null,
+  order:
+    (raw?.semNumber != null ? Number(raw.semNumber) : null) ??
+    extractNum(raw?.slug) ??
+    extractNum(raw?.name) ??
+    9999, // unknowns go to the end
 });
 
 const normalizeCourse = (raw) => ({
@@ -157,35 +176,50 @@ const normalizeCourse = (raw) => ({
     ) || 0,
 });
 
+/* ---------- Per-user assignment -> ALWAYS key by underlying activity id ---------- */
 const normalizeAssignmentActivity = (raw) => {
   const act = raw?.activity || {};
-  const course = act?.course || raw?.course || {};
-  const courseId =
-    (typeof course === "object" && (course?._id || course?.id)) ||
-    (typeof course === "string" && course) ||
+  const ctx = act?.context || {};
+
+  const activityId =
+    act?._id ||
+    act?.id ||
+    raw?.activityId ||
     null;
 
   return {
-    id:
-      raw?._id ||
-      raw?.id ||
-      act?._id ||
-      act?.id ||
-      raw?.activityId ||
-      "activity",
+    id: String(activityId || "activity"),
     title:
-      firstNonEmpty(
-        act?.title,
-        act?.name,
-        raw?.title,
-        raw?.label,
-        "Activity"
-      ) || "Activity",
-    status: (raw?.status || act?.status || "pending").toLowerCase(),
-    courseId,
-    due:
-      firstNonEmpty(raw?.due, raw?.dueDate, act?.due, act?.dueDate, null) ||
-      null,
+      firstNonEmpty(act?.title, act?.name, raw?.title, raw?.label, "Activity") ||
+      "Activity",
+    status: mapStatus(raw?.status || act?.status),
+    degreeId: firstId(ctx.degrees),
+    semesterId: firstId(ctx.semesters),
+    due: act?.endAt || ctx?.endAt || null,
+  };
+};
+
+/* Direct activity (role-targeted, from /list-activities) */
+const normalizeActivity = (raw) => {
+  const ctx = raw?.context || {};
+  const now = Date.now();
+  const start = raw?.startAt ? new Date(raw.startAt).getTime() : null;
+  const end = raw?.endAt ? new Date(raw.endAt).getTime() : null;
+
+  let status = "pending";
+  if (String(raw?.status).toLowerCase() === "published") {
+    const hasStarted = start == null || now >= start;
+    const notEnded = end == null || now <= end;
+    status = hasStarted && notEnded ? "ongoing" : "pending";
+  }
+
+  return {
+    id: raw?._id || raw?.id || "activity",
+    title: firstNonEmpty(raw?.title, "Activity") || "Activity",
+    status,
+    degreeId: firstId(ctx.degrees),
+    semesterId: firstId(ctx.semesters),
+    due: raw?.endAt || ctx?.endAt || null,
   };
 };
 
@@ -271,22 +305,23 @@ export default function StudentDashboard() {
   const [semesters, setSemesters] = useState([]);
   const [selectedSemesterId, setSelectedSemesterId] = useState(null);
 
-  // Courses & Activities
+  // Courses (for the left section UI)
   const [courses, setCourses] = useState([]);
-  const [assignments, setAssignments] = useState([]);
+
+  // Activities
+  const [assignmentActivities, setAssignmentActivities] = useState([]); // /my-activity-assignments
+  const [roleActivities, setRoleActivities] = useState([]); // /list-activities (roles=student, degree, semester)
+  const [activitiesTab, setActivitiesTab] = useState("ongoing"); // ongoing | completed | pending | all
 
   // Attendance & Gradebook (right panel)
   const [attendancePct, setAttendancePct] = useState(null);
-  const [gradebook, setGradebook] = useState([]); // [{courseId, courseTitle, exams:[{examId, examTitle, marks, maxMarks}]}]
+  const [gradebook, setGradebook] = useState([]);
   const [gradebookOpen, setGradebookOpen] = useState(false);
 
-  // “Current course” for the right panel
+  // “Current course” (left section)
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
-  // Activities status tab (within section)
-  const [activitiesTab, setActivitiesTab] = useState("ongoing"); // ongoing | completed | pending | all
-
-  // Search (debounced for perf)
+  // Search (debounced)
   const [rawSearch, setRawSearch] = useState("");
   const [search, setSearch] = useState("");
   useEffect(() => {
@@ -299,7 +334,7 @@ export default function StudentDashboard() {
   const coursesRef = useRef(null);
   const activitiesRef = useRef(null);
 
-  /* --------------------------- Load data chain --------------------------- */
+  /* --------------------------- Initial load --------------------------- */
   useEffect(() => {
     let alive = true;
     const load = async () => {
@@ -317,25 +352,30 @@ export default function StudentDashboard() {
         if (!alive) return;
         setDegree(degreeObj);
 
-        const semRes = await axios.get(
-          `${API}/semesters?page=1&limit=2000`,
-          auth()
-        );
+        // Semesters for this degree (SORT and pick Sem 1 by default)
+        const semRes = await axios.get(`${API}/semesters?page=1&limit=2000`, auth());
         const semListRaw = Array.isArray(semRes?.data?.data)
           ? semRes.data.data
           : Array.isArray(semRes?.data)
           ? semRes.data
           : [];
         const allSem = semListRaw.map(normalizeSemester);
-        const degSem = allSem.filter(
-          (s) => String(s.degreeId) === String(degreeObj.id)
-        );
+        const degSem = allSem
+          .filter((s) => String(s.degreeId) === String(degreeObj.id))
+          .sort(
+            (a, b) =>
+              (a.order ?? 9999) - (b.order ?? 9999) ||
+              String(a.name).localeCompare(String(b.name))
+          );
         if (!alive) return;
         setSemesters(degSem);
 
-        const firstSemId = degSem[0]?.id || null;
-        setSelectedSemesterId((prev) => prev || firstSemId);
+        // Choose Semester 1 if present; else first in sorted list
+        const sem1 = degSem.find((s) => s.order === 1);
+        const defaultSemId = sem1?.id ?? degSem[0]?.id ?? null;
+        setSelectedSemesterId((prev) => prev || defaultSemId);
 
+        // Courses (UI only)
         const courseRes = await axios.get(
           `${API}/list-courses?page=1&limit=2000`,
           auth()
@@ -349,6 +389,7 @@ export default function StudentDashboard() {
         if (!alive) return;
         setCourses(allCourses);
 
+        // Per-user assignments
         const aRes = await axios.get(`${API}/my-activity-assignments`, auth());
         const aRaw = Array.isArray(aRes?.data?.data)
           ? aRes.data.data
@@ -357,7 +398,7 @@ export default function StudentDashboard() {
           : [];
         const myActs = aRaw.map(normalizeAssignmentActivity);
         if (!alive) return;
-        setAssignments(myActs);
+        setAssignmentActivities(myActs);
       } catch (e) {
         if (alive)
           setErr(
@@ -374,6 +415,43 @@ export default function StudentDashboard() {
       alive = false;
     };
   }, []);
+
+  /* -------- Fetch role-targeted activities for selected degree + semester ------- */
+  useEffect(() => {
+    let alive = true;
+    const fetchRoleActivities = async () => {
+      try {
+        if (!degree?.id || !selectedSemesterId) return;
+        const params = {
+          page: 1,
+          limit: 2000,
+          audienceType: "roles",
+          roles: "student",
+          role: "student",
+          status: "published",
+          degreeId: degree.id,
+          semesterId: selectedSemesterId,
+        };
+        const lr = await axios.get(`${API}/list-activities`, {
+          params,
+          ...auth(),
+        });
+        const lraw = Array.isArray(lr?.data?.data)
+          ? lr.data.data
+          : Array.isArray(lr?.data)
+          ? lr.data
+          : [];
+        const acts = lraw.map(normalizeActivity);
+        if (alive) setRoleActivities(acts);
+      } catch {
+        if (alive) setRoleActivities([]);
+      }
+    };
+    fetchRoleActivities();
+    return () => {
+      alive = false;
+    };
+  }, [degree?.id, selectedSemesterId]);
 
   /* --------------------------- Attendance & Gradebook fetch --------------------------- */
   useEffect(() => {
@@ -437,69 +515,7 @@ export default function StudentDashboard() {
           return;
         }
 
-        const courseIdsThisSem = new Set(
-          courses
-            .filter((c) => String(c.semesterId) === String(selectedSemesterId))
-            .map((c) => String(c.id))
-        );
-
-        const exRes = await axios
-          .get(`${API}/list-exams?page=1&limit=2000`, auth())
-          .catch(() => null);
-        const examsRaw = Array.isArray(exRes?.data?.data)
-          ? exRes.data.data
-          : Array.isArray(exRes?.data)
-          ? exRes.data
-          : [];
-
-        const exams = examsRaw
-          .map((e) => ({
-            examId: e._id || e.id,
-            examTitle: e.title || e.name || "Exam",
-            courseId:
-              safeId(e, "course", "courseId") ||
-              (typeof e?.course === "string" ? e.course : null),
-            maxMarks: Number(e.maxMarks ?? e.total ?? 100),
-          }))
-          .filter((e) => courseIdsThisSem.has(String(e.courseId)));
-
-        const resultsRes = await axios
-          .get(`${API}/my-exam-results?page=1&limit=5000`, auth())
-          .catch(() => null);
-        const resultsRaw = Array.isArray(resultsRes?.data?.data)
-          ? resultsRes.data.data
-          : Array.isArray(resultsRes?.data)
-          ? resultsRes.data
-          : [];
-
-        const resultsMap = new Map();
-        for (const r of resultsRaw) {
-          const k =
-            (r.exam?._id || r.exam?.id || r.examId || r.exam) + "::" + "me";
-          resultsMap.set(k, Number(r.marks ?? r.score ?? 0));
-        }
-
-        const byCourse = new Map();
-        for (const ex of exams) {
-          const k = ex.courseId;
-          if (!byCourse.has(k))
-            byCourse.set(k, {
-              courseId: k,
-              courseTitle:
-                courses.find((c) => String(c.id) === String(k))?.title ||
-                "Course",
-              exams: [],
-            });
-          const myMarks = resultsMap.get((ex.examId || "") + "::me") ?? null;
-          byCourse.get(k).exams.push({
-            examId: ex.examId,
-            examTitle: ex.examTitle,
-            marks: myMarks != null ? Number(myMarks) : 0,
-            maxMarks: ex.maxMarks,
-          });
-        }
-
-        if (alive) setGradebook([...byCourse.values()]);
+        if (alive) setGradebook([]);
       } catch {
         if (alive) setGradebook([]);
       }
@@ -511,8 +527,7 @@ export default function StudentDashboard() {
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSemesterId, courses]);
+  }, [selectedSemesterId]);
 
   /* --------------------------- Derived / Filters -------------------------- */
   const degreeName = degree?.name || "Degree";
@@ -544,49 +559,55 @@ export default function StudentDashboard() {
     }
   }, [semesterCourses, selectedCourseId]);
 
-  const filteredCourses = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return semesterCourses;
-    return semesterCourses.filter((c) =>
-      c.title.toLowerCase().includes(needle)
+  // Merge activities (dedupe by id). Per-user assignment records overwrite role items.
+  const allActivities = useMemo(() => {
+    const map = new Map();
+    for (const a of roleActivities) {
+      if (a?.id) map.set(String(a.id), a);
+    }
+    for (const a of assignmentActivities) {
+      if (a?.id) map.set(String(a.id), a);
+    }
+    return [...map.values()];
+  }, [roleActivities, assignmentActivities]);
+
+  // STRICT degree + semester filter (no course dependency)
+  const degreeSemesterActivities = useMemo(() => {
+    return allActivities.filter(
+      (a) =>
+        String(a.degreeId || "") === String(degree?.id || "") &&
+        String(a.semesterId || "") === String(selectedSemesterId || "")
     );
-  }, [semesterCourses, search]);
+  }, [allActivities, degree?.id, selectedSemesterId]);
 
-  const searchActivities = useMemo(() => {
+  // Search
+  const searchedActivities = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    if (!needle) return assignments;
-    return assignments.filter((a) => a.title.toLowerCase().includes(needle));
-  }, [assignments, search]);
+    if (!needle) return degreeSemesterActivities;
+    return degreeSemesterActivities.filter((a) =>
+      String(a.title || "").toLowerCase().includes(needle)
+    );
+  }, [degreeSemesterActivities, search]);
 
-  const semesterCourseIds = useMemo(
-    () => new Set(semesterCourses.map((c) => String(c.id))),
-    [semesterCourses]
-  );
-
-  const semesterActivities = useMemo(
-    () =>
-      searchActivities.filter((a) => semesterCourseIds.has(String(a.courseId))),
-    [searchActivities, semesterCourseIds]
-  );
-
+  // Tabs
   const tabbedActivities = useMemo(() => {
     const tab = String(activitiesTab || "").toLowerCase();
-    if (tab === "all") return semesterActivities;
-    return semesterActivities.filter((a) => String(a.status) === tab);
-  }, [activitiesTab, semesterActivities]);
+    if (tab === "all") return searchedActivities;
+    return searchedActivities.filter((a) => String(a.status) === tab);
+  }, [activitiesTab, searchedActivities]);
 
   // Right pane stats
   const completedCount = useMemo(
-    () => semesterActivities.filter((a) => a.status === "completed").length,
-    [semesterActivities]
+    () => degreeSemesterActivities.filter((a) => a.status === "completed").length,
+    [degreeSemesterActivities]
   );
   const ongoingCount = useMemo(
-    () => semesterActivities.filter((a) => a.status === "ongoing").length,
-    [semesterActivities]
+    () => degreeSemesterActivities.filter((a) => a.status === "ongoing").length,
+    [degreeSemesterActivities]
   );
   const pendingCount = useMemo(
-    () => semesterActivities.filter((a) => a.status === "pending").length,
-    [semesterActivities]
+    () => degreeSemesterActivities.filter((a) => a.status === "pending").length,
+    [degreeSemesterActivities]
   );
   const incompleteCount = ongoingCount;
   const atRiskCount = pendingCount;
@@ -928,10 +949,7 @@ export default function StudentDashboard() {
             <button
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800"
               onClick={() =>
-                topRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                })
+                topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
             >
               Overview
@@ -939,10 +957,7 @@ export default function StudentDashboard() {
             <button
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800"
               onClick={() =>
-                coursesRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                })
+                coursesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
             >
               Courses
@@ -950,10 +965,7 @@ export default function StudentDashboard() {
             <button
               className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800"
               onClick={() =>
-                activitiesRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                })
+                activitiesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
             >
               Activities
@@ -984,11 +996,11 @@ export default function StudentDashboard() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search courses or activities…"
+              placeholder="Search activities or courses…"
               value={rawSearch}
               onChange={(e) => setRawSearch(e.target.value)}
               className="w-full rounded-full border border-gray-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-              aria-label="Search courses or activities"
+              aria-label="Search activities or courses"
             />
           </div>
         </div>
@@ -1005,22 +1017,22 @@ export default function StudentDashboard() {
           >
             <div className="flex items-center justify-between min-w-0">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate break-words">
-                {degreeSemesters.find((s) => s.id === selectedSemesterId)
-                  ?.name || "Semester"}{" "}
+                {degreeSemesters.find((s) => s.id === selectedSemesterId)?.name ||
+                  "Semester"}{" "}
                 • Courses
               </h2>
             </div>
             <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 sm:gap-3">
-              {filteredCourses.map((c) => (
+              {semesterCourses.map((c) => (
                 <CourseCard key={c.id} c={c} />
               ))}
-              {filteredCourses.length === 0 && (
+              {semesterCourses.length === 0 && (
                 <div className="text-sm text-gray-500">No courses found.</div>
               )}
             </div>
           </section>
 
-          {/* ---------------- ACTIVITIES SECTION ---------------- */}
+          {/* ---------------- ACTIVITIES SECTION (degree + semester) ---------------- */}
           <section
             ref={activitiesRef}
             className="border rounded-xl bg-white p-3 sm:p-4 md:p-5 overflow-hidden scroll-mt-24"
@@ -1049,9 +1061,7 @@ export default function StudentDashboard() {
                   <ActivityCard key={a.id} item={a} />
                 ))}
                 {tabbedActivities.length === 0 && (
-                  <div className="text-sm text-gray-500">
-                    No activities found.
-                  </div>
+                  <div className="text-sm text-gray-500">No activities found.</div>
                 )}
               </div>
             </div>
