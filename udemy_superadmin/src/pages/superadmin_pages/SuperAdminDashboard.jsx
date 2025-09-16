@@ -499,6 +499,12 @@ const SuperadminDashboard = () => {
   path: "/create-admission",
 },
 
+                {
+                  label: "Create Attendance",
+                  icon: <FaPlus className="text-purple-800" />,
+                  path: "/create-attendance",
+                },
+
               ]}
             />
           }

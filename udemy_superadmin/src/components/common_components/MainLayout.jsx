@@ -118,6 +118,7 @@ import AdmissionsAnalytics from "../../pages/student_admission_pages/AdmissionsA
 import AdmissionsCanceled from "../../pages/student_admission_pages/AdmissionsCanceled";
 // Prefer this (rename the file if needed):
 import AdmissionsExport from "../../pages/student_admission_pages/AdmissionsExport";
+import CreateAttendance from "@/pages/attendance_pages/CreateAttendance";
 // If your file is currently named AsmissionsExport.jsx, use this instead:
 // import AdmissionsExport from "../../pages/student_admission_pages/AsmissionsExport";
 
@@ -1002,6 +1003,19 @@ const MainLayout = () => {
     <PrivateRoute allowedRoles={["superadmin"]}>
       <PageTitle title="Canceled / Withdrawn Admissions">
         <AdmissionsCanceled />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+{/* Attendance pages .  */}
+
+<Route
+  path="/create-attendance"
+  element={
+    <PrivateRoute allowedRoles={["superadmin"]}>
+      <PageTitle title="Create Attendance">
+        <CreateAttendance />
       </PageTitle>
     </PrivateRoute>
   }

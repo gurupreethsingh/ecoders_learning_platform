@@ -129,6 +129,11 @@ const deleteCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
+
+
+
+    
+
     // Delete image if it exists
     if (category.category_image) {
       const imagePath = path.join(__dirname, "..", category.category_image);
