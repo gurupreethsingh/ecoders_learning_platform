@@ -44,6 +44,10 @@ import StudentDashboard from "./pages/student_pages/StudentDashboard";
 import AllUserNotifications from "./pages/notification_pages/AllUserNotifications";
 import SingleUserNotification from "./pages/notification_pages/SingleUserNotification";
 
+// attendance pages. 
+import MarkAttendance from "./pages/attendance_pages/MarkAttendance";
+import MyAttendance from "./pages/attendance_pages/MyAttendance";
+
 const PageTitle = ({ title, children }) => {
   useEffect(() => {
     document.title = title ? `${title} | ECODERS` : "ECODERS";
@@ -278,6 +282,63 @@ function App() {
               }
             />
 
+// in your routes file
+<Route
+  path="/mark-attendance"
+  element={
+    <PrivateRoute
+      allowedRoles={["superadmin", "student", "instructor", "teacher", "admin", "user"]}
+    >
+      <PageTitle title="Mark Attendance">
+        <MarkAttendance />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/mark-attendance/:code"
+  element={
+    <PrivateRoute
+      allowedRoles={["superadmin", "student", "instructor", "teacher", "admin", "user"]}
+    >
+      <PageTitle title="Mark Attendance">
+        <MarkAttendance />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/my-attendance"
+  element={
+    <PrivateRoute
+      allowedRoles={["superadmin", "student", "instructor", "teacher", "admin", "user"]}
+    >
+      <PageTitle title="My Attendance">
+        <MyAttendance />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+{/* Optional: deep-link with a code (keep this if you need it) */}
+<Route
+  path="/my-attendance/:code"
+  element={
+    <PrivateRoute
+      allowedRoles={["superadmin", "student", "instructor", "teacher", "admin", "user"]}
+    >
+      <PageTitle title="My Attendance">
+        <MyAttendance />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+
+
+
             <Route
               path="/page-not-found"
               element={
@@ -286,6 +347,10 @@ function App() {
                 </PageTitle>
               }
             />
+
+           
+
+
 
             <Route
               path="/*"

@@ -14,7 +14,7 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 
-import globalBackendRoute from "../../config/Config";
+import globalBackendRoute from "../../config/Config"; // or "../../config/Config.js"
 import { getAuthorizationHeader } from "../../components/auth_components/AuthManager";
 
 const API = globalBackendRoute;
@@ -40,7 +40,7 @@ function toISO(dateStr, timeStr) {
   const [y, m, d] = (dateStr || "").split("-").map((x) => parseInt(x, 10));
   const [hh, mm] = (timeStr || "").split(":").map((x) => parseInt(x, 10));
   if (!y || !m || !d) return null;
-  const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+  const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0);
   return dt.toISOString();
 }
 
@@ -78,6 +78,7 @@ const CreateAttendance = () => {
     let ignore = false;
     (async () => {
       try {
+        // matches your DegreeRoutes: /list-degrees
         const degRes = await axios.get(`${API}/api/list-degrees`, {
           headers: authHeader,
         });
@@ -106,6 +107,7 @@ const CreateAttendance = () => {
     let ignore = false;
     (async () => {
       try {
+        // your working route for listing by degree
         const res = await axios.get(
           `${API}/api/semesters/list-by-degree/${degreeId}`,
           { headers: authHeader }
@@ -135,6 +137,7 @@ const CreateAttendance = () => {
     let ignore = false;
     (async () => {
       try {
+        // your working route for listing by semester
         const res = await axios.get(
           `${API}/api/courses/list-by-semester/${semesterId}`,
           { headers: authHeader }
@@ -195,7 +198,7 @@ const CreateAttendance = () => {
     setBusy(true);
     try {
       if (method === "online") {
-        // Create ONLY an AttendanceLink; Attendance rows are created when students mark.
+        // ↳ POST /create-link (kebab-cased)
         const linkBody = {
           title: title.trim(),
           degreeId: limitToCohort ? degreeId : undefined,
@@ -213,7 +216,7 @@ const CreateAttendance = () => {
         const linkData = linkRes?.data?.data || linkRes?.data;
         setGeneratedLink(linkData);
 
-        // Optional email blast → your backend expects ?courseId= in QS
+        // Optional email blast → POST /send-reminder-for-active-link?courseId=...
         if (sendEmail && linkData?.course) {
           try {
             await axios.post(
@@ -236,10 +239,10 @@ const CreateAttendance = () => {
             : "Link created (inactive).",
         });
       } else {
-        // Manual: no link; you’ll mark students later from manual/bulk screens.
+        // Manual session setup (no API call here—/create-attendance needs a studentId).
         setToast({
           type: "success",
-          msg: "Manual session configured. Use the manual marking screen to mark students.",
+          msg: "Manual session configured. Use the manual/bulk marking screen to mark students.",
         });
       }
     } catch (err) {
@@ -657,8 +660,8 @@ const CreateAttendance = () => {
                       <span className="font-medium">Valid: </span>
                       {new Date(
                         generatedLink.validFrom
-                      ).toLocaleString()} —{" "}
-                      {new Date(generatedLink.validTo).toLocaleString()}
+                      ).toLocaleString()}{" "}
+                      — {new Date(generatedLink.validTo).toLocaleString()}
                     </div>
                   </div>
                 </div>

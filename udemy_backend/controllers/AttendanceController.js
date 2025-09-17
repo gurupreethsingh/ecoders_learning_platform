@@ -1106,3 +1106,125 @@ exports.exportAttendanceCSV = async (req, res) => {
     return bad(res, err.message, "EXPORT_ATTENDANCE_CSV_FAILED", 400);
   }
 };
+
+
+/* ============================ MY ATTENDANCE (STUDENT) ============================ */
+
+/**
+ * GET /api/my-attendance-summary
+ * Query:
+ *  - studentId (optional if you set req.user in authRequired)
+ *  - degreeId, semesterId (recommended)
+ *  - courseId (optional)
+ *  - from, to (ISO datetimes) -> converted to dateFrom/dateTo (date-only)
+ *
+ * Response: { present, total, percentage, breakdownByCourse?: [{courseId, present, total, pct}] }
+ */
+exports.myAttendanceSummary = async (req, res) => {
+  try {
+    const q = req.query || {};
+
+    // If your auth middleware sets req.user, prefer that. Otherwise accept studentId via query.
+    const studentId =
+      parseObjectId(q.studentId) || parseObjectId(req.user?._id);
+    if (!studentId) return bad(res, "studentId required.", "STUDENT_REQUIRED", 400);
+
+    // Build a where clause in terms the DB understands (date-only range)
+    const where = buildAttendanceQuery({
+      studentId: studentId,
+      degreeId: q.degreeId,
+      semesterId: q.semesterId,
+      courseId: q.courseId,
+      status: q.status,                 // optional
+      dateFrom: q.from,                 // map from->dateFrom
+      dateTo: q.to,                     // map to->dateTo
+    });
+
+    // Top-level counts
+    const [total, present] = await Promise.all([
+      Attendance.countDocuments(where),
+      Attendance.countDocuments({ ...where, status: "present" }),
+    ]);
+
+    let breakdownByCourse = [];
+    // Always compute per-course breakdown (frontend can ignore if they want)
+    const rows = await Attendance.aggregate([
+      { $match: where },
+      {
+        $group: {
+          _id: "$course",
+          total: { $sum: 1 },
+          present: {
+            $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    breakdownByCourse = rows.map((r) => ({
+      courseId: r._id,
+      present: r.present || 0,
+      total: r.total || 0,
+      pct:
+        r.total > 0 ? Math.round((Number(r.present || 0) / r.total) * 100) : 0,
+    }));
+
+    const percentage =
+      total > 0 ? Math.round((Number(present || 0) / total) * 100) : 0;
+
+    return ok(res, {
+      present,
+      total,
+      percentage,
+      breakdownByCourse,
+    });
+  } catch (err) {
+    return bad(res, err.message, "MY_ATTENDANCE_SUMMARY_FAILED", 400);
+  }
+};
+
+/**
+ * GET /api/my-attendance-list
+ * Same filters as summary. Returns individual rows (used for CSV and "Daily Log").
+ *
+ * Response: Array<{ _id, courseId, courseTitle?, status, date, markedAt, createdAt }>
+ */
+exports.myAttendanceList = async (req, res) => {
+  try {
+    const q = req.query || {};
+    const studentId =
+      parseObjectId(q.studentId) || parseObjectId(req.user?._id);
+    if (!studentId) return bad(res, "studentId required.", "STUDENT_REQUIRED", 400);
+
+    const where = buildAttendanceQuery({
+      studentId: studentId,
+      degreeId: q.degreeId,
+      semesterId: q.semesterId,
+      courseId: q.courseId,
+      status: q.status,
+      dateFrom: q.from,
+      dateTo: q.to,
+    });
+
+    const items = await Attendance.find(where)
+      .sort({ date: -1, createdAt: -1 })
+      .populate({ path: "course", select: "title name code" })
+      .lean();
+
+    const out = items.map((r) => ({
+      _id: r._id,
+      studentId: r.student,
+      courseId: r.course?._id || r.course,
+      courseTitle: r.course?.title || r.course?.name || r.course?.code || undefined,
+      status: r.status,
+      date: r.date,        // date-only (UTC midnight)
+      markedAt: r.markedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
+
+    return ok(res, out);
+  } catch (err) {
+    return bad(res, err.message, "MY_ATTENDANCE_LIST_FAILED", 400);
+  }
+};
