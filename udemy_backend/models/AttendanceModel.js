@@ -2,44 +2,72 @@
 // Mongoose schemas for Attendance and AttendanceLink
 // - Attendance: a student's mark for a given course & date
 // - AttendanceLink: a short-lived link students can click to auto-mark
+//
+// ONE-TIME DB FIX (run in mongosh to clear old unique index that breaks on null):
+// use ecoders_learning_platform
+// try { db.attendancelinks.dropIndex("code_1"); } catch(e){ print(e.message); }
+// db.attendancelinks.updateMany({ code: null }, { $unset: { code: "" } });
+// db.attendancelinks.updateMany({ code: "" },    { $unset: { code: "" } });
+// db.attendancelinks.createIndex(
+//   { code: 1 },
+//   { unique: true, partialFilterExpression: { code: { $type: "string" } } }
+// );
 
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const { Schema, Types, model } = mongoose;
 
-/* ------------------------ small helpers ------------------------ */
-const PRESENT = "present";
-const ABSENT = "absent";
-const LATE = "late";
-const EXCUSED = "excused";
+/* ------------------------ helpers & enums ------------------------ */
+const ATTENDANCE_STATUS = {
+  PRESENT: "present",
+  ABSENT: "absent",
+  LATE: "late",
+  EXCUSED: "excused",
+};
 
-const METHOD_LINK = "link";
-const METHOD_MANUAL = "manual";
+const ATTENDANCE_METHOD = {
+  LINK: "link",
+  MANUAL: "manual",
+};
 
 /**
  * Normalize any timestamp to a pure date (00:00:00 UTC) for uniqueness.
- * If you prefer local-time days, swap to toLocaleDateString logic.
  */
 function toDateOnlyUTC(d) {
   const dt = d instanceof Date ? d : new Date(d || Date.now());
-  return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
+  return new Date(
+    Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate())
+  );
 }
 
-/** Short, URL-safe code for links (no extra deps). */
-function generateCode(len = 10) {
-  // Node 16+: 'base64url' keeps it URL-safe without replacements
-  return crypto.randomBytes(Math.ceil((len * 3) / 4)).toString("base64url").slice(0, len);
+/** Short, URL-safe random code for links (no ambiguous chars). */
+function generateCandidate(len = 8) {
+  // Base32-ish alphabet without 0/O/1/I for readability
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < len; i++) {
+    out += alphabet[crypto.randomBytes(1)[0] % alphabet.length];
+  }
+  return out;
+}
+
+async function generateUniqueLinkCode(LinkModel, tries = 20) {
+  for (let i = 0; i < tries; i++) {
+    const code = generateCandidate(8);
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await LinkModel.exists({ code });
+    if (!exists) return code;
+  }
+  throw new Error("Could not generate unique link code");
 }
 
 /* ------------------------ AttendanceLink ------------------------ */
-/**
- * One attendance link usually maps to a specific course (and optional degree/semester),
- * and is valid for a time window. Students click it to mark themselves present.
- */
 const AttendanceLinkSchema = new Schema(
   {
-    code: { type: String, unique: true, index: true }, // short id in URL
-    title: { type: String }, // e.g. "CS101 — Lecture 5"
+    // IMPORTANT: do NOT put unique:true on the path; we add a partial unique index below
+    code: { type: String, trim: true, index: true },
+    title: { type: String },
+
     degree: { type: Types.ObjectId, ref: "Degree" },
     semester: { type: Types.ObjectId, ref: "Semester" },
     course: { type: Types.ObjectId, ref: "Course", required: true },
@@ -48,15 +76,32 @@ const AttendanceLinkSchema = new Schema(
     validTo: { type: Date, required: true },
     isActive: { type: Boolean, default: true },
 
-    // Optional constraints
-    maxUsesPerStudent: { type: Number, default: 1 }, // usually 1
+    maxUsesPerStudent: { type: Number, default: 1 },
 
-    // Audit
     createdBy: { type: Types.ObjectId, ref: "User" },
-    createdAt: { type: Date, default: Date.now },
     metadata: { type: Schema.Types.Mixed },
   },
-  { versionKey: false }
+  { timestamps: true, versionKey: false }
+);
+
+// Ensure a non-empty, unique code is present
+AttendanceLinkSchema.pre("validate", async function (next) {
+  try {
+    if (!this.code || typeof this.code !== "string" || !this.code.trim()) {
+      this.code = await generateUniqueLinkCode(this.constructor);
+    } else {
+      this.code = this.code.trim();
+    }
+    next();
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Partial unique index: only enforce uniqueness when code is a string
+AttendanceLinkSchema.index(
+  { code: 1 },
+  { unique: true, partialFilterExpression: { code: { $type: "string" } } }
 );
 
 AttendanceLinkSchema.methods.isCurrentlyValid = function (at = new Date()) {
@@ -79,9 +124,8 @@ AttendanceLinkSchema.statics.createForCourse = async function ({
   maxUsesPerStudent = 1,
   createdBy,
 }) {
-  const code = generateCode(10);
+  // code is auto-generated in pre-validate
   return this.create({
-    code,
     course,
     degree,
     semester,
@@ -95,37 +139,51 @@ AttendanceLinkSchema.statics.createForCourse = async function ({
 };
 
 /* ------------------------ Attendance ------------------------ */
-/**
- * One document per student per course per date.
- * Status defaults to "present" when marked via link, but you can set any.
- */
 const AttendanceSchema = new Schema(
   {
     student: { type: Types.ObjectId, ref: "User", required: true, index: true },
-    degree: { type: Types.ObjectId, ref: "Degree", required: true, index: true },
-    semester: { type: Types.ObjectId, ref: "Semester", required: true, index: true },
-    course: { type: Types.ObjectId, ref: "Course", required: true, index: true },
+    degree: {
+      type: Types.ObjectId,
+      ref: "Degree",
+      required: true,
+      index: true,
+    },
+    semester: {
+      type: Types.ObjectId,
+      ref: "Semester",
+      required: true,
+      index: true,
+    },
+    course: {
+      type: Types.ObjectId,
+      ref: "Course",
+      required: true,
+      index: true,
+    },
 
-    // The "day" of attendance (normalized to date-only UTC for uniqueness)
+    // date-only (UTC) of the class day
     date: { type: Date, required: true, index: true },
 
     status: {
       type: String,
-      enum: [PRESENT, ABSENT, LATE, EXCUSED],
-      default: PRESENT,
+      enum: Object.values(ATTENDANCE_STATUS),
+      default: ATTENDANCE_STATUS.PRESENT,
       index: true,
     },
 
-    // How it was marked
-    method: { type: String, enum: [METHOD_LINK, METHOD_MANUAL], required: true },
+    method: {
+      type: String,
+      enum: Object.values(ATTENDANCE_METHOD),
+      required: true,
+    },
 
-    // When using a link
+    // when marked via link
     link: { type: Types.ObjectId, ref: "AttendanceLink" },
-    linkCodeSnapshot: { type: String }, // store code as plain text for audit
+    linkCodeSnapshot: { type: String },
 
-    // Audit / extra
+    // audit
     markedAt: { type: Date, default: Date.now },
-    markedBy: { type: Types.ObjectId, ref: "User" }, // who performed the action (student or staff)
+    markedBy: { type: Types.ObjectId, ref: "User" },
     ip: { type: String },
     userAgent: { type: String },
     notes: { type: String },
@@ -133,33 +191,27 @@ const AttendanceSchema = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-// Ensure only 1 record per student+course+date
+// one row per student+course+date
 AttendanceSchema.index(
   { student: 1, course: 1, date: 1 },
   { unique: true, name: "uniq_student_course_date" }
 );
 
-// Always normalize "date" to date-only UTC before validate
+// normalize date to date-only UTC
 AttendanceSchema.pre("validate", function (next) {
   if (this.date) this.date = toDateOnlyUTC(this.date);
   next();
 });
 
-/* ---------- handy statics for your controllers/services ---------- */
-
-/**
- * Mark via link click. Validates the link window and enforces 1 entry per student/course/day.
- * - If a record exists for the same day, it will NOT create duplicates (returns the existing doc).
- * - Returns { doc, created: boolean } to tell you if it was new or already present.
- */
+/* ---------- statics ---------- */
 AttendanceSchema.statics.markViaLink = async function ({
-  linkDoc, // AttendanceLink document (already found by code)
+  linkDoc,
   studentId,
   degreeId,
   semesterId,
   ip,
   userAgent,
-  status = PRESENT,
+  status = ATTENDANCE_STATUS.PRESENT,
   at = new Date(),
 }) {
   if (!linkDoc || !linkDoc.isCurrentlyValid(at)) {
@@ -170,7 +222,6 @@ AttendanceSchema.statics.markViaLink = async function ({
 
   const day = toDateOnlyUTC(at);
 
-  // Enforce per-student-per-day uniqueness for this course
   const filter = {
     student: studentId,
     course: linkDoc.course,
@@ -184,7 +235,7 @@ AttendanceSchema.statics.markViaLink = async function ({
       semester: semesterId,
       course: linkDoc.course,
       date: day,
-      method: METHOD_LINK,
+      method: ATTENDANCE_METHOD.LINK,
       status,
       link: linkDoc._id,
       linkCodeSnapshot: linkDoc.code,
@@ -198,24 +249,20 @@ AttendanceSchema.statics.markViaLink = async function ({
   const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
   const doc = await this.findOneAndUpdate(filter, update, opts).lean(false);
 
-  // Was it newly created?
-  const created = doc.createdAt && doc.createdAt.getTime() === doc.updatedAt.getTime();
+  // If you need an explicit "created" flag, compare createdAt vs updatedAt
+  const created =
+    doc.createdAt && doc.createdAt.getTime() === doc.updatedAt.getTime();
   return { doc, created };
 };
 
-/**
- * Manual mark (from the "Mark Attendance" page/tab).
- * - Also enforces 1 entry per student/course/date.
- * - You can set status as needed (present/absent/late/excused)
- */
 AttendanceSchema.statics.markManual = async function ({
   studentId,
   degreeId,
   semesterId,
   courseId,
-  date, // the class day the user selects
-  status = PRESENT,
-  markedBy, // likely same as studentId, or a staff user
+  date,
+  status = ATTENDANCE_STATUS.PRESENT,
+  markedBy,
   ip,
   userAgent,
   notes,
@@ -231,7 +278,7 @@ AttendanceSchema.statics.markManual = async function ({
       course: courseId,
       date: day,
       status,
-      method: METHOD_MANUAL,
+      method: ATTENDANCE_METHOD.MANUAL,
       markedBy: markedBy || studentId,
       ip,
       userAgent,
@@ -252,11 +299,7 @@ const AttendanceLink = model("AttendanceLink", AttendanceLinkSchema);
 module.exports = {
   Attendance,
   AttendanceLink,
-
-  // export enums so controllers stay in sync
-  ATTENDANCE_STATUS: { PRESENT, ABSENT, LATE, EXCUSED },
-  ATTENDANCE_METHOD: { METHOD_LINK, METHOD_MANUAL },
-
-  // helper in case you need it elsewhere
+  ATTENDANCE_STATUS,
+  ATTENDANCE_METHOD,
   toDateOnlyUTC,
 };

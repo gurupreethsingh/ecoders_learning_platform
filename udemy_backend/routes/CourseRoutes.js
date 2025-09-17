@@ -47,4 +47,10 @@ router.delete(
 router.post("/courses/:id/ratings", CourseController.addOrUpdateRating);
 router.post("/courses/:id/threads", CourseController.addThread);
 router.post("/courses/:id/threads/:tIndex/replies", CourseController.addReply);
+
+/* ✅ NEW: list courses by semester for CreateAttendance */
+router.get(
+  "/courses/list-by-semester/:semesterId",
+  CourseController.listBySemester
+);
 module.exports = router;

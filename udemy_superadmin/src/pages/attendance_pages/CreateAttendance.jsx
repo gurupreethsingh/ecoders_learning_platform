@@ -1,6 +1,6 @@
 // src/pages/admin/attendance/CreateAttendance.jsx
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import {
   FiCalendar,
@@ -10,16 +10,12 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiAlertTriangle,
-  FiSend,
   FiRefreshCcw,
   FiChevronDown,
 } from "react-icons/fi";
 
 import globalBackendRoute from "../../config/Config";
-import {
-  getAuthorizationHeader,
-  getTokenUserId,
-} from "../../components/auth_components/AuthManager";
+import { getAuthorizationHeader } from "../../components/auth_components/AuthManager";
 
 const API = globalBackendRoute;
 
@@ -28,22 +24,19 @@ const METHODS = [
   { value: "online", label: "Online (students click a link)" },
 ];
 
-const DEFAULT_WINDOW_MINUTES = 60; // default link validity
+const DEFAULT_WINDOW_MINUTES = 60;
 
 function fmtLocalDateInput(d = new Date()) {
-  // yyyy-MM-dd for <input type="date">
   const z = (n) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
 }
 
 function fmtLocalTimeInput(d = new Date()) {
-  // HH:mm for <input type="time">
   const z = (n) => n.toString().padStart(2, "0");
   return `${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 
 function toISO(dateStr, timeStr) {
-  // Interprets date+time as local, returns ISO string
   const [y, m, d] = (dateStr || "").split("-").map((x) => parseInt(x, 10));
   const [hh, mm] = (timeStr || "").split(":").map((x) => parseInt(x, 10));
   if (!y || !m || !d) return null;
@@ -52,71 +45,58 @@ function toISO(dateStr, timeStr) {
 }
 
 const CreateAttendance = () => {
-  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState(null); // {type: 'success'|'error'|'warn', msg: string}
+  const [toast, setToast] = useState(null);
+
   const [degrees, setDegrees] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [courses, setCourses] = useState([]);
 
-  // form state
   const [title, setTitle] = useState("");
-  const [method, setMethod] = useState("online"); // default to online per your flow
+  const [method, setMethod] = useState("online");
   const [degreeId, setDegreeId] = useState("");
   const [semesterId, setSemesterId] = useState("");
-  const [courseId, setCourseId] = useState(""); // optional
+  const [courseId, setCourseId] = useState("");
   const [sessionDate, setSessionDate] = useState(fmtLocalDateInput(new Date()));
   const [startTime, setStartTime] = useState(fmtLocalTimeInput(new Date()));
   const [endTime, setEndTime] = useState(
-    fmtLocalTimeInput(
-      new Date(Date.now() + DEFAULT_WINDOW_MINUTES * 60 * 1000)
-    )
+    fmtLocalTimeInput(new Date(Date.now() + DEFAULT_WINDOW_MINUTES * 60 * 1000))
   );
   const [notes, setNotes] = useState("");
 
-  // publish/link options (only for online)
   const [publishNow, setPublishNow] = useState(true);
   const [windowMinutes, setWindowMinutes] = useState(DEFAULT_WINDOW_MINUTES);
-  const [limitToCohort, setLimitToCohort] = useState(true); // tie link to degree/semester
+  const [limitToCohort, setLimitToCohort] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
 
-  // response/link preview
-  const [createdAttendance, setCreatedAttendance] = useState(null);
-  const [generatedLink, setGeneratedLink] = useState(null); // { _id, code, url, validFrom, validTill, isActive }
+  const [generatedLink, setGeneratedLink] = useState(null);
 
   const authHeader = useMemo(() => getAuthorizationHeader(), []);
 
   /* ------------------------- Data bootstrapping ------------------------- */
   useEffect(() => {
     let ignore = false;
-
-    async function boot() {
+    (async () => {
       try {
-        const [degRes] = await Promise.all([
-          axios.get(`${API}/list-degrees`, { headers: authHeader }),
-        ]);
-
+        const degRes = await axios.get(`${API}/api/list-degrees`, {
+          headers: authHeader,
+        });
         if (ignore) return;
-        setDegrees(degRes?.data?.data || degRes?.data || []);
-
-        // Optionally pre-select single degree for faster UX
-        if (degRes?.data?.data?.length === 1) {
-          setDegreeId(degRes.data.data[0]._id);
-        }
+        const degreeList = degRes?.data?.data || degRes?.data || [];
+        setDegrees(degreeList);
+        if (degreeList.length === 1) setDegreeId(degreeList[0]._id);
       } catch (err) {
         setToast({
           type: "error",
           msg: err?.response?.data?.message || "Failed to load degrees",
         });
       }
-    }
-    boot();
+    })();
     return () => {
       ignore = true;
     };
-  }, [API]);
+  }, [API, authHeader]);
 
-  // when degree changes, load semesters
   useEffect(() => {
     if (!degreeId) {
       setSemesters([]);
@@ -124,10 +104,10 @@ const CreateAttendance = () => {
       return;
     }
     let ignore = false;
-    async function fetchSemesters() {
+    (async () => {
       try {
         const res = await axios.get(
-          `${API}/semesters/list-by-degree/${degreeId}`,
+          `${API}/api/semesters/list-by-degree/${degreeId}`,
           { headers: authHeader }
         );
         if (ignore) return;
@@ -140,14 +120,12 @@ const CreateAttendance = () => {
           msg: err?.response?.data?.message || "Failed to load semesters",
         });
       }
-    }
-    fetchSemesters();
+    })();
     return () => {
       ignore = true;
     };
-  }, [degreeId]);
+  }, [degreeId, API, authHeader]);
 
-  // when semester changes, load courses (optional)
   useEffect(() => {
     if (!semesterId) {
       setCourses([]);
@@ -155,10 +133,10 @@ const CreateAttendance = () => {
       return;
     }
     let ignore = false;
-    async function fetchCourses() {
+    (async () => {
       try {
         const res = await axios.get(
-          `${API}/courses/list-by-semester/${semesterId}`,
+          `${API}/api/courses/list-by-semester/${semesterId}`,
           { headers: authHeader }
         );
         if (ignore) return;
@@ -170,18 +148,16 @@ const CreateAttendance = () => {
           msg: err?.response?.data?.message || "Failed to load courses",
         });
       }
-    }
-    fetchCourses();
+    })();
     return () => {
       ignore = true;
     };
-  }, [semesterId]);
+  }, [semesterId, API, authHeader]);
 
   /* --------------------------- Core submission -------------------------- */
   const handleCreate = async () => {
     setToast(null);
 
-    // basic validation
     if (!title.trim()) {
       setToast({ type: "warn", msg: "Please enter a title." });
       return;
@@ -198,16 +174,16 @@ const CreateAttendance = () => {
       return;
     }
 
-    // online: need validity window to generate link
     const validFromISO =
       method === "online" ? toISO(sessionDate, startTime) : null;
-    const validTillISO =
-      method === "online" ? toISO(sessionDate, endTime) : null;
+    const validToISO = method === "online" ? toISO(sessionDate, endTime) : null;
 
     if (
       method === "online" &&
       publishNow &&
-      (!validFromISO || !validTillISO || new Date(validTillISO) <= new Date(validFromISO))
+      (!validFromISO ||
+        !validToISO ||
+        new Date(validToISO) <= new Date(validFromISO))
     ) {
       setToast({
         type: "warn",
@@ -216,72 +192,60 @@ const CreateAttendance = () => {
       return;
     }
 
-    const payload = {
-      title: title.trim(),
-      method, // "manual" | "online"
-      degree: degreeId,
-      semester: semesterId,
-      course: courseId || null,
-      sessionDate: toISO(sessionDate, "00:00"), // normalize date-only in UTC
-      notes: notes?.trim() || "",
-      // create as published if manual, or if online+publishNow
-      status: method === "manual" ? "published" : publishNow ? "published" : "draft",
-      createdBy: getTokenUserId(),
-    };
-
     setBusy(true);
     try {
-      // 1) Create attendance record
-      const createRes = await axios.post(`${API}/create-attendance`, payload, {
-        headers: authHeader,
-      });
-      const created = createRes?.data?.data || createRes?.data;
-      setCreatedAttendance(created);
-
-      // 2) If online & publishNow, create link tied to attendance
-      if (method === "online" && publishNow) {
+      if (method === "online") {
+        // Create ONLY an AttendanceLink; Attendance rows are created when students mark.
         const linkBody = {
-          attendanceId: created?._id,
-          degree: limitToCohort ? degreeId : null,
-          semester: limitToCohort ? semesterId : null,
-          course: courseId || null,
-          validFrom: validFromISO,
-          validTill: validTillISO,
-          // You can add constraints: { maxUses, deviceLock, ipRange, etc. }
+          title: title.trim(),
+          degreeId: limitToCohort ? degreeId : undefined,
+          semesterId: limitToCohort ? semesterId : undefined,
+          courseId: courseId || undefined,
+          validFrom: validFromISO || toISO(sessionDate, "00:00"),
+          validTo: validToISO || toISO(sessionDate, "23:59"),
+          isActive: !!publishNow,
+          metadata: { notes: notes?.trim() || "" },
         };
 
-        const linkRes = await axios.post(`${API}/create-link`, linkBody, {
+        const linkRes = await axios.post(`${API}/api/create-link`, linkBody, {
           headers: authHeader,
         });
         const linkData = linkRes?.data?.data || linkRes?.data;
         setGeneratedLink(linkData);
 
-        // 3) If email blast requested, notify students for this active link
-        if (sendEmail && linkData?._id) {
+        // Optional email blast → your backend expects ?courseId= in QS
+        if (sendEmail && linkData?.course) {
           try {
             await axios.post(
-              `${API}/send-reminder-for-active-link`,
-              { linkId: linkData._id },
+              `${API}/api/send-reminder-for-active-link?courseId=${linkData.course}`,
+              null,
               { headers: authHeader }
             );
           } catch (mailErr) {
-            // Non-fatal
-            console.warn("Email blast failed:", mailErr?.response?.data || mailErr);
+            console.warn(
+              "Email blast failed:",
+              mailErr?.response?.data || mailErr
+            );
           }
         }
-      }
 
-      setToast({
-        type: "success",
-        msg:
-          method === "online" && publishNow
-            ? "Attendance created & link published."
-            : "Attendance created successfully.",
-      });
+        setToast({
+          type: "success",
+          msg: publishNow
+            ? "Link created & published."
+            : "Link created (inactive).",
+        });
+      } else {
+        // Manual: no link; you’ll mark students later from manual/bulk screens.
+        setToast({
+          type: "success",
+          msg: "Manual session configured. Use the manual marking screen to mark students.",
+        });
+      }
     } catch (err) {
       setToast({
         type: "error",
-        msg: err?.response?.data?.message || "Failed to create attendance",
+        msg: err?.response?.data?.message || "Failed to create",
       });
     } finally {
       setBusy(false);
@@ -297,16 +261,17 @@ const CreateAttendance = () => {
     }
   };
 
-  // Auto-adjust endTime when windowMinutes changes
   useEffect(() => {
     if (!sessionDate || !startTime) return;
     const [hh, mm] = startTime.split(":").map((n) => parseInt(n, 10));
     const base = new Date();
     base.setHours(hh || 0, mm || 0, 0, 0);
-    const end = new Date(base.getTime() + (parseInt(windowMinutes, 10) || 0) * 60000);
+    const end = new Date(
+      base.getTime() + (parseInt(windowMinutes, 10) || 0) * 60000
+    );
     const z = (n) => n.toString().padStart(2, "0");
     setEndTime(`${z(end.getHours())}:${z(end.getMinutes())}`);
-  }, [windowMinutes]); // eslint-disable-line
+  }, [windowMinutes, sessionDate, startTime]);
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6">
@@ -317,8 +282,8 @@ const CreateAttendance = () => {
             Create Attendance
           </h1>
           <p className="text-sm text-gray-500">
-            Super Admin can create manual or online attendance. Online sessions
-            can generate a link for students to mark themselves present.
+            Create a manual session or an online attendance link students can
+            use within a time window.
           </p>
         </div>
 
@@ -358,7 +323,7 @@ const CreateAttendance = () => {
       {/* Card */}
       <section className="bg-white border rounded-2xl shadow-sm p-4 md:p-6">
         <div className="grid md:grid-cols-2 gap-5">
-          {/* Left column */}
+          {/* Left */}
           <div className="space-y-5">
             {/* Title */}
             <div>
@@ -394,7 +359,8 @@ const CreateAttendance = () => {
                 <FiChevronDown className="absolute right-3 top-3 pointer-events-none text-gray-400" />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Manual: staff marks attendance. Online: students click a link within a time window.
+                Manual: staff marks attendance. Online: students click a link
+                within a time window.
               </p>
             </div>
 
@@ -484,7 +450,7 @@ const CreateAttendance = () => {
             </div>
           </div>
 
-          {/* Right column */}
+          {/* Right */}
           <div className="space-y-5">
             {/* Date & window */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -584,7 +550,8 @@ const CreateAttendance = () => {
                       onChange={(e) => setLimitToCohort(e.target.checked)}
                       className="rounded"
                     />
-                    Restrict link to selected Degree/Semester (and Course if set)
+                    Restrict link to selected Degree/Semester (and Course if
+                    set)
                   </label>
 
                   <label className="flex items-center gap-2 text-sm">
@@ -598,7 +565,8 @@ const CreateAttendance = () => {
                   </label>
 
                   <p className="text-xs text-gray-500">
-                    Students will also see the active link on their Attendance tab during the window.
+                    Students will also see the active link on their Attendance
+                    tab during the window.
                   </p>
                 </div>
               </div>
@@ -663,13 +631,14 @@ const CreateAttendance = () => {
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-gray-700 break-all">
                         <span className="font-medium">URL: </span>
-                        {generatedLink.url || `${API}/attendance/mark/${generatedLink.code}`}
+                        {generatedLink.url ||
+                          `${API}/api/mark-via-link/${generatedLink.code}`}
                       </div>
                       <button
                         onClick={() =>
                           handleCopy(
                             generatedLink.url ||
-                              `${API}/attendance/mark/${generatedLink.code}`
+                              `${API}/api/mark-via-link/${generatedLink.code}`
                           )
                         }
                         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-white hover:bg-gray-50"
@@ -686,18 +655,10 @@ const CreateAttendance = () => {
 
                     <div className="text-gray-700">
                       <span className="font-medium">Valid: </span>
-                      {new Date(generatedLink.validFrom).toLocaleString()} —{" "}
-                      {new Date(generatedLink.validTill).toLocaleString()}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/admin/attendance/${createdAttendance?._id}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
-                      >
-                        <FiSend className="opacity-70" />
-                        View Session
-                      </Link>
+                      {new Date(
+                        generatedLink.validFrom
+                      ).toLocaleString()} —{" "}
+                      {new Date(generatedLink.validTo).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -708,8 +669,9 @@ const CreateAttendance = () => {
 
         {/* Footer Help */}
         <div className="mt-6 text-xs text-gray-500">
-          Tip: You can always generate or revoke links later from the session page.
-          Students can mark via the emailed link or their Dashboard &gt; Attendance.
+          Tip: Attendance rows appear when students mark via the link (during
+          the window) or when staff mark manually/bulk. Creating a link alone
+          does not create per-student rows.
         </div>
       </section>
     </div>

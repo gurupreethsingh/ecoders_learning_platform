@@ -35,4 +35,10 @@ router.post(
   semesterController.cloneToDegrees
 );
 
+/* ✅ NEW: list by degree for CreateAttendance */
+router.get(
+  "/semesters/list-by-degree/:degreeId",
+  semesterController.listByDegree
+);
+
 module.exports = router;

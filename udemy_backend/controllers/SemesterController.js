@@ -613,3 +613,20 @@ exports.cloneToDegrees = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.listByDegree = async (req, res) => {
+  try {
+    const { degreeId } = req.params;
+    const list = await Semester.find({ degree: degreeId }).sort({
+      semNumber: 1,
+    });
+    res.json({ success: true, data: list });
+  } catch (e) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: e.message || "Failed to list semesters",
+      });
+  }
+};

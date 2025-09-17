@@ -1,56 +1,96 @@
+const express = require("express");
+const router = express.Router();
+
+// Make sure this path is correct
 const ctrl = require("../controllers/AttendanceController");
-const router = require("express").Router();
 
-/* ------------------------------ Attendance ------------------------------ */
-router.post("/create-attendance", ctrl.createAttendance);
-router.get("/list-attendance", ctrl.listAttendance);
-router.get("/get-attendance-by-id/:id", ctrl.getAttendanceById);
-router.patch("/update-attendance/:id", ctrl.updateAttendance);
-router.delete("/delete-attendance/:id", ctrl.deleteAttendance);
+// No-op auth stubs (swap with real middleware if you have it)
+const authRequired = (_req, _res, next) => next();
+const adminOnly = (_req, _res, next) => next();
 
-router.post("/mark-manual", ctrl.markManual);
-router.post("/mark-via-link/:code", ctrl.markViaLink);
+/* ============================ ATTENDANCE LINKS ============================ */
+// Canonical REST paths
+router.post("/links", adminOnly, ctrl.createLink);
+router.get("/links", adminOnly, ctrl.listLinks);
+router.get("/links/:id", adminOnly, ctrl.getLink);
+router.patch("/links/:id", adminOnly, ctrl.updateLink);
+router.delete("/links/:id", adminOnly, ctrl.deleteLink);
+router.get("/links/code/:code", adminOnly, ctrl.getLinkByCode);
 
-/* -------------------------------- Counts -------------------------------- */
-router.get("/count-by-status", ctrl.countByStatus);
-router.get("/count-by-course", ctrl.countByCourse);
-router.get("/count-by-student", ctrl.countByStudent);
-router.get("/daily-counts", ctrl.dailyCounts);
+// Legacy aliases you were calling from the UI earlier
+router.post("/create-link", adminOnly, ctrl.createLink);
 
-/* -------------------------------- Filters ------------------------------- */
-router.get("/list-by-method/:method", ctrl.listByMethod);
-router.get("/list-late", ctrl.listLate);
+// Mark via link (student)
+router.post("/mark/link/:code", authRequired, ctrl.markViaLink);
+// Legacy alias for previews
+router.post("/mark-via-link/:code", authRequired, ctrl.markViaLink);
 
-/* ------------------------------- Bulk Ops ------------------------------- */
-router.post("/bulk-mark", ctrl.bulkMark);
-router.post("/bulk-delete", ctrl.bulkDelete);
-router.post("/bulk-import", ctrl.bulkImport);
-router.post("/bulk-mark-for-session", ctrl.bulkMarkForSession);
-router.post("/clear-course-day", ctrl.clearCourseDay);
-router.get("/export-attendance", ctrl.exportAttendance);
+/* ============================ ATTENDANCE RECORDS ========================== */
+// CRUD (manual attendance rows)
+router.post("/attendance", adminOnly, ctrl.createAttendance);
+router.get("/attendance", adminOnly, ctrl.listAttendance);
+router.get("/attendance/:id", adminOnly, ctrl.getAttendanceById);
+router.patch("/attendance/:id", adminOnly, ctrl.updateAttendance);
+router.delete("/attendance/:id", adminOnly, ctrl.deleteAttendance);
 
-/* --------------------------------- Links -------------------------------- */
-router.post("/create-link", ctrl.createLink);
-router.get("/list-links", ctrl.listLinks);
-router.get("/get-link/:id", ctrl.getLink);
-router.get("/get-link-by-code/:code", ctrl.getLinkByCode);
-router.patch("/update-link/:id", ctrl.updateLink);
-router.delete("/delete-link/:id", ctrl.deleteLink);
-router.post("/bulk-generate-links", ctrl.bulkGenerateLinks);
-router.post("/deactivate-expired-links", ctrl.deactivateExpiredLinks);
+// Marking (manual)
+router.post("/mark/manual", authRequired, ctrl.markManual);
 
-/* ----------------------------- Calculations ----------------------------- */
-router.get("/calc-student-course-percent", ctrl.calcStudentCoursePercent);
-router.get("/calc-student-semester-percent", ctrl.calcStudentSemesterPercent);
-router.get("/calc-monthly-breakdown", ctrl.calcMonthlyBreakdown);
-router.get("/calc-course-coverage", ctrl.calcCourseCoverage);
-router.get("/calc-streak", ctrl.calcStreak);
-router.get("/calc-eligibility", ctrl.calcEligibility);
-router.get("/calc-leaderboard", ctrl.calcLeaderboard);
+/* ============================== BULK OPERATIONS =========================== */
+router.post("/attendance/bulk/mark", adminOnly, ctrl.bulkMark);
+router.post("/attendance/bulk/delete", adminOnly, ctrl.bulkDelete);
+router.post("/attendance/bulk/import", adminOnly, ctrl.bulkImport);
+router.post(
+  "/attendance/bulk/generate-links",
+  adminOnly,
+  ctrl.bulkGenerateLinks
+);
+router.post(
+  "/attendance/deactivate-expired-links",
+  adminOnly,
+  ctrl.deactivateExpiredLinks
+);
+router.post("/attendance/clear-course-day", adminOnly, ctrl.clearCourseDay);
 
-/* ---------------------------- Notifications ----------------------------- */
-router.post("/send-reminder-for-active-link", ctrl.sendReminderForActiveLink);
-router.post("/notify-low-attendance", ctrl.notifyLowAttendance);
-router.post("/notify-instructor-summary", ctrl.notifyInstructorSummary);
+/* ================================ ANALYTICS =============================== */
+router.get("/attendance/count-by-status", adminOnly, ctrl.countByStatus);
+router.get("/attendance/count-by-course", adminOnly, ctrl.countByCourse);
+router.get("/attendance/count-by-student", adminOnly, ctrl.countByStudent);
+router.get("/attendance/daily-counts", adminOnly, ctrl.dailyCounts);
+router.get(
+  "/attendance/calc/monthly-breakdown",
+  adminOnly,
+  ctrl.calcMonthlyBreakdown
+);
+router.get(
+  "/attendance/calc/course-coverage",
+  adminOnly,
+  ctrl.calcCourseCoverage
+);
+router.get("/attendance/calc/streak", adminOnly, ctrl.calcStreak);
+router.get("/attendance/calc/eligibility", adminOnly, ctrl.calcEligibility);
+router.get(
+  "/attendance/calc/student-course-percent",
+  adminOnly,
+  ctrl.calcStudentCoursePercent
+);
+router.get(
+  "/attendance/calc/student-semester-percent",
+  adminOnly,
+  ctrl.calcStudentSemesterPercent
+);
+router.get("/attendance/calc/leaderboard", adminOnly, ctrl.calcLeaderboard);
+
+/* ============================== NOTIFICATIONS ============================= */
+router.post("/notify/send-reminder", adminOnly, ctrl.sendReminderForActiveLink);
+router.post("/notify/low-attendance", adminOnly, ctrl.notifyLowAttendance);
+router.post(
+  "/notify/instructor-summary",
+  adminOnly,
+  ctrl.notifyInstructorSummary
+);
+
+/* ================================= EXPORTS ================================= */
+router.get("/attendance/export", adminOnly, ctrl.exportAttendance); // JSON export
 
 module.exports = router;

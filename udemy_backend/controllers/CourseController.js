@@ -3004,3 +3004,34 @@ exports.addReply = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.listBySemester = async (req, res) => {
+  try {
+    const { semesterId } = req.params;
+
+    // Cast to ObjectId if valid; Mongoose can match with strings too,
+    // but this avoids mixed-type quirks.
+    const castId = Types.ObjectId.isValid(semesterId)
+      ? new Types.ObjectId(semesterId)
+      : semesterId;
+
+    // ✅ Support both 'semester' and legacy 'semister' field names
+    const q = { $or: [{ semester: castId }, { semister: castId }] };
+
+    // Optional: also filter by degree if sent as query ?degreeId=...
+    if (req.query.degreeId && Types.ObjectId.isValid(req.query.degreeId)) {
+      const dId = new Types.ObjectId(req.query.degreeId);
+      q.$and = [{ $or: [{ degree: dId }, { Degree: dId }] }]; // be generous if schema had variants
+    }
+
+    const list = await Course.find(q)
+      .sort({ title: 1 })
+      .select("_id title name slug semester semister degree"); // small payload
+
+    res.json({ success: true, data: list });
+  } catch (e) {
+    res
+      .status(500)
+      .json({ success: false, message: e.message || "Failed to list courses" });
+  }
+};
