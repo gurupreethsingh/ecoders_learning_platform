@@ -47,7 +47,15 @@ import SingleUserNotification from "./pages/notification_pages/SingleUserNotific
 // attendance pages. 
 import MarkAttendance from "./pages/attendance_pages/MarkAttendance";
 import MyAttendance from "./pages/attendance_pages/MyAttendance";
+
+// chat bot pages. 
 import ChatBot from "./components/chatbot_component/ChatBot";
+import AITutor from "./pages/chatbot_pages/AITutor";
+import CodeGenerator from "./pages/chatbot_pages/CodeGenerator";
+import CodeSummary from "./pages/chatbot_pages/CodeSummary";
+import RoadmapGenerator from "./pages/chatbot_pages/RoadmapGenerator";
+import DashboardGenerator from "./pages/chatbot_pages/DashboardGenerator";
+
 
 const PageTitle = ({ title, children }) => {
   useEffect(() => {
@@ -338,7 +346,72 @@ function App() {
 />
 
 
+{/* chat bot pages.  */}
 
+<Route
+  path="/ai-tutor"
+  element={
+    <PrivateRoute allowedRoles={[
+      "superadmin","student","instructor","teacher","admin","user"
+    ]}>
+      <PageTitle title="AI Tutor">
+        <AITutor />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/code-generator"
+  element={
+    <PrivateRoute allowedRoles={[
+      "superadmin","student","instructor","teacher","admin","user"
+    ]}>
+      <PageTitle title="Code Generator">
+        <CodeGenerator />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/code-summary"
+  element={
+    <PrivateRoute allowedRoles={[
+      "superadmin","student","instructor","teacher","admin","user"
+    ]}>
+      <PageTitle title="Code Summary">
+        <CodeSummary />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/roadmap-generator"
+  element={
+    <PrivateRoute allowedRoles={[
+      "superadmin","student","instructor","teacher","admin","user"
+    ]}>
+      <PageTitle title="Roadmap Generator">
+        <RoadmapGenerator />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
+
+<Route
+  path="/dashboard-generator"
+  element={
+    <PrivateRoute allowedRoles={[
+      "superadmin","student","instructor","teacher","admin","user"
+    ]}>
+      <PageTitle title="Dashboard Generator">
+        <DashboardGenerator />
+      </PageTitle>
+    </PrivateRoute>
+  }
+/>
 
             <Route
               path="/page-not-found"
