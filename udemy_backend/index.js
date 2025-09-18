@@ -33,6 +33,7 @@ const QuizRoutes = require("./routes/QuizRoutes.js");
 const questionRoutes = require("./routes/QuestionRoutes");
 const instructorRoutes = require("./routes/InstructorRoutes");
 const activityRoutes = require("./routes/ActivityRoutes.js");
+const chatRoutes = require("./routes/ChatInteractionRoutes.js")
 
 // 4. Initialize Express
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api", cartRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", contactRoutes);
 app.use("/api", courseRoutes);
+app.use("/api" , chatRoutes);
 app.use("/api", dashboardRoutes);
 app.use("/api", degreeRoutes);
 app.use("/api", examRoutes);

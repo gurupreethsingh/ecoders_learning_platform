@@ -47,6 +47,7 @@ import SingleUserNotification from "./pages/notification_pages/SingleUserNotific
 // attendance pages. 
 import MarkAttendance from "./pages/attendance_pages/MarkAttendance";
 import MyAttendance from "./pages/attendance_pages/MyAttendance";
+import ChatBot from "./components/chatbot_component/ChatBot";
 
 const PageTitle = ({ title, children }) => {
   useEffect(() => {
@@ -363,6 +364,8 @@ function App() {
           </Routes>
           <Footer />
         </div>
+
+         <ChatBot />
         <TopArrow scrollTargetId="app-scroll" />
       </Router>
     </AuthProvider>
