@@ -77,7 +77,9 @@ export default function MarkAttendance() {
         let dId =
           safeId(user?.degree) ||
           user?.degreeId ||
-          (typeof user?.program === "string" ? user.program : safeId(user?.program)) ||
+          (typeof user?.program === "string"
+            ? user.program
+            : safeId(user?.program)) ||
           null;
 
         if (!dId) {
@@ -85,7 +87,9 @@ export default function MarkAttendance() {
             `${API}/list-admissions?userId=${uid}&page=1&limit=1&sortBy=createdAt&sortDir=desc`,
             { headers: authHeader }
           );
-          const doc = (Array.isArray(adm?.data?.data) ? adm.data.data : adm?.data || [])[0];
+          const doc = (
+            Array.isArray(adm?.data?.data) ? adm.data.data : adm?.data || []
+          )[0];
           dId = safeId(doc?.intendedEnrollment?.degree);
         }
 
@@ -244,13 +248,19 @@ export default function MarkAttendance() {
         semesterId: semesterId || undefined,
         courseId: courseId || undefined,
       };
-      const res = await axios.post(`${API}/mark-via-link/${code.trim()}`, body, {
-        headers: authHeader,
-      });
+      const res = await axios.post(
+        `${API}/mark-via-link/${code.trim()}`,
+        body,
+        {
+          headers: authHeader,
+        }
+      );
       const data = res?.data?.data || res?.data || {};
       const created =
         data?.created === true ||
-        String(data?.message || "").toLowerCase().includes("created");
+        String(data?.message || "")
+          .toLowerCase()
+          .includes("created");
       setToast({
         type: "success",
         msg: created
@@ -325,7 +335,9 @@ export default function MarkAttendance() {
       const data = res?.data?.data || res?.data || {};
       const created =
         data?.created === true ||
-        String(data?.message || "").toLowerCase().includes("created");
+        String(data?.message || "")
+          .toLowerCase()
+          .includes("created");
       setToast({
         type: "success",
         msg: created
@@ -384,7 +396,7 @@ export default function MarkAttendance() {
         </div>
         <div className="flex gap-2">
           <Link
-            to="/attendance"
+            to="/my-attendance"
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 text-sm"
           >
             View Attendance
@@ -473,8 +485,9 @@ export default function MarkAttendance() {
         </div>
 
         <div className="text-xs text-gray-500 mt-2">
-          If your link is cohort-restricted, the Semester/Course you pick below will be
-          used as context. The server enforces eligibility and “today only”.
+          If your link is cohort-restricted, the Semester/Course you pick below
+          will be used as context. The server enforces eligibility and “today
+          only”.
         </div>
       </section>
 
